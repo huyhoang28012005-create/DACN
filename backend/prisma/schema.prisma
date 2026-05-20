@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite does not support Enums natively, so we map them to Strings.
+// Prisma supports enums for PostgreSQL/MySQL, but for SQLite we use string fields.
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  code      String?  @unique // Mã SV / Mã Cán bộ
+  role      String   @default("STUDENT") // STUDENT, ADMIN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings       Booking[]
+  chemicalUsages ChemicalUsage[]
+  reports        Report[]
+  checkInRecords CheckInRecord[]
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  name        String
+  capacity    Int
+  isActive    Boolean  @default(true)
+  
+  bookings    Booking[]
+  equipment   Equipment[]
+}
+
+model Equipment {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  qrCode      String   @unique
+  status      String   @default("AVAILABLE") // AVAILABLE, IN_USE, MAINTENANCE, BROKEN
+  roomId      String
+  room        Room     @relation(fields: [roomId], references: [id])
+
+  checkInRecords CheckInRecord[]
+  reports        Report[]
+}
+
+model Chemical {
+  id          String   @id @default(uuid())
+  name        String
+  quantity    Float
+  unit        String
+  
+  usages      ChemicalUsage[]
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  roomId      String
+  room        Room     @relation(fields: [roomId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  purpose     String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
+  createdAt   DateTime @default(now())
+
+  chemicalUsages ChemicalUsage[]
+}
+
+model ChemicalUsage {
+  id          String   @id @default(uuid())
+  chemicalId  String
+  chemical    Chemical @relation(fields: [chemicalId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  bookingId   String?
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+  amountUsed  Float
+  date        DateTime @default(now())
+}
+
+model CheckInRecord {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  checkInTime DateTime @default(now())
+  checkOutTime DateTime?
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  reporterId  String
+  reporter    User     @relation(fields: [reporterId], references: [id])
+  equipmentId String?
+  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+}
