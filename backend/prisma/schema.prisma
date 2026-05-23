@@ -1,108 +1,178 @@
+// ==========================================
+// CẤU HÌNH KẾT NỐI
+// ==========================================
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// SQLite does not support Enums natively, so we map them to Strings.
-// Prisma supports enums for PostgreSQL/MySQL, but for SQLite we use string fields.
+// ==========================================
+// ĐỊNH NGHĨA ENUM (Kiểu dữ liệu cố định)
+// ==========================================
+enum Role {
+  ADMIN
+  TECHNICIAN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  BROKEN
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  IN_USE
+  COMPLETED
+  CANCELED
+  REJECTED
+}
+
+// ==========================================
+// ĐỊNH NGHĨA CÁC BẢNG (MODELS)
+// ==========================================
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  fullName  String
-  code      String?  @unique // Mã SV / Mã Cán bộ
-  role      String   @default("STUDENT") // STUDENT, ADMIN
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         Int        @id @default(autoincrement())
+  name       String     @db.VarChar(255)
+  email      String     @unique @db.VarChar(255)
+  password   String     @db.VarChar(255)
+  role       Role       @default(STUDENT)
+  avatar_url String?    @db.VarChar(500) // Hình ảnh đại diện (Media)
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
 
-  bookings       Booking[]
-  chemicalUsages ChemicalUsage[]
-  reports        Report[]
-  checkInRecords CheckInRecord[]
+  bookings   Booking[]  // Mối quan hệ 1-N: 1 người dùng có nhiều lịch đặt
+  audit_logs AuditLog[] // Nhật ký thao tác của người dùng
+  courses    Course[]   // Học phần do giảng viên quản lý
+  
+  @@map("users")
+}
+
+model Course {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique @db.VarChar(100)
+  name          String   @db.VarChar(255)
+  instructor_id Int
+  created_at    DateTime @default(now())
+
+  instructor    User     @relation(fields: [instructor_id], references: [id], onDelete: Cascade)
+  bookings      Booking[]
+  chemical_usages ChemicalUsage[]
+
+  @@map("courses")
 }
 
 model Room {
-  id          String   @id @default(uuid())
-  name        String
-  capacity    Int
-  isActive    Boolean  @default(true)
-  
-  bookings    Booking[]
-  equipment   Equipment[]
+  id                  Int       @id @default(autoincrement())
+  name                String    @unique @db.VarChar(100)
+  location            String    @db.VarChar(255)
+  capacity            Int
+  has_air_conditioner Boolean   @default(true)
+  image_url           String?   @db.VarChar(500) // Hình ảnh phòng Lab (Media)
+  created_at          DateTime  @default(now())
+
+  equipment           Equipment[]
+  bookings            Booking[]
+
+  @@map("rooms")
 }
 
 model Equipment {
-  id          String   @id @default(uuid())
-  name        String
-  code        String   @unique
-  qrCode      String   @unique
-  status      String   @default("AVAILABLE") // AVAILABLE, IN_USE, MAINTENANCE, BROKEN
-  roomId      String
-  room        Room     @relation(fields: [roomId], references: [id])
+  id               Int             @id @default(autoincrement())
+  name             String          @db.VarChar(255)
+  serial_number    String          @unique @db.VarChar(100)
+  status           EquipmentStatus @default(AVAILABLE)
+  room_id          Int
+  last_maintenance DateTime?       @db.Date
+  image_url        String?         @db.VarChar(500) // Hình ảnh thiết bị (Media)
+  created_at       DateTime        @default(now())
+  
+  // Tối ưu hóa Concurrency: Tránh đụng độ khi 2 người cùng cập nhật trạng thái thiết bị
+  row_version      Int             @default(1)
 
-  checkInRecords CheckInRecord[]
-  reports        Report[]
+  room             Room            @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  bookings         Booking[]
+
+  @@map("equipment")
 }
 
 model Chemical {
-  id          String   @id @default(uuid())
-  name        String
-  quantity    Float
-  unit        String
-  
-  usages      ChemicalUsage[]
+  id              Int             @id @default(autoincrement())
+  name            String          @db.VarChar(255)
+  formula         String?         @db.VarChar(100)
+  quantity_stock  Float           @default(0.0)
+  unit            String          @db.VarChar(20)
+  expiration_date DateTime?       @db.Date // Cảnh báo hóa chất sắp hết hạn
+  image_url       String?         @db.VarChar(500) // Hình ảnh hóa chất (Media)
+  created_at      DateTime        @default(now())
+
+  usages          ChemicalUsage[]
+
+  @@map("chemicals")
 }
 
 model Booking {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  roomId      String
-  room        Room     @relation(fields: [roomId], references: [id])
-  startTime   DateTime
-  endTime     DateTime
-  purpose     String
-  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED, CANCELLED
-  createdAt   DateTime @default(now())
+  id           Int           @id @default(autoincrement())
+  user_id      Int
+  room_id      Int
+  equipment_id Int?
+  course_id    Int?
+  start_time   DateTime
+  end_time     DateTime
+  status       BookingStatus @default(PENDING)
+  purpose      String        @db.Text
+  created_at   DateTime      @default(now())
+  
+  // Tối ưu hóa Concurrency: Phiên bản bản ghi để chặn đụng độ lịch (Optimistic Locking)
+  row_version  Int           @default(1)
 
-  chemicalUsages ChemicalUsage[]
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  room            Room            @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  equipment       Equipment?      @relation(fields: [equipment_id], references: [id], onDelete: SetNull)
+  course          Course?         @relation(fields: [course_id], references: [id], onDelete: SetNull)
+  chemical_usages ChemicalUsage[]
+
+  // Tạo chỉ mục Index giống hệt SQL để tăng tốc truy vấn kiểm tra trùng lịch
+  @@index([room_id, start_time, end_time])
+  @@index([equipment_id, start_time, end_time])
+  @@map("bookings")
 }
 
 model ChemicalUsage {
-  id          String   @id @default(uuid())
-  chemicalId  String
-  chemical    Chemical @relation(fields: [chemicalId], references: [id])
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  bookingId   String?
-  booking     Booking? @relation(fields: [bookingId], references: [id])
-  amountUsed  Float
-  date        DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  booking_id    Int
+  chemical_id   Int
+  course_id     Int?
+  quantity_used Float
+  used_at       DateTime @default(now())
+
+  booking       Booking  @relation(fields: [booking_id], references: [id], onDelete: Cascade)
+  chemical      Chemical @relation(fields: [chemical_id], references: [id], onDelete: Cascade)
+  course        Course?  @relation(fields: [course_id], references: [id], onDelete: SetNull)
+
+  @@map("chemical_usage")
 }
 
-model CheckInRecord {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  equipmentId String
-  equipment   Equipment @relation(fields: [equipmentId], references: [id])
-  checkInTime DateTime @default(now())
-  checkOutTime DateTime?
-}
+// Bảng lưu vết hệ thống (Bổ sung theo yêu cầu kiến trúc an toàn dữ liệu)
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  action     String   @db.VarChar(255) // Ví dụ: 'CREATE_BOOKING', 'DELETE_EQUIPMENT'
+  table_name String   @db.VarChar(100)
+  record_id  Int
+  user_id    Int?
+  details    String?  @db.Text
+  timestamp  DateTime @default(now())
 
-model Report {
-  id          String   @id @default(uuid())
-  title       String
-  description String
-  reporterId  String
-  reporter    User     @relation(fields: [reporterId], references: [id])
-  equipmentId String?
-  equipment   Equipment? @relation(fields: [equipmentId], references: [id])
-  status      String   @default("PENDING")
-  createdAt   DateTime @default(now())
+  user       User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
 }
