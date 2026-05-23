@@ -1,22 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, XCircle, FileText, Calendar } from "lucide-react";
-
-const MOCK_BOOKINGS = [
-  { id: "BK-20231024-01", resource: "Lab AI & Máy học", time: "24/10/2023 • 09:00 - 11:30", status: "Approved" },
-  { id: "BK-20231025-02", resource: "Oscilloscope Tektronix", time: "25/10/2023 • 14:00 - 16:00", status: "Pending" },
-  { id: "BK-20231020-05", resource: "Phòng Thực hành Mạng", time: "20/10/2023 • 07:00 - 10:00", status: "Canceled" },
-];
+import { bookingService } from "../../services";
+import { format } from "date-fns";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { toast } from "react-hot-toast";
 
 export function MyBookings() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const res = await bookingService.getMyBookings();
+      setBookings(res.data || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancel = async (id: number) => {
+    if (confirm("Bạn có chắc chắn muốn hủy đơn này?")) {
+      try {
+        await bookingService.cancel(id.toString());
+        toast.success("Hủy thành công");
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch(status) {
-      case "Pending": return <span className="px-2.5 py-1 bg-[#FFF8E1] text-[#F59E0B] rounded text-[12px] font-medium border border-[#FFECB3]">Chờ duyệt</span>;
-      case "Approved": return <span className="px-2.5 py-1 bg-[#E8F5E9] text-[#2E7D32] rounded text-[12px] font-medium border border-[#C8E6C9]">Đã duyệt</span>;
-      case "Canceled": return <span className="px-2.5 py-1 bg-[#FDEDED] text-[#EF4444] rounded text-[12px] font-medium border border-[#FFCDD2]">Đã hủy</span>;
+      case "PENDING": return <span className="px-2.5 py-1 bg-[#FFF8E1] text-[#F59E0B] rounded text-[12px] font-medium border border-[#FFECB3]">Chờ duyệt</span>;
+      case "APPROVED": return <span className="px-2.5 py-1 bg-[#E8F5E9] text-[#2E7D32] rounded text-[12px] font-medium border border-[#C8E6C9]">Đã duyệt</span>;
+      case "REJECTED": return <span className="px-2.5 py-1 bg-[#FDEDED] text-[#EF4444] rounded text-[12px] font-medium border border-[#FFCDD2]">Từ chối</span>;
+      case "CANCELED": return <span className="px-2.5 py-1 bg-[#F5F5F5] text-[#757575] rounded text-[12px] font-medium border border-[#E0E0E0]">Đã hủy</span>;
+      default: return <span className="px-2.5 py-1 bg-[#F5F5F5] text-[#757575] rounded text-[12px] font-medium border border-[#E0E0E0]">{status}</span>;
     }
   };
+
+  const filteredBookings = bookings.filter(b => 
+    b.id.toString().includes(searchTerm) || 
+    (b.room?.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300">
@@ -37,50 +72,58 @@ export function MyBookings() {
               className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
             />
           </div>
-          <select className="px-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] text-[#212121] outline-none">
-            <option>Tất cả trạng thái</option>
-            <option>Chờ duyệt</option>
-            <option>Đã duyệt</option>
-            <option>Đã hủy</option>
-          </select>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="border-b border-[#E0E0E0] bg-white">
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Mã đơn</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Tên thiết bị/Phòng Lab</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Phòng Lab</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Mục đích</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Thời gian (Ngày & Giờ)</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Trạng thái</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E0E0E0]">
-              {MOCK_BOOKINGS.map((bk, i) => (
-                <tr key={i} className="hover:bg-[#F5F5F5] bg-white transition-colors">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-12">
+                    <LoadingSpinner text="Đang tải lịch sử đặt phòng..." />
+                  </td>
+                </tr>
+              ) : filteredBookings.map((bk) => (
+                <tr key={bk.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-[14px] font-medium text-[#1E5FA5]">
-                      <FileText className="w-4 h-4" /> {bk.id}
+                      <FileText className="w-4 h-4" /> #{bk.id}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-[14px] text-[#212121] font-medium">{bk.resource}</td>
+                  <td className="px-6 py-4 text-[14px] text-[#212121] font-medium">{bk.room?.name}</td>
+                  <td className="px-6 py-4 text-[14px] text-[#757575]">{bk.purpose}</td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-[14px] text-[#757575]">
-                      <Calendar className="w-4 h-4" /> {bk.time}
+                    <div className="flex items-center gap-2 text-[14px] text-[#212121]">
+                      <Calendar className="w-4 h-4 text-[#757575]" /> 
+                      {format(new Date(bk.start_time), "dd/MM/yyyy HH:mm")} - {format(new Date(bk.end_time), "HH:mm")}
                     </div>
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(bk.status)}</td>
                   <td className="px-6 py-4 text-right">
-                    {bk.status === "Pending" && (
-                      <button className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] rounded text-[13px] font-medium transition-colors">
+                    {bk.status === "PENDING" && (
+                      <button onClick={() => handleCancel(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] rounded text-[13px] font-medium transition-colors">
                         <XCircle className="w-4 h-4" /> Hủy đơn
                       </button>
                     )}
                   </td>
                 </tr>
               ))}
+              {!isLoading && filteredBookings.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-[#757575]">Không tìm thấy đơn đặt lịch nào.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

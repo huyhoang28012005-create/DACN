@@ -17,8 +17,9 @@ export class EquipmentService {
     });
   }
 
-  async findAll() {
+  async findAll(roomId?: number) {
     return this.prisma.equipment.findMany({
+      where: roomId ? { room_id: roomId } : undefined,
       include: {
         room: true,
       },

@@ -81,6 +81,18 @@ export class BookingsService {
     });
   }
 
+  async findMyBookings(userId: number) {
+    return this.prisma.booking.findMany({
+      where: { user_id: userId },
+      include: {
+        room: { select: { id: true, name: true } },
+        equipment: { select: { id: true, name: true } },
+        course: { select: { id: true, name: true } },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
   async findOne(id: number) {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
@@ -112,6 +124,17 @@ export class BookingsService {
         ...(end_time && { end_time: new Date(end_time) }),
         row_version: { increment: 1 },
       },
+    });
+  }
+
+  async cancelBooking(id: number, userId: number) {
+    const booking = await this.findOne(id);
+    if (booking.user_id !== userId) {
+      throw new ConflictException('Bạn không có quyền hủy đơn này');
+    }
+    return this.prisma.booking.update({
+      where: { id },
+      data: { status: 'CANCELED' },
     });
   }
 

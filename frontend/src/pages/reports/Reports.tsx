@@ -1,27 +1,10 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Settings, AlertTriangle, CheckCircle, Plus, Search, Check, RefreshCw, X } from "lucide-react";
+import { Download, FileText, Settings, AlertTriangle, CheckCircle, Plus, Search, RefreshCw, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { reportService, equipmentService, roomService } from "../../services";
 import { format } from "date-fns";
-
-const MOCK_BAR_DATA = [
-  { name: 'T2', value: 40 }, { name: 'T3', value: 65 }, { name: 'T4', value: 80 }, { name: 'T5', value: 45 },
-  { name: 'T6', value: 90 }, { name: 'T7', value: 20 }, { name: 'CN', value: 10 },
-];
-
-const MOCK_PIE_DATA = [
-  { name: 'Đã duyệt', value: 60, color: '#2E7D32' },
-  { name: 'Chờ duyệt', value: 25, color: '#F59E0B' },
-  { name: 'Đã hủy', value: 15, color: '#EF4444' },
-];
-
-const MOCK_HEATMAP = Array.from({ length: 7 }, (_, day) => 
-  Array.from({ length: 8 }, (_, hour) => ({
-    day, hour, value: Math.floor(Math.random() * 100)
-  }))
-);
-const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-const HOURS = ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { toast } from "react-hot-toast";
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
@@ -63,7 +46,7 @@ export function Reports() {
       setEquipments(eqRes.data || []);
       setRooms(roomRes.data || []);
     } catch (error) {
-      console.error("Lỗi khi tải dữ liệu báo cáo", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -78,21 +61,22 @@ export function Reports() {
         equipment_id: formData.equipment_id ? parseInt(formData.equipment_id) : undefined,
         room_id: formData.room_id ? parseInt(formData.room_id) : undefined,
       } as any);
-      alert("Đã gửi báo cáo sự cố!");
+      toast.success("Đã gửi báo cáo sự cố!");
       setIsModalOpen(false);
       setFormData({ title: "", description: "", equipment_id: "", room_id: "" });
       fetchData();
     } catch (error) {
-      alert("Lỗi khi gửi báo cáo.");
+      console.error(error);
     }
   };
 
   const handleUpdateStatus = async (id: number, status: string) => {
     try {
       await reportService.update(id.toString(), { status });
+      toast.success("Đã cập nhật trạng thái");
       fetchData();
     } catch (error) {
-      alert("Cập nhật trạng thái thất bại");
+      console.error(error);
     }
   };
 
@@ -134,22 +118,23 @@ export function Reports() {
       {activeTab === "Thống kê" && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <KPICard title="Tổng số yêu cầu" value="1,284" sub="+12% tuần này" icon={<FileText className="w-5 h-5 text-[#1E5FA5]" />} bg="bg-[#D6E4F7]/50" />
-            <KPICard title="Thiết bị đang bảo trì" value="15" sub="3 thiết bị sắp sửa xong" icon={<Settings className="w-5 h-5 text-[#F59E0B]" />} bg="bg-[#FFF8E1]" />
-            <KPICard title="Hóa chất sắp hết hạn" value="8" sub="Cần kiểm tra ngay" icon={<AlertTriangle className="w-5 h-5 text-[#EF4444]" />} bg="bg-[#FDEDED]" />
-            <KPICard title="Tỷ lệ phê duyệt" value="85%" sub="Ổn định" icon={<CheckCircle className="w-5 h-5 text-[#2E7D32]" />} bg="bg-[#E8F5E9]" />
+            <KPICard title="Tổng số sự cố" value={reports.length} sub="Toàn thời gian" icon={<FileText className="w-5 h-5 text-[#1E5FA5]" />} bg="bg-[#D6E4F7]/50" />
+            <KPICard title="Chưa xử lý" value={reports.filter(r => r.status === 'OPEN').length} sub="Cần được xem xét" icon={<AlertTriangle className="w-5 h-5 text-[#EF4444]" />} bg="bg-[#FDEDED]" />
+            <KPICard title="Đang xử lý" value={reports.filter(r => r.status === 'IN_PROGRESS').length} sub="Kỹ thuật viên đang làm" icon={<Settings className="w-5 h-5 text-[#F59E0B]" />} bg="bg-[#FFF8E1]" />
+            <KPICard title="Đã khắc phục" value={reports.filter(r => r.status === 'RESOLVED').length} sub="Hoạt động bình thường" icon={<CheckCircle className="w-5 h-5 text-[#2E7D32]" />} bg="bg-[#E8F5E9]" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-6">
-              <h2 className="text-[16px] font-bold text-[#212121] mb-6">Tần suất sử dụng phòng Lab theo tuần</h2>
-              <div className="h-[280px]">
+            <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-6 flex flex-col items-center justify-center text-center">
+              <h2 className="text-[16px] font-bold text-[#212121] mb-2">Biểu đồ sự cố theo ngày</h2>
+              <div className="text-[13px] text-[#757575] mb-6">(Tính năng đang được phát triển)</div>
+              <div className="h-[200px] w-full flex items-center justify-center opacity-50 grayscale">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={MOCK_BAR_DATA}>
+                  <BarChart data={[{name: 'T2', value: 2}, {name: 'T3', value: 5}, {name: 'T4', value: 1}]}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E0E0E0" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#757575', fontSize: 12}} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#757575', fontSize: 12}} />
-                    <Tooltip cursor={{fill: '#F5F5F5'}} contentStyle={{borderRadius: '8px', border: '1px solid #E0E0E0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)'}} />
+                    <Tooltip cursor={{fill: '#F5F5F5'}} />
                     <Bar dataKey="value" fill="#1E5FA5" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -157,23 +142,36 @@ export function Reports() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] p-6">
-              <h2 className="text-[16px] font-bold text-[#212121] mb-6">Tỷ lệ trạng thái đơn hàng</h2>
+              <h2 className="text-[16px] font-bold text-[#212121] mb-6">Tỷ lệ trạng thái sự cố</h2>
               <div className="h-[280px] flex items-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={MOCK_PIE_DATA} innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                      {MOCK_PIE_DATA.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                    <Pie 
+                      data={[
+                        { name: 'Đã khắc phục', value: reports.filter(r => r.status === 'RESOLVED').length || 1, color: '#2E7D32' },
+                        { name: 'Đang xử lý', value: reports.filter(r => r.status === 'IN_PROGRESS').length || 1, color: '#F59E0B' },
+                        { name: 'Chưa xử lý', value: reports.filter(r => r.status === 'OPEN').length || 1, color: '#EF4444' }
+                      ]} 
+                      innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value"
+                    >
+                      {[
+                        { color: '#2E7D32' }, { color: '#F59E0B' }, { color: '#EF4444' }
+                      ].map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                     </Pie>
                     <Tooltip contentStyle={{borderRadius: '8px', border: '1px solid #E0E0E0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)'}} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="w-[140px] flex flex-col gap-4">
-                  {MOCK_PIE_DATA.map(item => (
+                  {[
+                    { name: 'Đã khắc phục', value: reports.filter(r => r.status === 'RESOLVED').length, color: '#2E7D32' },
+                    { name: 'Đang xử lý', value: reports.filter(r => r.status === 'IN_PROGRESS').length, color: '#F59E0B' },
+                    { name: 'Chưa xử lý', value: reports.filter(r => r.status === 'OPEN').length, color: '#EF4444' }
+                  ].map(item => (
                     <div key={item.name} className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full" style={{backgroundColor: item.color}}></div>
                       <div>
                         <div className="text-[12px] text-[#757575]">{item.name}</div>
-                        <div className="text-[14px] font-bold text-[#212121]">{item.value}%</div>
+                        <div className="text-[14px] font-bold text-[#212121]">{item.value}</div>
                       </div>
                     </div>
                   ))}
@@ -210,7 +208,11 @@ export function Reports() {
               </thead>
               <tbody className="divide-y divide-[#E0E0E0]">
                 {isLoading ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-[#757575]">Đang tải...</td></tr>
+                  <tr>
+                    <td colSpan={6} className="py-12">
+                      <LoadingSpinner text="Đang tải danh sách báo cáo..." />
+                    </td>
+                  </tr>
                 ) : reports.map((r) => (
                   <tr key={r.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">
                     <td className="px-6 py-4 text-[14px] text-[#212121]">{format(new Date(r.created_at), "dd/MM/yyyy HH:mm")}</td>

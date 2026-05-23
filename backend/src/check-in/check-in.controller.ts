@@ -34,6 +34,16 @@ export class CheckInController {
     return this.checkInService.findAll();
   }
 
+  @Get('active/records')
+  getActive() {
+    return this.checkInService.getActiveRecords();
+  }
+
+  @Get('history/user')
+  getHistory(@Request() req: any) {
+    return this.checkInService.getUserHistory(req.user.userId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.checkInService.findOne(id);
@@ -45,6 +55,11 @@ export class CheckInController {
     @Body() updateCheckInDto: UpdateCheckInDto,
   ) {
     return this.checkInService.update(id, updateCheckInDto);
+  }
+
+  @Post(':id/check-out')
+  checkOut(@Param('id', ParseIntPipe) id: number) {
+    return this.checkInService.checkOut(id);
   }
 
   @Delete(':id')

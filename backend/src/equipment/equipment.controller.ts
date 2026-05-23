@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
@@ -29,8 +30,8 @@ export class EquipmentController {
   }
 
   @Get()
-  findAll() {
-    return this.equipmentService.findAll();
+  findAll(@Query('roomId') roomId?: string) {
+    return this.equipmentService.findAll(roomId ? parseInt(roomId) : undefined);
   }
 
   @Get(':id')

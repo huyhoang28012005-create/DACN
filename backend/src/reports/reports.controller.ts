@@ -33,6 +33,16 @@ export class ReportsController {
     return this.reportsService.findAll();
   }
 
+  @Get('user/my-reports')
+  findMyReports(@Request() req: any) {
+    return this.reportsService.findMyReports(req.user.userId);
+  }
+
+  @Get('statistics/overview')
+  getStatistics() {
+    return this.reportsService.getStatistics();
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.reportsService.findOne(id);

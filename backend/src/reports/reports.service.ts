@@ -27,6 +27,32 @@ export class ReportsService {
     });
   }
 
+  async findMyReports(userId: number) {
+    return (this.prisma as any).report.findMany({
+      where: { user_id: userId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        equipment: { select: { id: true, name: true } },
+        room: { select: { id: true, name: true } },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  async getStatistics() {
+    const total = await (this.prisma as any).report.count();
+    const open = await (this.prisma as any).report.count({ where: { status: 'OPEN' } });
+    const inProgress = await (this.prisma as any).report.count({ where: { status: 'IN_PROGRESS' } });
+    const resolved = await (this.prisma as any).report.count({ where: { status: 'RESOLVED' } });
+    
+    return {
+      total,
+      open,
+      inProgress,
+      resolved
+    };
+  }
+
   async findOne(id: number) {
     const report = await (this.prisma as any).report.findUnique({
       where: { id },

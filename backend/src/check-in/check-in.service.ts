@@ -30,6 +30,31 @@ export class CheckInService {
     });
   }
 
+  async getActiveRecords() {
+    return (this.prisma as any).checkInRecord.findMany({
+      where: { status: 'ACTIVE' },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        equipment: { select: { id: true, name: true } },
+        room: { select: { id: true, name: true } },
+        booking: { select: { id: true, purpose: true } },
+      },
+      orderBy: { check_in: 'desc' },
+    });
+  }
+
+  async getUserHistory(userId: number) {
+    return (this.prisma as any).checkInRecord.findMany({
+      where: { user_id: userId },
+      include: {
+        equipment: { select: { id: true, name: true } },
+        room: { select: { id: true, name: true } },
+        booking: { select: { id: true, purpose: true } },
+      },
+      orderBy: { check_in: 'desc' },
+    });
+  }
+
   async findOne(id: number) {
     const record = await (this.prisma as any).checkInRecord.findUnique({
       where: { id },
@@ -59,6 +84,17 @@ export class CheckInService {
         ...rest,
         ...(check_in && { check_in: new Date(check_in) }),
         ...(check_out && { check_out: new Date(check_out) }),
+      },
+    });
+  }
+
+  async checkOut(id: number) {
+    await this.findOne(id);
+    return (this.prisma as any).checkInRecord.update({
+      where: { id },
+      data: {
+        status: 'COMPLETED',
+        check_out: new Date(),
       },
     });
   }

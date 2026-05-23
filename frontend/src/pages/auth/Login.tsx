@@ -18,7 +18,7 @@ export function Login() {
     setError(false);
     
     try {
-      const response = await authService.login({ email, password });
+      const response = await authService.login({ email: email.trim(), password });
       const { access_token, user } = response.data;
       
       authService.saveToken(access_token);

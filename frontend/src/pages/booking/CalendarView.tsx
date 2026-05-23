@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Lock, Clock, Calendar, Search, Filter, Plus, Info, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Clock, Calendar, Filter, Plus, Info, X } from "lucide-react";
 import { bookingService, roomService } from "../../services";
-import { format, startOfWeek, addDays, getHours, getDay, differenceInHours, isSameDay, parseISO } from "date-fns";
+import { format, startOfWeek, addDays, getHours, getDay, differenceInHours, isSameDay } from "date-fns";
+import { toast } from "react-hot-toast";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07:00 to 22:00
 
@@ -11,6 +13,7 @@ export function CalendarView() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,7 +45,7 @@ export function CalendarView() {
         setSelectedRooms(roomsRes.data.map((r: any) => r.id));
       }
     } catch (error) {
-      console.error("Lỗi khi tải dữ liệu", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -106,22 +109,25 @@ export function CalendarView() {
 
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     try {
       const startDate = new Date(`${formData.date}T${formData.startTime}:00`);
       const endDate = new Date(startDate.getTime() + parseInt(formData.duration) * 60 * 60 * 1000);
       
       await bookingService.create({
         purpose: formData.purpose,
-        room_id: parseInt(formData.room_id),
-        start_time: startDate.toISOString(),
-        end_time: endDate.toISOString(),
+        roomId: formData.room_id,
+        startTime: startDate,
+        endTime: endDate,
       });
       
-      alert("Đặt phòng thành công! Đang chờ duyệt.");
+      toast.success("Đặt phòng thành công! Đang chờ duyệt.");
       setIsModalOpen(false);
       fetchData();
     } catch (error: any) {
-      alert(error.response?.data?.message || "Lỗi đặt phòng. Có thể bị trùng lịch.");
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -191,7 +197,12 @@ export function CalendarView() {
       </div>
 
       {/* Main Calendar Area */}
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-[#E0E0E0] overflow-hidden flex flex-col min-w-0">
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-[#E0E0E0] overflow-hidden flex flex-col min-w-0 relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center">
+            <LoadingSpinner size={32} text="Đang tải lịch..." />
+          </div>
+        )}
         
         {/* Calendar Header */}
         <div className="h-[64px] border-b border-[#E0E0E0] px-6 flex items-center justify-between bg-white flex-shrink-0">
@@ -344,6 +355,7 @@ export function CalendarView() {
                   onChange={e => setFormData({...formData, purpose: e.target.value})}
                   placeholder="VD: Thực hành Hóa vô cơ..." 
                   className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] focus:ring-1 focus:ring-[#1E5FA5]"
+                  disabled={isSubmitting}
                 />
               </div>
               
@@ -354,6 +366,7 @@ export function CalendarView() {
                   value={formData.room_id}
                   onChange={e => setFormData({...formData, room_id: e.target.value})}
                   className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] focus:ring-1 focus:ring-[#1E5FA5]"
+                  disabled={isSubmitting}
                 >
                   <option value="">-- Chọn phòng --</option>
                   {rooms.map(r => (
@@ -371,6 +384,7 @@ export function CalendarView() {
                     value={formData.date}
                     onChange={e => setFormData({...formData, date: e.target.value})}
                     className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                    disabled={isSubmitting}
                   />
                 </div>
                 <div>
@@ -381,6 +395,7 @@ export function CalendarView() {
                     value={formData.startTime}
                     onChange={e => setFormData({...formData, startTime: e.target.value})}
                     className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>
@@ -391,6 +406,7 @@ export function CalendarView() {
                   value={formData.duration}
                   onChange={e => setFormData({...formData, duration: e.target.value})}
                   className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                  disabled={isSubmitting}
                 >
                   <option value="1">1 giờ</option>
                   <option value="2">2 giờ</option>
@@ -405,14 +421,17 @@ export function CalendarView() {
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2 text-[14px] font-medium text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors"
+                  disabled={isSubmitting}
                 >
                   Hủy
                 </button>
                 <button 
                   type="submit" 
-                  className="px-4 py-2 text-[14px] font-bold text-white bg-[#1E5FA5] hover:bg-[#154a85] rounded-md transition-colors"
+                  className="px-4 py-2 text-[14px] font-bold text-white bg-[#1E5FA5] hover:bg-[#154a85] rounded-md transition-colors flex items-center gap-2"
+                  disabled={isSubmitting}
                 >
-                  Xác nhận đặt
+                  {isSubmitting && <LoadingSpinner size={16} className="p-0 text-white" />} 
+                  {isSubmitting ? "Đang xử lý..." : "Xác nhận đặt"}
                 </button>
               </div>
             </form>

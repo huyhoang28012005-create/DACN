@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Search, Check, X, CheckSquare, RefreshCw } from "lucide-react";
 import { bookingService } from "../../services";
 import { format } from "date-fns";
+import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { toast } from "react-hot-toast";
 
 export function Approvals() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,7 +21,7 @@ export function Approvals() {
       const res = await bookingService.getAll();
       setRequests(res.data || []);
     } catch (error) {
-      console.error("Failed to load bookings", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -29,8 +31,9 @@ export function Approvals() {
     try {
       await bookingService.update(id.toString(), { status });
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
+      toast.success("Cập nhật trạng thái thành công");
     } catch (error) {
-      alert("Cập nhật trạng thái thất bại");
+      console.error(error);
     }
   };
 
@@ -41,9 +44,10 @@ export function Approvals() {
 
     try {
       await Promise.all(pendingReqs.map(r => bookingService.update(r.id.toString(), { status: "APPROVED" })));
+      toast.success(`Đã duyệt ${pendingReqs.length} đơn`);
       fetchData();
     } catch (error) {
-      alert("Lỗi khi duyệt hàng loạt");
+      console.error(error);
     }
   };
 
@@ -112,7 +116,9 @@ export function Approvals() {
             <tbody className="divide-y divide-[#E0E0E0]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#757575]">Đang tải dữ liệu...</td>
+                  <td colSpan={6} className="py-12">
+                    <LoadingSpinner text="Đang tải danh sách đơn..." />
+                  </td>
                 </tr>
               ) : filteredRequests.map((req) => (
                 <tr key={req.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">

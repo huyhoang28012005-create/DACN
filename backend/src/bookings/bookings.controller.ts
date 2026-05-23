@@ -33,6 +33,11 @@ export class BookingsController {
     return this.bookingsService.findAll();
   }
 
+  @Get('user/my-bookings')
+  findMyBookings(@Request() req: any) {
+    return this.bookingsService.findMyBookings(req.user.userId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.bookingsService.findOne(id);
@@ -45,6 +50,11 @@ export class BookingsController {
     @Body() updateBookingDto: UpdateBookingDto,
   ) {
     return this.bookingsService.update(id, updateBookingDto);
+  }
+
+  @Post(':id/cancel')
+  cancelBooking(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.bookingsService.cancelBooking(id, req.user.userId);
   }
 
   @Delete(':id')

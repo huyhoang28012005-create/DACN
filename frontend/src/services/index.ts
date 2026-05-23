@@ -2,7 +2,7 @@ import apiClient from './apiClient';
 
 export const authService = {
   register: (data: { email: string; password: string; fullName: string; code?: string }) =>
-    apiClient.post('/api/auth/register', data),
+    apiClient.post('/api/auth/register', { email: data.email, password: data.password, name: data.fullName }),
 
   login: (data: { email: string; password: string }) =>
     apiClient.post('/api/auth/login', data),
@@ -23,7 +23,7 @@ export const authService = {
 
 export const userService = {
   create: (data: { email: string; password: string; fullName: string; code?: string; role?: string }) =>
-    apiClient.post('/api/users', data),
+    apiClient.post('/api/users', { email: data.email, password: data.password, name: data.fullName, role: data.role }),
 
   getAll: () => apiClient.get('/api/users'),
 
@@ -36,7 +36,7 @@ export const userService = {
 
 export const roomService = {
   create: (data: { name: string; capacity: number; isActive?: boolean }) =>
-    apiClient.post('/api/rooms', data),
+    apiClient.post('/api/rooms', { name: data.name, capacity: Number(data.capacity) }),
 
   getAll: () => apiClient.get('/api/rooms'),
 
@@ -49,7 +49,7 @@ export const roomService = {
 
 export const equipmentService = {
   create: (data: { name: string; code: string; qrCode: string; status?: string; roomId: string }) =>
-    apiClient.post('/api/equipment', data),
+    apiClient.post('/api/equipment', { name: data.name, serial_number: data.code || data.qrCode, room_id: Number(data.roomId), status: data.status }),
 
   getAll: () => apiClient.get('/api/equipment'),
 
@@ -63,8 +63,13 @@ export const equipmentService = {
 };
 
 export const bookingService = {
-  create: (data: { roomId: string; startTime: Date; endTime: Date; purpose: string }) =>
-    apiClient.post('/api/bookings', data),
+  create: (data: { roomId: string | number; startTime: Date; endTime: Date; purpose: string }) =>
+    apiClient.post('/api/bookings', {
+      room_id: Number(data.roomId),
+      start_time: data.startTime.toISOString(),
+      end_time: data.endTime.toISOString(),
+      purpose: data.purpose,
+    }),
 
   getAll: () => apiClient.get('/api/bookings'),
 
@@ -81,7 +86,7 @@ export const bookingService = {
 
 export const chemicalService = {
   create: (data: { name: string; quantity: number; unit: string }) =>
-    apiClient.post('/api/chemicals', data),
+    apiClient.post('/api/chemicals', { name: data.name, quantity_stock: Number(data.quantity), unit: data.unit }),
 
   getAll: () => apiClient.get('/api/chemicals'),
 
@@ -99,7 +104,7 @@ export const chemicalService = {
 };
 
 export const reportService = {
-  create: (data: { title: string; description: string; equipmentId?: string }) =>
+  create: (data: { title: string; description: string; equipment_id?: number; room_id?: number }) =>
     apiClient.post('/api/reports', data),
 
   getAll: () => apiClient.get('/api/reports'),
@@ -116,7 +121,7 @@ export const reportService = {
 };
 
 export const checkInService = {
-  checkIn: (data: { equipmentId: string }) => apiClient.post('/api/check-in', data),
+  checkIn: (data: { equipmentId: string }) => apiClient.post('/api/check-in', { equipment_id: Number(data.equipmentId) }),
 
   checkOut: (recordId: string) => apiClient.post(`/api/check-in/${recordId}/check-out`),
 

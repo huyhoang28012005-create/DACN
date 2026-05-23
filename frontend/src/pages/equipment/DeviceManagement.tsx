@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit2, Trash2, X, AlertCircle, RefreshCw, Filter, ShieldAlert, CheckCircle2, AlertTriangle, FileText, FileClock } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, AlertCircle, RefreshCw, ShieldAlert, CheckCircle2, AlertTriangle, FileText, FileClock } from "lucide-react";
 import { equipmentService } from "../../services";
 import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 
 function StatusBadge({ status }: { status: string }) {
   const getBadgeStyle = (status: string) => {
@@ -32,7 +33,6 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function DeviceManagement() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -61,8 +61,9 @@ export function DeviceManagement() {
       try {
         await equipmentService.delete(id.toString());
         setDevices(devices.filter(d => d.id !== id));
+        toast.success("Xóa thiết bị thành công!");
       } catch (error) {
-        alert("Xóa thất bại!");
+        console.error(error);
       }
     }
   };
@@ -87,8 +88,8 @@ export function DeviceManagement() {
         <div className="flex items-center justify-between">
           <h1 className="text-[24px] font-bold text-[#212121]">Quản lý Thiết bị</h1>
           <button
-            onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]"
+            onClick={() => toast.error("Tính năng đang phát triển")}
           >
             <Plus className="w-4 h-4" />
             Thêm thiết bị mới
