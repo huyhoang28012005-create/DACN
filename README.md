@@ -1,7 +1,7 @@
 
   # Web Lab Booking System
 
-  This is a code bundle for Web Lab Booking System. The original project is available at https://www.figma.com/design/7TKEYhg3dmTjjVdyzh0LDt/Web-Lab-Booking-System.
+  This is a code bundle for Web Lab Booking System. The original project is available at figma.com/make/7TKEYhg3dmTjjVdyzh0LDt/Web-Lab-Booking-System?t=QGJppfBhR91zaQKj-20&fullscreen=1&code-node-id=0-9
 
   ## Running the code
 
