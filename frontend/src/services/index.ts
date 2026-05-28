@@ -35,8 +35,8 @@ export const userService = {
 };
 
 export const roomService = {
-  create: (data: { name: string; capacity: number; isActive?: boolean }) =>
-    apiClient.post('/api/rooms', { name: data.name, capacity: Number(data.capacity) }),
+  create: (data: { name: string; location: string; capacity: number; has_air_conditioner: boolean }) =>
+    apiClient.post('/api/rooms', data),
 
   getAll: () => apiClient.get('/api/rooms'),
 
@@ -48,8 +48,8 @@ export const roomService = {
 };
 
 export const equipmentService = {
-  create: (data: { name: string; code: string; qrCode: string; status?: string; roomId: string }) =>
-    apiClient.post('/api/equipment', { name: data.name, serial_number: data.code || data.qrCode, room_id: Number(data.roomId), status: data.status }),
+  create: (data: { name: string; serial_number: string; status?: string; room_id: number }) =>
+    apiClient.post('/api/equipment', data),
 
   getAll: () => apiClient.get('/api/equipment'),
 

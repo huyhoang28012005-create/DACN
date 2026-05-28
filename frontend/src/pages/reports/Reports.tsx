@@ -80,6 +80,30 @@ export function Reports() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (reports.length === 0) {
+      toast.error("Không có dữ liệu để xuất báo cáo");
+      return;
+    }
+    const headers = ["ID", "Tên sự cố", "Mô tả", "Trạng thái", "Ngày tạo"];
+    const csvRows = reports.map(r => [
+      r.id,
+      `"${r.title.replace(/"/g, '""')}"`,
+      `"${r.description.replace(/"/g, '""')}"`,
+      r.status,
+      format(new Date(r.created_at), "dd/MM/yyyy")
+    ].join(","));
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...csvRows].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `bao-cao-su-co-${format(new Date(), "dd-MM-yyyy")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Xuất báo cáo thành công!");
+  };
+
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8 h-full flex flex-col">
       {/* Header */}
@@ -101,7 +125,7 @@ export function Reports() {
           </div>
         </div>
         {activeTab === "Thống kê" && (
-          <button className="flex items-center gap-2 bg-white border border-[#E0E0E0] hover:bg-[#F5F5F5] text-[#212121] px-4 py-2.5 rounded-md font-medium transition-colors text-[14px] shadow-sm mb-2">
+          <button onClick={handleExportCSV} className="flex items-center gap-2 bg-white border border-[#E0E0E0] hover:bg-[#F5F5F5] text-[#212121] px-4 py-2.5 rounded-md font-medium transition-colors text-[14px] shadow-sm mb-2">
             <Download className="w-4 h-4" /> Xuất báo cáo
           </button>
         )}

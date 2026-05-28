@@ -7,16 +7,34 @@ export function ResourceManagement() {
   const [activeTab, setActiveTab] = useState("Thiết bị");
   const [rooms, setRooms] = useState<any[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const [isAddingRoom, setIsAddingRoom] = useState(false);
+  const [newRoom, setNewRoom] = useState({ name: "", location: "", capacity: 30, has_air_conditioner: true });
+
+  const fetchRooms = () => {
+    setIsLoadingRooms(true);
+    roomService.getAll()
+      .then(res => setRooms(res.data || []))
+      .catch(console.error)
+      .finally(() => setIsLoadingRooms(false));
+  };
 
   useEffect(() => {
     if (activeTab === "Phòng Lab") {
-      setIsLoadingRooms(true);
-      roomService.getAll()
-        .then(res => setRooms(res.data || []))
-        .catch(console.error)
-        .finally(() => setIsLoadingRooms(false));
+      fetchRooms();
     }
   }, [activeTab]);
+
+  const handleAddRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await roomService.create(newRoom);
+      setIsAddingRoom(false);
+      setNewRoom({ name: "", location: "", capacity: 30, has_air_conditioner: true });
+      fetchRooms();
+    } catch (error) {
+      // toast is handled
+    }
+  };
 
   return (
     <div className="h-full flex overflow-hidden max-w-[1400px] mx-auto animate-in fade-in duration-300 gap-6">
@@ -60,7 +78,7 @@ export function ResourceManagement() {
                   className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
                 />
               </div>
-              <button className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
+              <button onClick={() => setIsAddingRoom(true)} className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
                 <Plus className="w-4 h-4" /> Thêm Phòng
               </button>
             </div>
@@ -109,6 +127,36 @@ export function ResourceManagement() {
         )}
 
       </div>
+
+      {isAddingRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Thêm phòng Lab mới</h2>
+            <form onSubmit={handleAddRoom} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên phòng Lab</label>
+                <input required type="text" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Vị trí (Tòa/Tầng)</label>
+                <input required type="text" value={newRoom.location} onChange={e => setNewRoom({...newRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Sức chứa (người)</label>
+                <input required type="number" min="1" value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="has_air" checked={newRoom.has_air_conditioner} onChange={e => setNewRoom({...newRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0]" />
+                <label htmlFor="has_air" className="text-[14px] text-[#212121]">Có điều hòa</label>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsAddingRoom(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Thêm phòng</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

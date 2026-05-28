@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Edit2, Trash2, AlertCircle, RefreshCw, ShieldAlert, CheckCircle2, AlertTriangle, FileText, FileClock } from "lucide-react";
-import { equipmentService } from "../../services";
+import { equipmentService, roomService } from "../../services";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 
@@ -37,6 +37,9 @@ export function DeviceManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isAddingDevice, setIsAddingDevice] = useState(false);
+  const [newDevice, setNewDevice] = useState({ name: "", serial_number: "", room_id: 0, status: "AVAILABLE" });
+  const [rooms, setRooms] = useState<any[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -53,6 +56,36 @@ export function DeviceManagement() {
       setDevices([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchRooms = async () => {
+    try {
+      const res = await roomService.getAll();
+      setRooms(res.data || []);
+      if (res.data?.length > 0 && newDevice.room_id === 0) {
+        setNewDevice({ ...newDevice, room_id: res.data[0].id });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const openAddModal = () => {
+    fetchRooms();
+    setIsAddingDevice(true);
+  };
+
+  const handleAddDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await equipmentService.create(newDevice);
+      toast.success("Thêm thiết bị thành công!");
+      setIsAddingDevice(false);
+      setNewDevice({ name: "", serial_number: "", room_id: rooms[0]?.id || 0, status: "AVAILABLE" });
+      fetchData();
+    } catch (error) {
+      // toast handles it
     }
   };
 
@@ -89,7 +122,7 @@ export function DeviceManagement() {
           <h1 className="text-[24px] font-bold text-[#212121]">Quản lý Thiết bị</h1>
           <button
             className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]"
-            onClick={() => toast.error("Tính năng đang phát triển")}
+            onClick={openAddModal}
           >
             <Plus className="w-4 h-4" />
             Thêm thiết bị mới
@@ -201,6 +234,36 @@ export function DeviceManagement() {
           </table>
         </div>
       </div>
+
+      {isAddingDevice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Thêm thiết bị mới</h2>
+            <form onSubmit={handleAddDevice} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên thiết bị</label>
+                <input required type="text" value={newDevice.name} onChange={e => setNewDevice({...newDevice, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Số Serial</label>
+                <input required type="text" value={newDevice.serial_number} onChange={e => setNewDevice({...newDevice, serial_number: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Phòng Lab</label>
+                <select value={newDevice.room_id} onChange={e => setNewDevice({...newDevice, room_id: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                  {rooms.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsAddingDevice(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Lưu thiết bị</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

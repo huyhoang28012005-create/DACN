@@ -8,6 +8,8 @@ export function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAddingUser, setIsAddingUser] = useState(false);
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "STUDENT" });
 
   useEffect(() => {
     fetchData();
@@ -30,6 +32,19 @@ export function Users() {
     toast.error("Tính năng khóa tài khoản đang được phát triển");
   };
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await userService.create({ email: newUser.email, password: newUser.password, fullName: newUser.name, role: newUser.role });
+      toast.success("Thêm người dùng thành công");
+      setIsAddingUser(false);
+      setNewUser({ name: "", email: "", password: "", role: "STUDENT" });
+      fetchData();
+    } catch (error) {
+      // Handled by global interceptor
+    }
+  };
+
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'Quản trị viên';
@@ -49,7 +64,9 @@ export function Users() {
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300">
       <div className="flex justify-between items-center">
         <h1 className="text-[24px] font-bold text-[#212121]">Quản lý người dùng</h1>
-        <button className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2.5 rounded-md font-medium transition-colors text-[14px]">
+        <button 
+          onClick={() => setIsAddingUser(true)}
+          className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2.5 rounded-md font-medium transition-colors text-[14px]">
           <Plus className="w-4 h-4" /> Thêm tài khoản mới
         </button>
       </div>
@@ -127,6 +144,41 @@ export function Users() {
           </table>
         </div>
       </div>
+
+      {isAddingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Thêm tài khoản mới</h2>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Họ và tên</label>
+                <input required type="text" value={newUser.name} onChange={e => setNewUser({...newUser, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Email</label>
+                <input required type="email" value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Mật khẩu</label>
+                <input required type="password" value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Vai trò</label>
+                <select value={newUser.role} onChange={e => setNewUser({...newUser, role: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                  <option value="STUDENT">Sinh viên</option>
+                  <option value="INSTRUCTOR">Giảng viên</option>
+                  <option value="TECHNICIAN">Kỹ thuật viên</option>
+                  <option value="ADMIN">Quản trị viên</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsAddingUser(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Lưu tài khoản</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
