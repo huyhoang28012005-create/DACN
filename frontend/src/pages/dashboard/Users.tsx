@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Edit2, Plus } from "lucide-react";
+import { Search, Edit2, Plus, Users as UsersIcon } from "lucide-react";
 import { userService } from "../../services";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
@@ -137,7 +137,11 @@ export function Users() {
               ))}
               {!isLoading && filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#757575]">Không tìm thấy người dùng nào.</td>
+                  <td colSpan={6} className="py-12 text-center text-[#757575]">
+                    <UsersIcon className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
+                    <p className="mb-4">Chưa có người dùng nào</p>
+                    <button onClick={() => setIsAddingUser(true)} className="px-4 py-2 bg-[#1E5FA5] text-white rounded-md text-[14px]">Thêm tài khoản ngay</button>
+                  </td>
                 </tr>
               )}
             </tbody>

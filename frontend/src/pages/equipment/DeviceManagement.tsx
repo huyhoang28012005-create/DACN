@@ -3,6 +3,8 @@ import { Plus, Search, Edit2, Trash2, AlertCircle, RefreshCw, ShieldAlert, Check
 import { equipmentService, roomService } from "../../services";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
+import { DatabaseBackup } from "lucide-react";
 
 function StatusBadge({ status }: { status: string }) {
   const getBadgeStyle = (status: string) => {
@@ -40,6 +42,7 @@ export function DeviceManagement() {
   const [isAddingDevice, setIsAddingDevice] = useState(false);
   const [newDevice, setNewDevice] = useState({ name: "", serial_number: "", room_id: 0, status: "AVAILABLE" });
   const [rooms, setRooms] = useState<any[]>([]);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -89,15 +92,16 @@ export function DeviceManagement() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (confirm("Bạn có chắc chắn muốn xóa thiết bị này?")) {
+  const executeDelete = async () => {
+    if (deleteConfirmId) {
       try {
-        await equipmentService.delete(id.toString());
-        setDevices(devices.filter(d => d.id !== id));
+        await equipmentService.delete(deleteConfirmId.toString());
+        setDevices(devices.filter(d => d.id !== deleteConfirmId));
         toast.success("Xóa thiết bị thành công!");
       } catch (error) {
         console.error(error);
       }
+      setDeleteConfirmId(null);
     }
   };
 
@@ -215,7 +219,7 @@ export function DeviceManagement() {
                       <button className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded" title="Sửa">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(dev.id)} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded" title="Xóa">
+                      <button onClick={() => setDeleteConfirmId(dev.id)} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded" title="Xóa">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -225,8 +229,10 @@ export function DeviceManagement() {
 
               {!isLoading && filteredDevices.length === 0 && !fetchError && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-[#757575] bg-[#F5F5F5]">
-                    Không tìm thấy thiết bị nào.
+                  <td colSpan={6} className="py-12 text-center text-[#757575]">
+                    <DatabaseBackup className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
+                    <p className="mb-4">Chưa có thiết bị nào</p>
+                    <button onClick={openAddModal} className="px-4 py-2 bg-[#1E5FA5] text-white rounded-md text-[14px]">Thêm thiết bị ngay</button>
                   </td>
                 </tr>
               )}
@@ -234,6 +240,16 @@ export function DeviceManagement() {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteConfirmId !== null}
+        title="Xóa thiết bị"
+        message="Bạn có chắc chắn muốn xóa thiết bị này không? Hành động này không thể hoàn tác."
+        confirmText="Xóa thiết bị"
+        isDestructive={true}
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
 
       {isAddingDevice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

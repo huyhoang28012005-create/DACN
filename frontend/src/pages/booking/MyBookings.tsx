@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
-import { Search, XCircle, FileText, Calendar } from "lucide-react";
+import { Search, XCircle, FileText, Calendar, CalendarX } from "lucide-react";
 import { bookingService } from "../../services";
 import { format } from "date-fns";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
+import { useNavigate } from "react-router";
 
 export function MyBookings() {
   const [searchTerm, setSearchTerm] = useState("");
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cancelConfirmId, setCancelConfirmId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -26,15 +30,16 @@ export function MyBookings() {
     }
   };
 
-  const handleCancel = async (id: number) => {
-    if (confirm("Bạn có chắc chắn muốn hủy đơn này?")) {
+  const executeCancel = async () => {
+    if (cancelConfirmId) {
       try {
-        await bookingService.cancel(id.toString());
+        await bookingService.cancel(cancelConfirmId.toString());
         toast.success("Hủy thành công");
         fetchData();
       } catch (error) {
         console.error(error);
       }
+      setCancelConfirmId(null);
     }
   };
 
@@ -112,7 +117,7 @@ export function MyBookings() {
                   <td className="px-6 py-4">{getStatusBadge(bk.status)}</td>
                   <td className="px-6 py-4 text-right">
                     {bk.status === "PENDING" && (
-                      <button onClick={() => handleCancel(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] rounded text-[13px] font-medium transition-colors">
+                      <button onClick={() => setCancelConfirmId(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] rounded text-[13px] font-medium transition-colors">
                         <XCircle className="w-4 h-4" /> Hủy đơn
                       </button>
                     )}
@@ -121,13 +126,27 @@ export function MyBookings() {
               ))}
               {!isLoading && filteredBookings.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#757575]">Không tìm thấy đơn đặt lịch nào.</td>
+                  <td colSpan={6} className="py-12 text-center text-[#757575]">
+                    <CalendarX className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
+                    <p className="mb-4">Chưa có lịch đặt nào</p>
+                    <button onClick={() => navigate('/calendar')} className="px-4 py-2 bg-[#1E5FA5] text-white rounded-md text-[14px]">Đặt lịch ngay</button>
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={cancelConfirmId !== null}
+        title="Xác nhận hủy lịch"
+        message="Bạn có chắc chắn muốn hủy đơn đặt lịch này không? Hành động này không thể hoàn tác."
+        confirmText="Hủy lịch"
+        isDestructive={true}
+        onConfirm={executeCancel}
+        onCancel={() => setCancelConfirmId(null)}
+      />
     </div>
   );
 }

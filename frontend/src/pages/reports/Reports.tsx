@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Settings, AlertTriangle, CheckCircle, Plus, Search, RefreshCw, X } from "lucide-react";
+import { Download, FileText, Settings, AlertTriangle, CheckCircle, Plus, Search, RefreshCw, X, FileX } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { reportService, equipmentService, roomService } from "../../services";
 import { format } from "date-fns";
+import { timeAgo } from "../../utils/timeAgo";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
 
@@ -239,7 +240,7 @@ export function Reports() {
                   </tr>
                 ) : reports.map((r) => (
                   <tr key={r.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">
-                    <td className="px-6 py-4 text-[14px] text-[#212121]">{format(new Date(r.created_at), "dd/MM/yyyy HH:mm")}</td>
+                    <td className="px-6 py-4 text-[14px] text-[#212121]" title={format(new Date(r.created_at), "dd/MM/yyyy HH:mm")}>{timeAgo(r.created_at)}</td>
                     <td className="px-6 py-4 text-[14px] text-[#212121]">{r.user?.name}</td>
                     <td className="px-6 py-4">
                       <div className="text-[14px] font-bold text-[#212121]">{r.title}</div>
@@ -266,7 +267,12 @@ export function Reports() {
                   </tr>
                 ))}
                 {!isLoading && reports.length === 0 && (
-                  <tr><td colSpan={6} className="p-8 text-center text-[#757575]">Không có báo cáo nào.</td></tr>
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-[#757575]">
+                      <FileX className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
+                      <p>Không có báo cáo nào</p>
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

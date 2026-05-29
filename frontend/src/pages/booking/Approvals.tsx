@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import { Search, Check, X, CheckSquare, RefreshCw } from "lucide-react";
+import { Search, Check, X, CheckSquare, RefreshCw, CalendarX } from "lucide-react";
 import { bookingService } from "../../services";
 import { format } from "date-fns";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
 
 export function Approvals() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [requests, setRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmState, setConfirmState] = useState<{isOpen: boolean, type: 'APPROVE_ALL' | 'REJECT', id?: number}>({isOpen: false, type: 'APPROVE_ALL'});
 
   useEffect(() => {
     fetchData();
@@ -37,18 +39,29 @@ export function Approvals() {
     }
   };
 
-  const handleApproveAll = async () => {
+  const handleApproveAll = () => {
     const pendingReqs = requests.filter(r => r.status === "PENDING");
-    if (pendingReqs.length === 0) return;
-    if (!confirm(`Bạn muốn duyệt tất cả ${pendingReqs.length} đơn?`)) return;
-
-    try {
-      await Promise.all(pendingReqs.map(r => bookingService.update(r.id.toString(), { status: "APPROVED" })));
-      toast.success(`Đã duyệt ${pendingReqs.length} đơn`);
-      fetchData();
-    } catch (error) {
-      console.error(error);
+    if (pendingReqs.length === 0) {
+      toast.error("Không có đơn chờ duyệt");
+      return;
     }
+    setConfirmState({ isOpen: true, type: 'APPROVE_ALL' });
+  };
+
+  const executeConfirmAction = async () => {
+    if (confirmState.type === 'APPROVE_ALL') {
+      const pendingReqs = requests.filter(r => r.status === "PENDING");
+      try {
+        await Promise.all(pendingReqs.map(r => bookingService.update(r.id.toString(), { status: "APPROVED" })));
+        toast.success(`Đã duyệt ${pendingReqs.length} đơn`);
+        fetchData();
+      } catch (error) {
+        console.error(error);
+      }
+    } else if (confirmState.type === 'REJECT' && confirmState.id) {
+      handleUpdateStatus(confirmState.id, "REJECTED");
+    }
+    setConfirmState({ ...confirmState, isOpen: false });
   };
 
   const filteredRequests = requests.filter(r => {
@@ -139,7 +152,7 @@ export function Approvals() {
                         <button onClick={() => handleUpdateStatus(req.id, "APPROVED")} className="p-1.5 bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#C8E6C9] rounded transition-colors" title="Phê duyệt">
                           <Check className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleUpdateStatus(req.id, "REJECTED")} className="p-1.5 bg-[#FDEDED] text-[#C62828] hover:bg-[#FFCDD2] rounded transition-colors" title="Từ chối">
+                        <button onClick={() => setConfirmState({ isOpen: true, type: 'REJECT', id: req.id })} className="p-1.5 bg-[#FDEDED] text-[#C62828] hover:bg-[#FFCDD2] rounded transition-colors" title="Từ chối">
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -149,13 +162,28 @@ export function Approvals() {
               ))}
               {!isLoading && filteredRequests.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#757575]">Không tìm thấy đơn nào.</td>
+                  <td colSpan={6} className="py-12 text-center text-[#757575]">
+                    <CalendarX className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
+                    <p>Không có yêu cầu đặt lịch nào</p>
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.type === 'APPROVE_ALL' ? "Duyệt tất cả" : "Từ chối yêu cầu"}
+        message={confirmState.type === 'APPROVE_ALL' 
+          ? "Bạn có chắc chắn muốn phê duyệt tất cả các đơn đang chờ duyệt không?" 
+          : "Bạn có chắc chắn muốn từ chối yêu cầu đặt phòng này?"}
+        confirmText={confirmState.type === 'APPROVE_ALL' ? "Duyệt tất cả" : "Từ chối"}
+        isDestructive={confirmState.type === 'REJECT'}
+        onConfirm={executeConfirmAction}
+        onCancel={() => setConfirmState({ ...confirmState, isOpen: false })}
+      />
     </div>
   );
 }
