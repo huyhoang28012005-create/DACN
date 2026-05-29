@@ -37,9 +37,11 @@ enum BookingStatus {
 }
 
 enum ReportStatus {
-  PENDING
+  OPEN
+  IN_PROGRESS
   RESOLVED
   REJECTED
+  PENDING
 }
 
 // ==========================================
@@ -197,7 +199,7 @@ model Report {
   room_id      Int?
   title        String       @db.VarChar(255)
   description  String       @db.Text
-  status       ReportStatus @default(PENDING)
+  status       ReportStatus @default(OPEN)
   image_url    String?      @db.VarChar(500)
   created_at   DateTime     @default(now())
 
