@@ -55,6 +55,8 @@ model User {
   password   String     @db.VarChar(255)
   role       Role       @default(STUDENT)
   avatar_url String?    @db.VarChar(500) // Hình ảnh đại diện (Media)
+  is_active  Boolean    @default(true)   // Trạng thái khóa/mở khóa tài khoản
+  refresh_token String? @db.Text         // Token làm mới cấp lại Access Token
   created_at DateTime   @default(now())
   updated_at DateTime   @updatedAt
 

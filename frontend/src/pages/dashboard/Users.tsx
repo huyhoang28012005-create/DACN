@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, Edit2, Plus, Users as UsersIcon } from "lucide-react";
+import { Search, Edit2, Plus, Users as UsersIcon, Trash2 } from "lucide-react";
 import { userService } from "../../services";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { toast } from "react-hot-toast";
 
 export function Users() {
@@ -9,7 +10,10 @@ export function Users() {
   const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "STUDENT" });
+  const [editingUser, setEditingUser] = useState({ id: 0, name: "", email: "", role: "STUDENT" });
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -27,9 +31,48 @@ export function Users() {
     }
   };
 
-  const toggleActive = async () => {
-    // Demo implementation since we don't have an isActive field easily togglable
-    toast.error("Tính năng khóa tài khoản đang được phát triển");
+  const toggleActive = async (userId: number, currentStatus: boolean) => {
+    try {
+      await userService.update(userId.toString(), { is_active: !currentStatus });
+      toast.success(currentStatus ? "Đã khóa tài khoản" : "Đã mở khóa tài khoản");
+      fetchData();
+    } catch (error) {
+      toast.error("Cập nhật trạng thái thất bại");
+    }
+  };
+
+  const handleEditClick = (user: any) => {
+    setEditingUser({ id: user.id, name: user.name, email: user.email, role: user.role });
+    setIsEditingUser(true);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await userService.update(editingUser.id.toString(), { 
+        name: editingUser.name, 
+        email: editingUser.email, 
+        role: editingUser.role 
+      });
+      toast.success("Cập nhật thông tin thành công");
+      setIsEditingUser(false);
+      fetchData();
+    } catch (error) {
+      toast.error("Cập nhật thất bại");
+    }
+  };
+
+  const executeDelete = async () => {
+    if (deleteConfirmId) {
+      try {
+        await userService.delete(deleteConfirmId.toString());
+        toast.success("Xóa người dùng thành công");
+        setDeleteConfirmId(null);
+        fetchData();
+      } catch (error) {
+        toast.error("Xóa thất bại");
+      }
+    }
   };
 
   const handleAddUser = async (e: React.FormEvent) => {
@@ -122,16 +165,22 @@ export function Users() {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button 
-                      onClick={() => toggleActive()}
-                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors bg-[#1E5FA5]`}
+                      onClick={() => toggleActive(u.id, u.is_active ?? true)}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${u.is_active !== false ? 'bg-[#1E5FA5]' : 'bg-[#E0E0E0]'}`}
+                      title={u.is_active !== false ? "Khóa tài khoản" : "Mở khóa tài khoản"}
                     >
-                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-4`} />
+                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${u.is_active !== false ? 'translate-x-4' : 'translate-x-1'}`} />
                     </button>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button onClick={() => toast.error("Tính năng đang phát triển")} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded transition-colors" title="Chỉnh sửa">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => handleEditClick(u)} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded transition-colors" title="Chỉnh sửa">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => setDeleteConfirmId(u.id)} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded transition-colors" title="Xóa">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -183,6 +232,47 @@ export function Users() {
           </div>
         </div>
       )}
+
+      {isEditingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Sửa thông tin tài khoản</h2>
+            <form onSubmit={handleUpdateUser} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Họ và tên</label>
+                <input required type="text" value={editingUser.name} onChange={e => setEditingUser({...editingUser, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Email</label>
+                <input required type="email" value={editingUser.email} onChange={e => setEditingUser({...editingUser, email: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Vai trò</label>
+                <select value={editingUser.role} onChange={e => setEditingUser({...editingUser, role: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                  <option value="STUDENT">Sinh viên</option>
+                  <option value="INSTRUCTOR">Giảng viên</option>
+                  <option value="TECHNICIAN">Kỹ thuật viên</option>
+                  <option value="ADMIN">Quản trị viên</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsEditingUser(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Cập nhật</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        isOpen={deleteConfirmId !== null}
+        title="Xóa tài khoản"
+        message="Bạn có chắc chắn muốn xóa tài khoản này không? Hành động này sẽ xóa các lịch đặt và báo cáo liên quan. Không thể hoàn tác!"
+        confirmText="Xóa tài khoản"
+        isDestructive={true}
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
     </div>
   );
 }

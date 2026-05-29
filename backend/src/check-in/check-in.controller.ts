@@ -45,21 +45,22 @@ export class CheckInController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.checkInService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.checkInService.findOneSecure(id, req.user);
   }
 
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCheckInDto: UpdateCheckInDto,
+    @Request() req: any
   ) {
-    return this.checkInService.update(id, updateCheckInDto);
+    return this.checkInService.update(id, updateCheckInDto, req.user);
   }
 
   @Post(':id/check-out')
-  checkOut(@Param('id', ParseIntPipe) id: number) {
-    return this.checkInService.checkOut(id);
+  checkOut(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.checkInService.checkOut(id, req.user);
   }
 
   @Delete(':id')

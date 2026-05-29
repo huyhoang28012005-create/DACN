@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { checkOwnership } from '../common/utils/ownership.util';
 
 @Injectable()
 export class BookingsService {
@@ -108,6 +109,12 @@ export class BookingsService {
       throw new NotFoundException(`Booking với ID ${id} không tồn tại`);
     }
 
+    return booking;
+  }
+
+  async findOneSecure(id: number, currentUser: any) {
+    const booking = await this.findOne(id);
+    checkOwnership(booking.user_id, currentUser);
     return booking;
   }
 

@@ -44,8 +44,8 @@ export class ReportsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.reportsService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.reportsService.findOneSecure(id, req.user);
   }
 
   @Patch(':id')

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router";
-import { LayoutDashboard, Calendar, Box, LogOut, Search, Bell, Settings, FileText, Server, Users, ChevronDown, BarChart2 } from "lucide-react";
+import { LayoutDashboard, Calendar, LogOut, Search, Bell, Settings, FileText, Server, Users, ChevronDown, BarChart2, BookOpen } from "lucide-react";
 import clsx from "clsx";
 import { authService } from "../../services";
 
@@ -11,7 +11,7 @@ export function Layout() {
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
   const storedRole = localStorage.getItem("userRole") || (user?.role?.toLowerCase());
-  const isAdminPath = ["/admin-dashboard", "/approvals", "/resources", "/users", "/reports"].includes(location.pathname);
+  const isAdminPath = ["/admin-dashboard", "/approvals", "/resources", "/courses", "/users", "/reports"].includes(location.pathname);
   const isAdmin = storedRole === "admin" || (!storedRole && isAdminPath);
 
   // Breadcrumb mapping
@@ -22,6 +22,7 @@ export function Layout() {
     "/my-bookings": "Đơn đặt lịch của tôi",
     "/approvals": "Duyệt yêu cầu",
     "/resources": "Quản lý Phòng Lab, Thiết bị & Hóa chất",
+    "/courses": "Quản lý học phần",
     "/users": "Quản lý người dùng",
     "/reports": "Báo cáo & Thống kê",
   };
@@ -52,6 +53,7 @@ export function Layout() {
               <NavItem to="/calendar" icon={<Calendar />} label="Lịch biểu / Đặt phòng" />
               <NavItem to="/approvals" icon={<FileText />} label="Duyệt yêu cầu" />
               <NavItem to="/resources" icon={<Server />} label="Quản lý tài nguyên" />
+              <NavItem to="/courses" icon={<BookOpen />} label="Quản lý học phần" />
               <NavItem to="/users" icon={<Users />} label="Quản lý người dùng" />
               <NavItem to="/reports" icon={<BarChart2 />} label="Báo cáo & Thống kê" />
               <NavItem to="#" icon={<Settings />} label="Cài đặt hệ thống" />

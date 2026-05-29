@@ -40,7 +40,9 @@ export function DeviceManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isAddingDevice, setIsAddingDevice] = useState(false);
+  const [isEditingDevice, setIsEditingDevice] = useState(false);
   const [newDevice, setNewDevice] = useState({ name: "", serial_number: "", room_id: 0, status: "AVAILABLE" });
+  const [editingDevice, setEditingDevice] = useState({ id: 0, name: "", serial_number: "", room_id: 0, status: "AVAILABLE" });
   const [rooms, setRooms] = useState<any[]>([]);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
@@ -86,6 +88,23 @@ export function DeviceManagement() {
       toast.success("Thêm thiết bị thành công!");
       setIsAddingDevice(false);
       setNewDevice({ name: "", serial_number: "", room_id: rooms[0]?.id || 0, status: "AVAILABLE" });
+      fetchData();
+    } catch (error) {
+      // toast handles it
+    }
+  };
+
+  const handleUpdateDevice = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await equipmentService.update(editingDevice.id.toString(), {
+        name: editingDevice.name,
+        serial_number: editingDevice.serial_number,
+        room_id: editingDevice.room_id,
+        status: editingDevice.status
+      });
+      toast.success("Cập nhật thiết bị thành công!");
+      setIsEditingDevice(false);
       fetchData();
     } catch (error) {
       // toast handles it
@@ -216,7 +235,11 @@ export function DeviceManagement() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <button className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded" title="Sửa">
+                      <button onClick={() => { 
+                        setEditingDevice({ id: dev.id, name: dev.name, serial_number: dev.serial_number, room_id: dev.room_id || 0, status: dev.status }); 
+                        fetchRooms(); 
+                        setIsEditingDevice(true); 
+                      }} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded" title="Sửa">
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={() => setDeleteConfirmId(dev.id)} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded" title="Xóa">
@@ -275,6 +298,46 @@ export function DeviceManagement() {
               <div className="flex justify-end gap-3 mt-6">
                 <button type="button" onClick={() => setIsAddingDevice(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
                 <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Lưu thiết bị</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isEditingDevice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Sửa thông tin thiết bị</h2>
+            <form onSubmit={handleUpdateDevice} className="space-y-4">
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên thiết bị</label>
+                <input required type="text" value={editingDevice.name} onChange={e => setEditingDevice({...editingDevice, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Số Serial</label>
+                <input required type="text" value={editingDevice.serial_number} onChange={e => setEditingDevice({...editingDevice, serial_number: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Phòng Lab</label>
+                <select value={editingDevice.room_id} onChange={e => setEditingDevice({...editingDevice, room_id: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                  <option value={0}>Không xếp phòng</option>
+                  {rooms.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[13px] font-medium text-[#757575] mb-1">Trạng thái</label>
+                <select value={editingDevice.status} onChange={e => setEditingDevice({...editingDevice, status: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                  <option value="AVAILABLE">Khả dụng</option>
+                  <option value="IN_USE">Đang dùng</option>
+                  <option value="MAINTENANCE">Bảo trì</option>
+                  <option value="BROKEN">Hỏng hóc</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsEditingDevice(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Cập nhật</button>
               </div>
             </form>
           </div>

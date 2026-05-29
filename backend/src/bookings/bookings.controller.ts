@@ -39,8 +39,8 @@ export class BookingsController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.bookingsService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.bookingsService.findOneSecure(id, req.user);
   }
 
   @Patch(':id')

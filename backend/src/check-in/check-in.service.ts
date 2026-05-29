@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateCheckInDto } from './dto/create-check-in.dto';
 import { UpdateCheckInDto } from './dto/update-check-in.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { checkOwnership } from '../common/utils/ownership.util';
 
 @Injectable()
 export class CheckInService {
@@ -73,8 +74,14 @@ export class CheckInService {
     return record;
   }
 
-  async update(id: number, updateCheckInDto: UpdateCheckInDto) {
-    await this.findOne(id);
+  async findOneSecure(id: number, currentUser: any) {
+    const record = await this.findOne(id);
+    checkOwnership(record.user_id, currentUser);
+    return record;
+  }
+
+  async update(id: number, updateCheckInDto: UpdateCheckInDto, currentUser: any) {
+    await this.findOneSecure(id, currentUser);
 
     const { check_in, check_out, ...rest } = updateCheckInDto;
 
@@ -88,8 +95,8 @@ export class CheckInService {
     });
   }
 
-  async checkOut(id: number) {
-    await this.findOne(id);
+  async checkOut(id: number, currentUser: any) {
+    await this.findOneSecure(id, currentUser);
     return (this.prisma as any).checkInRecord.update({
       where: { id },
       data: {
