@@ -27,8 +27,8 @@ export function Layout() {
 
   useEffect(() => {
     if (user) {
-      apiClient.get('/bookings').then(res => setBookings(res.data)).catch(() => {});
-      apiClient.get('/equipment').then(res => setEquipment(res.data)).catch(() => {});
+      apiClient.get('/api/bookings').then(res => setBookings(res.data)).catch(() => {});
+      apiClient.get('/api/equipment').then(res => setEquipment(res.data)).catch(() => {});
     }
 
     // Kết nối Socket.io để nhận thông báo realtime
@@ -41,7 +41,7 @@ export function Layout() {
 
         // Tự động tải lại danh sách Booking khi có sự thay đổi
         if (user) {
-          apiClient.get('/bookings').then(res => setBookings(res.data)).catch(() => {});
+          apiClient.get('/api/bookings').then(res => setBookings(res.data)).catch(() => {});
         }
       });
     }
@@ -49,22 +49,22 @@ export function Layout() {
     return () => {
       socketService.disconnect();
     };
-  }, [user]);
+  }, [userStr]);
 
   const handleAIAction = async (action: string, payload?: any) => {
     try {
       if (action === 'approve-all') {
-        await apiClient.put('/bookings/approve-all');
+        await apiClient.put('/api/bookings/approve-all');
         toast.success("Đã phê duyệt tất cả các đơn chờ!");
       } else if (action === 'cancel-booking') {
         if (payload?.id) {
            // Dùng PATCH thay vì PUT theo đúng chuẩn Controller Backend hiện tại
-           await apiClient.patch(`/bookings/${payload.id}`, { status: "CANCELED" });
+           await apiClient.patch(`/api/bookings/${payload.id}`, { status: "CANCELED" });
            toast.success(`Đã hủy booking #${payload.id}`);
         }
       }
       // Nạp lại danh sách Booking sau khi AI thực hiện action thành công
-      apiClient.get('/bookings').then(res => setBookings(res.data)).catch(() => {});
+      apiClient.get('/api/bookings').then(res => setBookings(res.data)).catch(() => {});
     } catch (e) {
       toast.error("Lệnh AI xử lý thất bại.");
     }
@@ -169,6 +169,12 @@ export function Layout() {
                 type="text" 
                 placeholder={t("search_placeholder")} 
                 className="pl-9 pr-4 py-2 bg-[#F5F5F5] border-none rounded-md text-[14px] focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] w-64"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    toast('Chức năng tìm kiếm toàn cục đang được phát triển', { icon: '🔍' });
+                    (e.target as HTMLInputElement).value = '';
+                  }
+                }}
               />
             </div>
             

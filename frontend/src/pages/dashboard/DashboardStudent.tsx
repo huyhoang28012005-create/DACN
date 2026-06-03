@@ -1,5 +1,6 @@
-import { Calendar, Clock, ArrowRight, LayoutGrid, CheckCircle2, ChevronRight, TrendingUp } from "lucide-react";
+import { Calendar, Clock, ArrowRight, LayoutGrid, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router";
+import { toast } from "react-hot-toast";
 
 export function DashboardStudent() {
   const today = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -92,9 +93,9 @@ export function DashboardStudent() {
             ))}
           </div>
           <div className="px-6 py-3 bg-[#F5F5F5] border-t border-[#E0E0E0] text-center">
-            <button className="text-[14px] font-medium text-[#1E5FA5] hover:underline inline-flex items-center gap-1">
+            <Link to="/my-bookings" className="text-[14px] font-medium text-[#1E5FA5] hover:underline inline-flex items-center gap-1">
               Xem tất cả <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -121,7 +122,7 @@ export function DashboardStudent() {
             ))}
           </div>
           <div className="px-6 py-3 bg-[#F5F5F5] border-t border-[#E0E0E0] text-center">
-            <button className="text-[14px] font-medium text-[#1E5FA5] hover:underline inline-flex items-center gap-1">
+            <button onClick={() => toast.success('Tính năng hiển thị tất cả thông báo đang được phát triển')} className="text-[14px] font-medium text-[#1E5FA5] hover:underline inline-flex items-center gap-1">
               Xem tất cả <ArrowRight className="w-4 h-4" />
             </button>
           </div>

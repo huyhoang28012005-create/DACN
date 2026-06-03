@@ -1,6 +1,4 @@
 import { io, Socket } from 'socket.io-client';
-import { apiClient } from './apiClient'; // for interceptors if needed
-import { authService } from './auth.service';
 
 let socket: Socket | null = null;
 

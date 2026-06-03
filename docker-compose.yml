@@ -35,5 +35,36 @@ services:
     ports:
       - "6379:6379"
 
+  nestjs-app:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lab-booking-backend
+    restart: always
+    environment:
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD:-123456}@db:3306/${MYSQL_DATABASE:-lab_management_system}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: super-secret-jwt-key-dacn-lab-management-2026-secure
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  react-app:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lab-booking-frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - nestjs-app
+
 volumes:
   mysql_data:

@@ -38,23 +38,13 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
         }),
       }),
     }),
-    CacheModule.registerAsync({
+    CacheModule.register({
       isGlobal: true,
-      useFactory: () => ({
-        store: redisStore,
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      }),
     }),
-    ThrottlerModule.forRootAsync({
-      useFactory: () => ({
-        throttlers: [
-          { name: 'short', ttl: 60000, limit: 10 },
-          { name: 'long', ttl: 3600000, limit: 100 },
-        ],
-        storage: new ThrottlerStorageRedisService(process.env.REDIS_URL || 'redis://localhost:6379'),
-      }),
-    }),
+    ThrottlerModule.forRoot([
+      { name: 'short', ttl: 60000, limit: 10 },
+      { name: 'long', ttl: 3600000, limit: 100 },
+    ]),
     PrismaModule,
     UsersModule,
     AuthModule,
@@ -73,7 +63,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
     I18nModule.forRoot({
       fallbackLanguage: 'vi',
       loaderOptions: {
-        path: path.join(__dirname, '/i18n/'),
+        path: path.join(process.cwd(), 'src/i18n/'),
         watch: true,
       },
       resolvers: [AcceptLanguageResolver],

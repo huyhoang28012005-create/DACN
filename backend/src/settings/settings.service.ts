@@ -119,9 +119,10 @@ export class SettingsService implements OnModuleInit {
   async bulkUpdate(settings: { key: string; value: string }[]) {
     await this.prisma.$transaction(
       settings.map((setting) =>
-        this.prisma.systemSetting.update({
+        this.prisma.systemSetting.upsert({
           where: { key: setting.key },
-          data: { value: setting.value },
+          update: { value: setting.value },
+          create: { key: setting.key, value: setting.value, category: 'GENERAL', description: '' },
         }),
       ),
     );

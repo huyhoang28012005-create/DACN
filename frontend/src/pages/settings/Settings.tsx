@@ -25,7 +25,7 @@ export function Settings() {
 
   async function fetchSettings() {
     try {
-      const res = await apiClient.get('/settings');
+      const res = await apiClient.get('/api/settings');
       setSettings(res.data);
     } catch (error) {
       toast.error('Lỗi khi tải cấu hình');
@@ -35,14 +35,19 @@ export function Settings() {
   }
 
   const handleChange = (key: string, value: string) => {
-    setSettings((prev) => prev.map((s) => (s.key === key ? { ...s, value } : s)));
+    setSettings((prev) => {
+      if (prev.find((s) => s.key === key)) {
+        return prev.map((s) => (s.key === key ? { ...s, value } : s));
+      }
+      return [...prev, { id: Date.now(), key, value, description: '', category: 'GENERAL' }];
+    });
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const payload = settings.map((s) => ({ key: s.key, value: s.value }));
-      await apiClient.put('/settings/bulk', { settings: payload });
+      await apiClient.put('/api/settings/bulk', { settings: payload });
       toast.success('Cập nhật cấu hình thành công');
     } catch (error) {
       toast.error('Lỗi khi lưu cấu hình');

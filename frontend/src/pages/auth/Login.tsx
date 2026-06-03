@@ -181,7 +181,7 @@ export function Login() {
       {/* Dev helper */}
       <div className="fixed bottom-4 right-4 bg-white p-4 rounded-lg shadow-xl text-xs text-[#212121] border border-[#E0E0E0] z-50">
         <p className="font-bold mb-2 border-b pb-1">Demo Logins</p>
-        <p className="flex justify-between gap-4"><span>Student:</span> <span className="font-mono bg-[#F5F5F5] px-1 rounded">student@vju.ac.vn</span></p>
+        <p className="flex justify-between gap-4"><span>Student:</span> <span className="font-mono bg-[#F5F5F5] px-1 rounded">lehoangc@st.vju.ac.vn</span></p>
         <p className="flex justify-between gap-4 mt-1"><span>Admin:</span> <span className="font-mono bg-[#F5F5F5] px-1 rounded">admin@vju.ac.vn</span></p>
         <p className="mt-2 text-[10px] text-[#757575]">Password: <span className="font-mono">password</span></p>
       </div>
