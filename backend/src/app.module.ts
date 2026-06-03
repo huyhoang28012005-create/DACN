@@ -38,26 +38,22 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
         }),
       }),
     }),
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      store: redisStore,
-      host: 'localhost',
-      port: 6379,
+      useFactory: () => ({
+        store: redisStore,
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
+      }),
     }),
-    ThrottlerModule.forRoot({
-      throttlers: [
-        {
-          name: 'short',
-          ttl: 60000, // 60s (1 phút)
-          limit: 10, // Tối đa 10 request
-        },
-        {
-          name: 'long',
-          ttl: 3600000, // 3600s (1 giờ)
-          limit: 100, // Tối đa 100 request
-        },
-      ],
-      storage: new ThrottlerStorageRedisService('redis://localhost:6379'),
+    ThrottlerModule.forRootAsync({
+      useFactory: () => ({
+        throttlers: [
+          { name: 'short', ttl: 60000, limit: 10 },
+          { name: 'long', ttl: 3600000, limit: 100 },
+        ],
+        storage: new ThrottlerStorageRedisService(process.env.REDIS_URL || 'redis://localhost:6379'),
+      }),
     }),
     PrismaModule,
     UsersModule,
