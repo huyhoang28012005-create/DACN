@@ -12,7 +12,8 @@ import { ReportsModule } from './reports/reports.module';
 import { CheckInModule } from './check-in/check-in.module';
 import { CoursesModule } from './courses/courses.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import { ConfigModule } from '@nestjs/config';
 import { CommentsModule } from './comments/comments.module';
 import * as Joi from 'joi';
@@ -88,6 +89,10 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditLogInterceptor,
     },
   ],
 })
