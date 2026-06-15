@@ -3,6 +3,7 @@ import { Login } from "./pages/auth/Login";
 import { Layout } from "./components/layout/Layout";
 import { DashboardStudent } from "./pages/dashboard/DashboardStudent";
 import { DashboardAdmin } from "./pages/dashboard/DashboardAdmin";
+import { DashboardInstructor } from "./pages/dashboard/DashboardInstructor";
 import { CalendarView } from "./pages/booking/CalendarView";
 import { DeviceManagement } from "./pages/equipment/DeviceManagement";
 import { ForgotPassword } from "./pages/auth/ForgotPassword";
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "student-dashboard", Component: DashboardStudent },
           { path: "admin-dashboard", Component: DashboardAdmin },
+          { path: "instructor-dashboard", Component: DashboardInstructor },
           { path: "calendar", Component: CalendarView },
           { path: "my-bookings", Component: MyBookings },
           { path: "approvals", Component: Approvals },

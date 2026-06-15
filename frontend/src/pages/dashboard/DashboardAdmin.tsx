@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Users, MonitorPlay, Activity, Check, X } from "lucide-react";
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -33,19 +34,18 @@ const EQUIPMENT_COLORS: Record<string, string> = {
   BROKEN:      "#EF4444",
 };
 
-const STATUS_VI: Record<string, string> = {
-  PENDING:   "Chờ duyệt",
-  APPROVED:  "Đã duyệt",
-  COMPLETED: "Hoàn thành",
-  REJECTED:  "Từ chối",
-  CANCELED:  "Đã hủy",
-  AVAILABLE:   "Khả dụng",
-  IN_USE:      "Đang dùng",
-  MAINTENANCE: "Bảo trì",
-  BROKEN:      "Hỏng",
-};
 
 export function DashboardAdmin() {
+  const { t } = useTranslation();
+
+  const getStatusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      PENDING: t("status_pending"), APPROVED: t("status_approved"), COMPLETED: t("status_completed"), REJECTED: t("status_rejected"), CANCELED: t("status_canceled"),
+      AVAILABLE: t("status_available"), IN_USE: t("status_in_use"), MAINTENANCE: t("status_maintenance"), BROKEN: t("status_broken")
+    };
+    return map[status] || status;
+  };
+
   const [stats, setStats] = useState({
     pendingRequests: 0,
     devicesTotal: 0,
@@ -88,7 +88,7 @@ export function DashboardAdmin() {
         const bookingData = Object.entries(bookingStatusCounts)
           .filter(([, count]) => count > 0)
           .map(([status, count]) => ({
-            name: STATUS_VI[status] || status,
+            name: getStatusLabel(status) || status,
             value: count,
             color: BOOKING_COLORS[status] || "#9CA3AF",
           }));
@@ -102,14 +102,15 @@ export function DashboardAdmin() {
         const equipData = Object.entries(equipStatusCounts)
           .filter(([, count]) => count > 0)
           .map(([status, count]) => ({
-            name: STATUS_VI[status] || status,
+            name: getStatusLabel(status) || status,
             value: count,
             color: EQUIPMENT_COLORS[status] || "#9CA3AF",
           }));
         setEquipmentChartData(equipData);
 
-      } catch (error) {
-        // apiClient.ts đã xử lý toast
+      } catch (error: any) {
+        const msg = error.response?.data?.message || t("dashboard_load_error");
+        toast.error(Array.isArray(msg) ? msg[0] : msg);
       } finally {
         setIsLoading(false);
       }
@@ -123,8 +124,9 @@ export function DashboardAdmin() {
       await bookingService.update(id.toString(), { status: "APPROVED" });
       setRecentBookings(recentBookings.filter(b => b.id !== id));
       setStats(prev => ({ ...prev, pendingRequests: prev.pendingRequests - 1 }));
-    } catch (error) {
-      // apiClient.ts đã xử lý toast
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("approve_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -133,16 +135,17 @@ export function DashboardAdmin() {
       await bookingService.update(id.toString(), { status: "REJECTED" });
       setRecentBookings(recentBookings.filter(b => b.id !== id));
       setStats(prev => ({ ...prev, pendingRequests: prev.pendingRequests - 1 }));
-    } catch (error) {
-      // apiClient.ts đã xử lý toast
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("reject_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-neutral-900 dark:text-slate-100">Admin Dashboard</h1>
-        <p className="text-neutral-500 dark:text-slate-400 mt-1">Overview of lab utilization and pending requests.</p>
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-slate-100">{t("dashboard_title")}</h1>
+        <p className="text-neutral-500 dark:text-slate-400 mt-1">{t("dashboard_desc")}</p>
       </div>
 
       {/* Widgets */}
@@ -150,36 +153,36 @@ export function DashboardAdmin() {
         <Widget
           icon={<Activity className="w-6 h-6 text-orange-600" />}
           bg="bg-orange-50"
-          label="Pending Requests"
+          label={t("pending_requests")}
           value={isLoading ? "..." : stats.pendingRequests}
-          trend="Needs approval"
+          trend={t("needs_action")}
         />
         <Widget
           icon={<MonitorPlay className="w-6 h-6 text-blue-600" />}
           bg="bg-blue-50"
-          label="Total Devices"
+          label={t("total_devices")}
           value={isLoading ? "..." : stats.devicesTotal}
-          trend="Managed in system"
+          trend={t("managing")}
         />
         <Widget
           icon={<Users className="w-6 h-6 text-green-600" />}
           bg="bg-green-50"
-          label="Total Rooms"
+          label={t("total_rooms")}
           value={isLoading ? "..." : stats.roomsTotal}
-          trend="Active laboratories"
+          trend={t("active")}
         />
       </div>
 
       {/* ── Charts Section ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Booking Status Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-neutral-200 dark:border-slate-800 p-6 transition-colors duration-300">
-          <h2 className="text-base font-bold text-neutral-900 dark:text-slate-100 mb-1">Tỷ lệ trạng thái Đơn đặt phòng</h2>
-          <p className="text-sm text-neutral-500 dark:text-slate-400 mb-4">Phân bổ theo trạng thái xử lý</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 transition-all duration-300">
+          <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-1">{t("booking_status_ratio")}</h2>
+          <p className="text-sm text-neutral-500 dark:text-slate-400 mb-6">{t("booking_status_desc")}</p>
           {isLoading ? (
-            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">Đang tải...</div>
+            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("loading")}</div>
           ) : bookingChartData.length === 0 ? (
-            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">Chưa có dữ liệu</div>
+            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("no_data")}</div>
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
@@ -203,7 +206,7 @@ export function DashboardAdmin() {
                     borderRadius: "8px",
                     fontSize: "13px",
                   }}
-                  formatter={(value: number, name: string) => [`${value} đơn`, name]}
+                  formatter={(value: number, name: string) => [`${value} ${t("units_bookings")}`, name]}
                 />
                 <Legend
                   formatter={(value) => (
@@ -216,13 +219,13 @@ export function DashboardAdmin() {
         </div>
 
         {/* Equipment Status Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-neutral-200 dark:border-slate-800 p-6 transition-colors duration-300">
-          <h2 className="text-base font-bold text-neutral-900 dark:text-slate-100 mb-1">Tỷ lệ trạng thái Thiết bị</h2>
-          <p className="text-sm text-neutral-500 dark:text-slate-400 mb-4">Phân bổ theo tình trạng hoạt động</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 transition-all duration-300">
+          <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-1">{t("equipment_status_ratio")}</h2>
+          <p className="text-sm text-neutral-500 dark:text-slate-400 mb-6">{t("equipment_status_desc")}</p>
           {isLoading ? (
-            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">Đang tải...</div>
+            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("loading")}</div>
           ) : equipmentChartData.length === 0 ? (
-            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">Chưa có dữ liệu</div>
+            <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("no_data")}</div>
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
@@ -246,7 +249,7 @@ export function DashboardAdmin() {
                     borderRadius: "8px",
                     fontSize: "13px",
                   }}
-                  formatter={(value: number, name: string) => [`${value} thiết bị`, name]}
+                  formatter={(value: number, name: string) => [`${value} ${t("units_devices")}`, name]}
                 />
                 <Legend
                   formatter={(value) => (
@@ -259,10 +262,13 @@ export function DashboardAdmin() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-neutral-200 dark:border-slate-800 overflow-hidden transition-colors duration-300">
-        <div className="px-6 py-5 border-b border-neutral-200 dark:border-slate-800 bg-neutral-50/50 dark:bg-slate-800/50 flex justify-between items-center">
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-slate-100">Recent Pending Requests</h2>
+      {/* ── Recent Bookings Section ── */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 transition-all duration-300 overflow-hidden">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white">{t("pending_approval_requests")}</h2>
+            <p className="text-sm text-neutral-500 dark:text-slate-400 mt-1">{t("latest_pending_bookings")}</p>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -306,15 +312,15 @@ export function DashboardAdmin() {
                           </AlertDialogTrigger>
                           <AlertDialogContent className="bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800">
                             <AlertDialogHeader>
-                              <AlertDialogTitle className="text-neutral-900 dark:text-slate-100">Xác nhận từ chối</AlertDialogTitle>
+                              <AlertDialogTitle className="text-neutral-900 dark:text-slate-100">{t("confirm_reject")}</AlertDialogTitle>
                               <AlertDialogDescription className="text-neutral-500 dark:text-slate-400">
-                                Bạn có chắc chắn muốn từ chối đơn đặt phòng này? Hành động này không thể hoàn tác.
+                                {t("confirm_reject_msg")}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-white dark:bg-slate-800 text-neutral-900 dark:text-slate-200 hover:bg-neutral-100 dark:hover:bg-slate-700 border border-neutral-200 dark:border-slate-700">Hủy bỏ</AlertDialogCancel>
+                              <AlertDialogCancel className="bg-white dark:bg-slate-800 text-neutral-900 dark:text-slate-200 hover:bg-neutral-100 dark:hover:bg-slate-700 border border-neutral-200 dark:border-slate-700">{t("cancel")}</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleReject(req.id)} className="bg-red-600 hover:bg-red-700 text-white">
-                                Xác nhận từ chối
+                                {t("confirm_reject_btn")}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -360,19 +366,20 @@ function SkeletonRow() {
 function Widget({ icon, bg, label, value, trend }: any) {
   return (
     <motion.div
-      whileHover={{ y: -5, boxShadow: "0px 10px 20px rgba(0,0,0,0.05)" }}
+      whileHover={{ y: -5, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-neutral-200 dark:border-slate-800 p-6 flex flex-col transition-colors duration-300 cursor-pointer"
+      className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-xl dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 flex flex-col transition-all duration-300 cursor-pointer overflow-hidden relative group"
     >
-      <div className="flex items-center gap-4 mb-4">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 ${bg} dark:bg-opacity-20`}>
+      <div className={`absolute -right-6 -top-6 w-32 h-32 rounded-full ${bg} opacity-40 blur-3xl dark:opacity-10 group-hover:opacity-60 transition-opacity duration-500 pointer-events-none`}></div>
+      <div className="flex items-center gap-4 mb-4 relative z-10">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${bg} dark:bg-opacity-20 shadow-inner`}>
           {icon}
         </div>
-        <h3 className="text-sm font-semibold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">{label}</h3>
+        <h3 className="text-[15px] font-bold text-neutral-600 dark:text-slate-300 tracking-wide">{label}</h3>
       </div>
-      <div>
-        <div className="text-3xl font-bold text-neutral-900 dark:text-slate-100">{value}</div>
-        <div className="text-sm font-medium text-neutral-500 dark:text-slate-400 mt-1">{trend}</div>
+      <div className="relative z-10">
+        <div className="text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">{value}</div>
+        <div className="text-sm font-medium text-neutral-500 dark:text-slate-400 mt-2">{trend}</div>
       </div>
     </motion.div>
   );

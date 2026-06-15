@@ -101,6 +101,30 @@ export class AuthController {
     return this.authService.logout(user.userId);
   }
 
+  // -----------------------------------------------------------------------
+  // 🛡️ API XÁC THỰC 2 BƯỚC (MFA)
+  // -----------------------------------------------------------------------
+  @UseGuards(JwtAuthGuard)
+  @Post('mfa/generate')
+  async generateMfaSecret(@CurrentUser() user: UserPayload) {
+    return this.authService.generateMfaSecret(user.userId, user.email);
+  }
+
+  // API này dùng để Verify (Lúc login) và Kích hoạt (Lúc setup)
+  @Post('mfa/verify')
+  @HttpCode(HttpStatus.OK)
+  async verifyMfa(
+    @Body() body: { userId: number; code: string },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result: any = await this.authService.verifyMfa(body.userId, body.code);
+    if (result.refresh_token) {
+      this.setRefreshTokenCookie(res, result.refresh_token);
+      delete result.refresh_token; // don't send back in body
+    }
+    return result;
+  }
+
   // Hàm tiện ích để cài đặt HttpOnly Cookie
   private setRefreshTokenCookie(res: Response, token: string) {
     res.cookie('refresh_token', token, {
@@ -109,5 +133,15 @@ export class AuthController {
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
     });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('mfa/disable')
+  async disableMfa(@CurrentUser() user: UserPayload) {
+    if (user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Chỉ Quản trị viên mới được phép tác động đến 2FA');
+    }
+    await this.authService.disableMfa(user.userId);
+    return { message: 'Đã tắt xác thực 2 bước thành công' };
   }
 }

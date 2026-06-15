@@ -9,6 +9,7 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import type { Request } from 'express';
 import { PrismaService } from '../../prisma/prisma.service';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class AuditLogInterceptor implements NestInterceptor {
@@ -22,7 +23,6 @@ export class AuditLogInterceptor implements NestInterceptor {
       .getRequest<Request & { user?: { id?: number; userId?: number } }>();
     const method = request.method;
 
-    // Chỉ bắt các request làm thay đổi dữ liệu
     if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
       return next.handle();
     }
@@ -32,19 +32,16 @@ export class AuditLogInterceptor implements NestInterceptor {
     const body = request.body as Record<string, unknown>;
     const params = request.params;
 
-    // Cố gắng trích xuất record_id từ URL params
     let recordId = 0;
     if (params && params.id) {
       recordId = parseInt(params.id as string, 10);
       if (isNaN(recordId)) recordId = 0;
     }
 
-    // Tên route/controller đang được thao tác (Lấy path không chứa query params)
     const tableName = url.split('?')[0];
 
     return next.handle().pipe(
       tap((data) => {
-        // Nếu response trả về một record có id (Thường là khi CREATE), ưu tiên lấy id đó
         if (
           data &&
           typeof data === 'object' &&
@@ -54,19 +51,39 @@ export class AuditLogInterceptor implements NestInterceptor {
           recordId = Number((data as Record<string, unknown>).id);
         }
 
-        // Fire-and-forget ghi log bất đồng bộ
-        this.prisma.auditLog
-          .create({
-            data: {
-              action: `${method} ${url}`,
-              table_name: tableName,
-              record_id: recordId,
-              user_id: user?.id || user?.userId || null, // Có thể null nếu api public (Login/Register)
-              details:
-                body && Object.keys(body).length > 0
-                  ? JSON.stringify(body)
-                  : null,
-            },
+        const userId = user?.id || user?.userId || null;
+        const details =
+          body && Object.keys(body).length > 0 ? JSON.stringify(body) : null;
+        const action = `${method} ${url}`;
+
+        // Cryptographic Audit Trail (Hash Chaining)
+        this.prisma
+          .$transaction(async (tx) => {
+            const lastLog = await tx.auditLog.findFirst({
+              orderBy: { id: 'desc' },
+            });
+
+            const previousHash = lastLog?.current_hash || 'GENESIS_HASH';
+            const timestamp = new Date();
+
+            // Dữ liệu cần băm (Payload)
+            const payload = `${previousHash}|${action}|${tableName}|${recordId}|${userId || 'SYSTEM'}|${details || 'NONE'}|${timestamp.toISOString()}`;
+            const currentHash = createHash('sha256')
+              .update(payload)
+              .digest('hex');
+
+            await tx.auditLog.create({
+              data: {
+                action,
+                table_name: tableName,
+                record_id: recordId,
+                user_id: userId,
+                details,
+                previous_hash: previousHash,
+                current_hash: currentHash,
+                timestamp,
+              },
+            });
           })
           .catch((err: unknown) => {
             const error = err as Error;

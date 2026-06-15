@@ -11,14 +11,15 @@ import { UpdateBookingDto } from './dto/update-booking.dto';
 import { PrismaService } from '../prisma/prisma.service';
 import { checkOwnership } from '../common/utils/ownership.util';
 import { SettingsService } from '../settings/settings.service';
-import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { NotificationsService } from '../notifications/notifications.service';
+import { EncryptionUtil } from '../common/utils/encryption.util';
 
 @Injectable()
 export class BookingsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settingsService: SettingsService,
-    private readonly notificationsGateway: NotificationsGateway,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(createBookingDto: CreateBookingDto, userId: number) {
@@ -109,7 +110,7 @@ export class BookingsService {
       );
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       // -----------------------------------------------------------------------
       // 🛡️ BẢO MẬT & ĐỒNG BỘ: PESSIMISTIC LOCKING (Khóa Bi Quan)
       // -----------------------------------------------------------------------
@@ -234,7 +235,12 @@ export class BookingsService {
         }
       }
 
-      return tx.booking.create({
+      // -----------------------------------------------------------------------
+      // 🛡️ BẢO MẬT: ENCRYPTION AT REST (Mã hóa CSDL)
+      // -----------------------------------------------------------------------
+      const encryptedPurpose = EncryptionUtil.encrypt(purpose);
+
+      const newBooking = await tx.booking.create({
         data: {
           user_id: userId,
           room_id,
@@ -242,15 +248,35 @@ export class BookingsService {
           course_id: course_id || null,
           start_time: startTime,
           end_time: endTime,
-          purpose,
+          purpose: encryptedPurpose,
           status: 'PENDING',
         },
       });
+      return newBooking;
     });
+
+    // -----------------------------------------------------------------------
+    // BẮN THÔNG BÁO CHO ADMIN KHI CÓ ĐƠN MỚI (CHẠY NGẦM)
+    // -----------------------------------------------------------------------
+    this.prisma.user
+      .findMany({ where: { role: 'ADMIN' } })
+      .then((admins) => {
+        for (const admin of admins) {
+          this.notificationsService.createNotification(
+            admin.id,
+            'Đơn đặt phòng mới',
+            `Có một đơn đặt phòng mới (ID: #${result.id}) đang chờ phê duyệt.`,
+            'info',
+          );
+        }
+      })
+      .catch((err) => console.error('Lỗi gửi thông báo cho Admin:', err));
+
+    return result;
   }
 
   async findAll() {
-    return this.prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       include: {
         user: { select: { id: true, name: true, email: true } },
         room: { select: { id: true, name: true } },
@@ -259,10 +285,15 @@ export class BookingsService {
       },
       orderBy: { created_at: 'desc' },
     });
+
+    return bookings.map((b) => ({
+      ...b,
+      purpose: EncryptionUtil.decrypt(b.purpose),
+    }));
   }
 
   async findMyBookings(userId: number) {
-    return this.prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       where: { user_id: userId },
       include: {
         room: { select: { id: true, name: true } },
@@ -271,6 +302,11 @@ export class BookingsService {
       },
       orderBy: { created_at: 'desc' },
     });
+
+    return bookings.map((b) => ({
+      ...b,
+      purpose: EncryptionUtil.decrypt(b.purpose),
+    }));
   }
 
   async approveAllPending() {
@@ -286,7 +322,7 @@ export class BookingsService {
     });
 
     for (const booking of pendings) {
-      this.notificationsGateway.sendNotificationToUser(
+      this.notificationsService.createNotification(
         booking.user_id,
         'Phê duyệt hàng loạt',
         `Đơn đặt phòng #${booking.id} của bạn đã được phê duyệt.`,
@@ -316,7 +352,10 @@ export class BookingsService {
       );
     }
 
-    return booking;
+    return {
+      ...booking,
+      purpose: EncryptionUtil.decrypt(booking.purpose),
+    };
   }
 
   async findOneSecure(id: number, currentUser: UserPayload) {
@@ -328,7 +367,12 @@ export class BookingsService {
   async update(id: number, updateBookingDto: UpdateBookingDto) {
     await this.findOne(id); // Check exists
 
-    const { start_time, end_time, row_version, ...rest } = updateBookingDto;
+    const { start_time, end_time, row_version, purpose, ...rest } =
+      updateBookingDto;
+
+    const encryptedPurpose = purpose
+      ? EncryptionUtil.encrypt(purpose)
+      : undefined;
 
     const result = await this.prisma.booking.update({
       where: {
@@ -339,6 +383,7 @@ export class BookingsService {
         ...rest,
         ...(start_time && { start_time: new Date(start_time) }),
         ...(end_time && { end_time: new Date(end_time) }),
+        ...(encryptedPurpose && { purpose: encryptedPurpose }),
         row_version: { increment: 1 },
       },
     });
@@ -351,7 +396,7 @@ export class BookingsService {
       const statusVi =
         updateBookingDto.status === 'APPROVED' ? 'phê duyệt' : 'từ chối';
       const type = updateBookingDto.status === 'APPROVED' ? 'success' : 'error';
-      this.notificationsGateway.sendNotificationToUser(
+      this.notificationsService.createNotification(
         result.user_id,
         `Cập nhật Đơn đặt phòng #${result.id}`,
         `Đơn đặt phòng của bạn đã bị ${statusVi} bởi Quản trị viên.`,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Search, XCircle, FileText, Calendar, CalendarX } from "lucide-react";
 import { bookingService } from "../../services";
 import { format } from "date-fns";
@@ -8,6 +9,8 @@ import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { useNavigate } from "react-router";
 
 export function MyBookings() {
+  const { t } = useTranslation();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [bookings, setBookings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,8 +26,9 @@ export function MyBookings() {
     try {
       const res = await bookingService.getMyBookings();
       setBookings(res.data || []);
-    } catch (error) {
-      // apiClient.ts đã xử lý toast
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("load_bookings_error");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsLoading(false);
     }
@@ -34,22 +38,25 @@ export function MyBookings() {
     if (cancelConfirmId) {
       try {
         await bookingService.cancel(cancelConfirmId.toString());
-        toast.success("Hủy thành công");
+        toast.success(t("cancel_success"));
         fetchData();
-      } catch (error) {
-        // apiClient.ts đã xử lý toast
+      } catch (error: any) {
+        const msg = error.response?.data?.message || t("cancel_failed");
+        toast.error(Array.isArray(msg) ? msg[0] : msg);
       }
       setCancelConfirmId(null);
     }
   };
 
   const getStatusBadge = (status: string) => {
+    const map: Record<string, string> = { PENDING: t("status_pending"), APPROVED: t("status_approved"), REJECTED: t("status_rejected"), CANCELED: t("status_canceled") };
+
     switch(status) {
-      case "PENDING": return <span className="px-2.5 py-1 bg-[#FFF8E1] text-[#F59E0B] rounded text-[12px] font-medium border border-[#FFECB3]">Chờ duyệt</span>;
-      case "APPROVED": return <span className="px-2.5 py-1 bg-[#E8F5E9] text-[#2E7D32] rounded text-[12px] font-medium border border-[#C8E6C9]">Đã duyệt</span>;
-      case "REJECTED": return <span className="px-2.5 py-1 bg-[#FDEDED] text-[#EF4444] rounded text-[12px] font-medium border border-[#FFCDD2]">Từ chối</span>;
-      case "CANCELED": return <span className="px-2.5 py-1 bg-[#F5F5F5] text-[#757575] rounded text-[12px] font-medium border border-[#E0E0E0]">Đã hủy</span>;
-      default: return <span className="px-2.5 py-1 bg-[#F5F5F5] text-[#757575] rounded text-[12px] font-medium border border-[#E0E0E0]">{status}</span>;
+      case "PENDING": return <span className="px-2.5 py-1 bg-[#FFF8E1] text-[#F59E0B] rounded text-[12px] font-medium border border-[#FFECB3]">{map["PENDING"]}</span>;
+      case "APPROVED": return <span className="px-2.5 py-1 bg-[#E8F5E9] dark:bg-green-900/30 text-[#2E7D32] rounded text-[12px] font-medium border border-[#C8E6C9]">{map["APPROVED"]}</span>;
+      case "REJECTED": return <span className="px-2.5 py-1 bg-[#FDEDED] dark:bg-red-900/30 text-[#EF4444] rounded text-[12px] font-medium border border-[#FFCDD2]">{map["REJECTED"]}</span>;
+      case "CANCELED": return <span className="px-2.5 py-1 bg-[#F5F5F5] dark:bg-slate-800/50 text-[#757575] dark:text-slate-400 rounded text-[12px] font-medium border border-[#E0E0E0] dark:border-slate-800">{map["CANCELED"]}</span>;
+      default: return <span className="px-2.5 py-1 bg-[#F5F5F5] dark:bg-slate-800/50 text-[#757575] dark:text-slate-400 rounded text-[12px] font-medium border border-[#E0E0E0] dark:border-slate-800">{status}</span>;
     }
   };
 
@@ -61,38 +68,38 @@ export function MyBookings() {
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex justify-between items-center">
-        <h1 className="text-[24px] font-bold text-[#0F172A] tracking-tight">Đơn đặt lịch của tôi</h1>
+        <h1 className="text-[24px] font-bold text-[#0F172A] dark:text-slate-100 tracking-tight">{t("my_bookings")}</h1>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E2E8F0] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E2E8F0] dark:border-slate-800 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-[#E0E0E0] bg-[#F5F5F5] flex justify-between items-center">
+        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between items-center">
           <div className="relative w-[300px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575]" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
             <input 
               type="text" 
-              placeholder="Tìm theo mã đơn hoặc tên tài nguyên..." 
+              placeholder={t("search_booking_placeholder")} 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
             />
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-white">
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Mã đơn</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Phòng Lab</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Mục đích</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Thời gian (Ngày & Giờ)</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Trạng thái</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] text-right">Thao tác</th>
+              <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50">
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("booking_code")}</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room")}</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("purpose")}</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("time_date_hour")}</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("status")}</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-right">{t("action")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
               {isLoading ? (
                 <>
                   <SkeletonRow />
@@ -100,25 +107,25 @@ export function MyBookings() {
                   <SkeletonRow />
                 </>
               ) : filteredBookings.map((bk) => (
-                <tr key={bk.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">
+                <tr key={bk.id} className="hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 bg-white dark:bg-slate-900 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-[14px] font-medium text-[#1E5FA5]">
+                    <div className="flex items-center gap-2 text-[14px] font-medium text-[#1E5FA5] dark:text-blue-400">
                       <FileText className="w-4 h-4" /> #{bk.id}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-[14px] text-[#212121] font-medium">{bk.room?.name}</td>
-                  <td className="px-6 py-4 text-[14px] text-[#757575]">{bk.purpose}</td>
+                  <td className="px-6 py-4 text-[14px] text-[#212121] dark:text-slate-100 font-medium">{bk.room?.name}</td>
+                  <td className="px-6 py-4 text-[14px] text-[#757575] dark:text-slate-400">{bk.purpose}</td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-[14px] text-[#212121]">
-                      <Calendar className="w-4 h-4 text-[#757575]" /> 
+                    <div className="flex items-center gap-2 text-[14px] text-[#212121] dark:text-slate-100">
+                      <Calendar className="w-4 h-4 text-[#757575] dark:text-slate-400" /> 
                       {format(new Date(bk.start_time), "dd/MM/yyyy HH:mm")} - {format(new Date(bk.end_time), "HH:mm")}
                     </div>
                   </td>
                   <td className="px-6 py-4">{getStatusBadge(bk.status)}</td>
                   <td className="px-6 py-4 text-right">
                     {bk.status === "PENDING" && (
-                      <button onClick={() => setCancelConfirmId(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] rounded text-[13px] font-medium transition-colors">
-                        <XCircle className="w-4 h-4" /> Hủy đơn
+                      <button onClick={() => setCancelConfirmId(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded text-[13px] font-medium transition-colors">
+                        <XCircle className="w-4 h-4" /> {t("cancel_booking")}
                       </button>
                     )}
                   </td>
@@ -131,13 +138,13 @@ export function MyBookings() {
                       <div className="w-24 h-24 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full flex items-center justify-center mb-2 shadow-inner">
                         <CalendarX className="w-10 h-10 text-blue-400" />
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-800">Chưa có lịch đặt nào</h3>
+                      <h3 className="text-lg font-semibold text-slate-800">{t("no_bookings_yet")}</h3>
                       <p className="text-sm text-slate-500 text-center leading-relaxed">
                         Bạn chưa thực hiện bất kỳ phiên đặt phòng nào. Hãy tạo mới một đơn đặt lịch để sử dụng tài nguyên của phòng Lab.
                       </p>
                       <button 
                         onClick={() => navigate('/calendar')} 
-                        className="mt-4 px-6 py-2.5 bg-[#1E40AF] hover:bg-[#1D4ED8] text-white rounded-lg text-[14px] font-medium shadow-md shadow-blue-500/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                        className="mt-4 px-6 py-2.5 bg-[#1E40AF] hover:bg-[#1D4ED8] text-white rounded-lg text-[14px] font-medium shadow-md dark:shadow-slate-900/50 shadow-blue-500/20 hover:shadow-lg dark:shadow-slate-900/50 hover:-translate-y-0.5 transition-all duration-200"
                       >
                         Đặt lịch ngay
                       </button>
@@ -152,9 +159,9 @@ export function MyBookings() {
 
       <ConfirmModal
         isOpen={cancelConfirmId !== null}
-        title="Xác nhận hủy lịch"
-        message="Bạn có chắc chắn muốn hủy đơn đặt lịch này không? Hành động này không thể hoàn tác."
-        confirmText="Hủy lịch"
+        title={t("confirm_cancel_booking")}
+        message={t("confirm_cancel_booking_msg")}
+        confirmText={t("cancel_booking_btn")}
         isDestructive={true}
         onConfirm={executeCancel}
         onCancel={() => setCancelConfirmId(null)}

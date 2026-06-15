@@ -12,6 +12,8 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { Role, User } from '@prisma/client';
 import * as crypto from 'crypto';
+import { authenticator } from 'otplib';
+import * as qrcode from 'qrcode';
 
 @Injectable()
 export class AuthService {
@@ -57,9 +59,37 @@ export class AuthService {
       );
     }
 
+    // -----------------------------------------------------------------------
+    // 🛡️ BẢO MẬT: KIỂM TRA ACCOUNT LOCKOUT
+    // -----------------------------------------------------------------------
+    if (user.locked_until && user.locked_until > new Date()) {
+      const remainingMinutes = Math.ceil(
+        (user.locked_until.getTime() - Date.now()) / 60000,
+      );
+      throw new ForbiddenException(
+        `Tài khoản đã bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau ${remainingMinutes} phút.`,
+      );
+    }
+
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
+      await this.usersService.incrementFailedLogin(user.id);
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+    }
+
+    // Reset attempts if successful
+    if (user.failed_login_attempts > 0) {
+      await this.usersService.resetFailedLogin(user.id);
+    }
+
+    // -----------------------------------------------------------------------
+    // 🛡️ BẢO MẬT: KIỂM TRA XÁC THỰC 2 BƯỚC (MFA)
+    // -----------------------------------------------------------------------
+    if ((user as any).is_mfa_enabled) {
+      return {
+        requires_mfa: true,
+        user_id: user.id, // Trả về ID tạm để Frontend dùng gọi API verify
+      };
     }
 
     return this.generateAuthResponse(user);
@@ -116,7 +146,56 @@ export class AuthService {
         name: user.name,
         role: user.role,
         avatar_url: (user as { avatar_url?: string }).avatar_url,
+        is_mfa_enabled: (user as any).is_mfa_enabled,
       },
     };
+  }
+
+  // -----------------------------------------------------------------------
+  // 🛡️ MÔ ĐUN XÁC THỰC 2 BƯỚC (2FA / MFA)
+  // -----------------------------------------------------------------------
+  async generateMfaSecret(userId: number, email: string) {
+    const user = await this.usersService.findById(userId);
+    if (user?.role !== Role.ADMIN) {
+      throw new ForbiddenException('Chỉ Quản trị viên mới được phép sử dụng tính năng 2FA');
+    }
+
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri(email, 'LabBook System', secret);
+    
+    // Lưu tạm secret vào database (chưa enable)
+    await this.usersService.updateMfaSecret(userId, secret);
+
+    const qrCodeDataUrl = await qrcode.toDataURL(otpauthUrl);
+    return {
+      qrCodeDataUrl,
+      secret,
+    };
+  }
+
+  async verifyMfa(userId: number, code: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('Người dùng không tồn tại');
+
+    const secret = (user as any).mfa_secret;
+    if (!secret) throw new BadRequestException('MFA chưa được thiết lập');
+
+    const isValid = authenticator.verify({ token: code, secret });
+
+    if (!isValid) {
+      throw new UnauthorizedException('Mã xác thực 6 số không chính xác');
+    }
+
+    // Nếu chưa enable thì giờ enable
+    if (!(user as any).is_mfa_enabled) {
+      await this.usersService.enableMfa(userId);
+    }
+
+    // Đăng nhập thành công, trả về JWT Token
+    return this.generateAuthResponse(user);
+  }
+
+  async disableMfa(userId: number) {
+    return this.usersService.disableMfa(userId);
   }
 }

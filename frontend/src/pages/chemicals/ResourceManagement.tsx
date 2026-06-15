@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Search, Edit2, Trash2 } from "lucide-react";
 import { DeviceManagement } from "../equipment/DeviceManagement";
 import { ChemicalManagement } from "./ChemicalManagement";
@@ -7,7 +8,10 @@ import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { toast } from "react-hot-toast";
 
 export function ResourceManagement() {
+  const { t } = useTranslation();
+
   const [activeTab, setActiveTab] = useState("Thiết bị");
+  const tabs = [{id: "Phòng Lab", label: t("lab_room")}, {id: "Thiết bị", label: t("equipment")}, {id: "Hóa chất", label: t("chemicals")}];
   const [rooms, setRooms] = useState<any[]>([]);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [isAddingRoom, setIsAddingRoom] = useState(false);
@@ -36,10 +40,11 @@ export function ResourceManagement() {
       await roomService.create(newRoom);
       setIsAddingRoom(false);
       setNewRoom({ name: "", location: "", capacity: 30, has_air_conditioner: true });
-      toast.success("Thêm phòng Lab thành công!");
+      toast.success(t("add_room_success"));
       fetchRooms();
-    } catch {
-      toast.error("Thêm phòng thất bại");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("add_room_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -50,10 +55,11 @@ export function ResourceManagement() {
         name: editingRoom.name, location: editingRoom.location, capacity: editingRoom.capacity, has_air_conditioner: editingRoom.has_air_conditioner
       });
       setIsEditingRoom(false);
-      toast.success("Cập nhật phòng Lab thành công!");
+      toast.success(t("update_room_success"));
       fetchRooms();
-    } catch {
-      toast.error("Cập nhật phòng thất bại");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("update_room_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -61,11 +67,12 @@ export function ResourceManagement() {
     if (deleteConfirmRoomId) {
       try {
         await roomService.delete(deleteConfirmRoomId.toString());
-        toast.success("Xóa phòng Lab thành công!");
+        toast.success(t("delete_room_success"));
         setDeleteConfirmRoomId(null);
         fetchRooms();
-      } catch {
-        toast.error("Xóa phòng thất bại");
+      } catch (error: any) {
+        const msg = error.response?.data?.message || t("delete_room_failed");
+        toast.error(Array.isArray(msg) ? msg[0] : msg);
       }
     }
   };
@@ -75,20 +82,20 @@ export function ResourceManagement() {
       <div className="flex-1 flex flex-col space-y-6 min-w-0">
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-[24px] font-bold text-[#212121] mb-4">Quản lý Tài nguyên</h1>
+            <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("manage_resources")}</h1>
             {/* Tabs */}
-            <div className="flex border-b border-[#E0E0E0]">
-              {['Phòng Lab', 'Thiết bị', 'Hóa chất'].map(tab => (
+            <div className="flex border-b border-[#E0E0E0] dark:border-slate-800">
+              {tabs.map(tab => (
                 <button 
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
                   className={`px-6 py-2 text-[14px] font-medium border-b-2 transition-colors ${
-                    activeTab === tab 
-                      ? 'border-[#1E5FA5] text-[#1E5FA5]' 
-                      : 'border-transparent text-[#757575] hover:text-[#212121]'
+                    activeTab === tab.id 
+                      ? 'border-[#1E5FA5] text-[#1E5FA5] dark:text-blue-400' 
+                      : 'border-transparent text-[#757575] dark:text-slate-400 hover:text-[#212121] dark:text-slate-100'
                   }`}
                 >
-                  {tab}
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -102,46 +109,46 @@ export function ResourceManagement() {
         )}
 
         {activeTab === "Phòng Lab" && (
-          <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] flex-1 flex flex-col overflow-hidden">
-             <div className="p-4 border-b border-[#E0E0E0] bg-[#F5F5F5] flex justify-between">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex-1 flex flex-col overflow-hidden">
+             <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between">
                <div className="relative w-[300px]">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575]" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Tìm kiếm phòng..." 
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                  placeholder={t("search_room_placeholder")} 
+                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
                 />
               </div>
-              <button onClick={() => setIsAddingRoom(true)} className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
+              <button onClick={() => setIsAddingRoom(true)} className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
                 <Plus className="w-4 h-4" /> Thêm Phòng
               </button>
             </div>
             <div className="flex-1 overflow-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E0E0E0] bg-white sticky top-0">
-                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">ID</th>
-                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Tên Phòng Lab</th>
-                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575]">Vị trí</th>
-                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] text-center">Sức chứa</th>
-                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] text-center">Điều hòa</th>
-                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] text-right">Hành động</th>
+                  <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0">
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">ID</th>
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room_name")}</th>
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("location")}</th>
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-center">{t("capacity")}</th>
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-center">{t("air_conditioner")}</th>
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-right">{t("action")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E0E0E0]">
+                <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
                   {isLoadingRooms ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-[#757575]">Đang tải...</td></tr>
+                    <tr><td colSpan={5} className="p-8 text-center text-[#757575] dark:text-slate-400">{t("loading")}</td></tr>
                   ) : rooms.map((r) => (
-                    <tr key={r.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">
-                      <td className="px-6 py-4 text-[14px] font-mono text-[#757575]">{r.id}</td>
-                      <td className="px-6 py-4 text-[14px] font-bold text-[#212121]">{r.name}</td>
-                      <td className="px-6 py-4 text-[14px] text-[#212121]">{r.location}</td>
-                      <td className="px-6 py-4 text-[14px] text-center text-[#212121]">{r.capacity} người</td>
+                    <tr key={r.id} className="hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 bg-white dark:bg-slate-900 transition-colors">
+                      <td className="px-6 py-4 text-[14px] font-mono text-[#757575] dark:text-slate-400">{r.id}</td>
+                      <td className="px-6 py-4 text-[14px] font-bold text-[#212121] dark:text-slate-100">{r.name}</td>
+                      <td className="px-6 py-4 text-[14px] text-[#212121] dark:text-slate-100">{r.location}</td>
+                      <td className="px-6 py-4 text-[14px] text-center text-[#212121] dark:text-slate-100">{r.capacity}  {t("people")}</td>
                       <td className="px-6 py-4 text-center">
                         {r.has_air_conditioner ? (
-                          <span className="px-2 py-1 bg-[#E8F5E9] text-[#2E7D32] rounded text-[12px]">Có</span>
+                          <span className="px-2 py-1 bg-[#E8F5E9] dark:bg-green-900/30 text-[#2E7D32] rounded text-[12px]">{t("yes")}</span>
                         ) : (
-                          <span className="px-2 py-1 bg-[#F5F5F5] text-[#757575] rounded text-[12px]">Không</span>
+                          <span className="px-2 py-1 bg-[#F5F5F5] dark:bg-slate-800/50 text-[#757575] dark:text-slate-400 rounded text-[12px]">{t("no")}</span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -149,10 +156,10 @@ export function ResourceManagement() {
                           <button onClick={() => {
                             setEditingRoom({ id: r.id, name: r.name, location: r.location, capacity: r.capacity, has_air_conditioner: r.has_air_conditioner });
                             setIsEditingRoom(true);
-                          }} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded transition-colors" title="Sửa">
+                          }} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-[#D6E4F7] dark:bg-blue-900/30 rounded transition-colors" title={t("edit")}>
                             <Edit2 className="w-4 h-4" />
                           </button>
-                          <button onClick={() => setDeleteConfirmRoomId(r.id)} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded transition-colors" title="Xóa">
+                          <button onClick={() => setDeleteConfirmRoomId(r.id)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded transition-colors" title={t("delete")}>
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -160,7 +167,7 @@ export function ResourceManagement() {
                     </tr>
                   ))}
                   {!isLoadingRooms && rooms.length === 0 && (
-                    <tr><td colSpan={5} className="p-8 text-center text-[#757575]">Chưa có phòng Lab nào</td></tr>
+                    <tr><td colSpan={5} className="p-8 text-center text-[#757575] dark:text-slate-400">{t("no_lab_rooms")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -178,28 +185,28 @@ export function ResourceManagement() {
 
       {isAddingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Thêm phòng Lab mới</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("add_new_lab_room")}</h2>
             <form onSubmit={handleAddRoom} className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên phòng Lab</label>
-                <input required type="text" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("lab_room_name_label")}</label>
+                <input required type="text" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Vị trí (Tòa/Tầng)</label>
-                <input required type="text" value={newRoom.location} onChange={e => setNewRoom({...newRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("location_label")}</label>
+                <input required type="text" value={newRoom.location} onChange={e => setNewRoom({...newRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Sức chứa (người)</label>
-                <input required type="number" min="1" value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("capacity_label")}</label>
+                <input required type="number" min="1" value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="has_air" checked={newRoom.has_air_conditioner} onChange={e => setNewRoom({...newRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0]" />
-                <label htmlFor="has_air" className="text-[14px] text-[#212121]">Có điều hòa</label>
+                <input type="checkbox" id="has_air" checked={newRoom.has_air_conditioner} onChange={e => setNewRoom({...newRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0] dark:border-slate-800" />
+                <label htmlFor="has_air" className="text-[14px] text-[#212121] dark:text-slate-100">{t("has_air_conditioner")}</label>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsAddingRoom(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Thêm phòng</button>
+                <button type="button" onClick={() => setIsAddingRoom(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors">{t("add_room_btn")}</button>
               </div>
             </form>
           </div>
@@ -208,28 +215,28 @@ export function ResourceManagement() {
 
       {isEditingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Sửa thông tin phòng Lab</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("edit_lab_room_info")}</h2>
             <form onSubmit={handleUpdateRoom} className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên phòng Lab</label>
-                <input required type="text" value={editingRoom.name} onChange={e => setEditingRoom({...editingRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("lab_room_name_label")}</label>
+                <input required type="text" value={editingRoom.name} onChange={e => setEditingRoom({...editingRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Vị trí (Tòa/Tầng)</label>
-                <input required type="text" value={editingRoom.location} onChange={e => setEditingRoom({...editingRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("location_label")}</label>
+                <input required type="text" value={editingRoom.location} onChange={e => setEditingRoom({...editingRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Sức chứa (người)</label>
-                <input required type="number" min="1" value={editingRoom.capacity} onChange={e => setEditingRoom({...editingRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("capacity_label")}</label>
+                <input required type="number" min="1" value={editingRoom.capacity} onChange={e => setEditingRoom({...editingRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="edit_has_air" checked={editingRoom.has_air_conditioner} onChange={e => setEditingRoom({...editingRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0]" />
-                <label htmlFor="edit_has_air" className="text-[14px] text-[#212121]">Có điều hòa</label>
+                <input type="checkbox" id="edit_has_air" checked={editingRoom.has_air_conditioner} onChange={e => setEditingRoom({...editingRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0] dark:border-slate-800" />
+                <label htmlFor="edit_has_air" className="text-[14px] text-[#212121] dark:text-slate-100">{t("has_air_conditioner")}</label>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsEditingRoom(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Cập nhật</button>
+                <button type="button" onClick={() => setIsEditingRoom(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors">{t("update")}</button>
               </div>
             </form>
           </div>
@@ -238,9 +245,9 @@ export function ResourceManagement() {
 
       <ConfirmModal
         isOpen={deleteConfirmRoomId !== null}
-        title="Xóa phòng Lab"
-        message="Bạn có chắc chắn muốn xóa phòng Lab này không? Hành động này sẽ xóa các thiết bị và lịch đặt thuộc về phòng này. Không thể hoàn tác!"
-        confirmText="Xóa phòng"
+        title={t("delete_lab_room")}
+        message={t("delete_lab_room_confirm")}
+        confirmText={t("delete_room_btn")}
         isDestructive={true}
         onConfirm={executeDeleteRoom}
         onCancel={() => setDeleteConfirmRoomId(null)}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Lock, Clock, Calendar, Filter, Plus, Info, X } from "lucide-react";
 import { bookingService, roomService } from "../../services";
 import { format, startOfWeek, addDays, getHours, getDay, differenceInHours, isSameDay } from "date-fns";
@@ -8,6 +9,8 @@ import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07:00 to 22:00
 
 export function CalendarView() {
+  const { t } = useTranslation();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
@@ -44,8 +47,9 @@ export function CalendarView() {
       if (roomsRes.data && roomsRes.data.length > 0) {
         setSelectedRooms(roomsRes.data.map((r: any) => r.id));
       }
-    } catch (error) {
-      // apiClient.ts đã xử lý toast
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("calendar_load_error");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +64,7 @@ export function CalendarView() {
   const startOfCurrentWeek = startOfWeek(currentDate, { weekStartsOn: 1 }); // Monday
   const DAYS = Array.from({ length: 7 }).map((_, i) => {
     const d = addDays(startOfCurrentWeek, i);
-    const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    const dayNames = [t("sun"), t("mon"), t("tue"), t("wed"), t("thu"), t("fri"), t("sat")];
     return { name: dayNames[getDay(d)], date: format(d, "dd/MM"), fullDate: d };
   });
 
@@ -121,11 +125,12 @@ export function CalendarView() {
         endTime: endDate,
       });
       
-      toast.success("Đặt phòng thành công! Đang chờ duyệt.");
+      toast.success(t("booking_success_pending"));
       setIsModalOpen(false);
       fetchData();
     } catch (error: any) {
-      // apiClient.ts đã xử lý toast
+      const msg = error.response?.data?.message || t("booking_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -138,23 +143,23 @@ export function CalendarView() {
       <div className="w-full md:w-[260px] flex flex-col gap-6 flex-shrink-0">
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="w-full bg-[#1E5FA5] hover:bg-[#154a85] text-white py-3 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-sm text-[14px]"
+          className="w-full bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-sm dark:shadow-slate-900/50 text-[14px]"
         >
-          <Plus className="w-5 h-5" /> Đặt phòng / Thiết bị
+          <Plus className="w-5 h-5" /> {t("book_room_device")}
         </button>
 
         {/* Filter Box */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col transition-colors duration-300">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col transition-colors duration-300">
           <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex items-center gap-2">
             <Filter className="w-4 h-4 text-[#757575] dark:text-slate-400" />
-            <h3 className="text-[14px] font-bold text-[#212121] dark:text-slate-200">Bộ lọc tìm kiếm</h3>
+            <h3 className="text-[14px] font-bold text-[#212121] dark:text-slate-200">{t("search_filter")}</h3>
           </div>
           
           <div className="p-4 overflow-y-auto flex-1 space-y-6">
             
             {/* Lọc theo Phòng */}
             <div className="space-y-3">
-              <h4 className="text-[13px] font-bold text-[#212121] dark:text-slate-200 uppercase tracking-wide">Phòng Lab</h4>
+              <h4 className="text-[13px] font-bold text-[#212121] dark:text-slate-200 uppercase tracking-wide">{t("lab_room")}</h4>
               <div className="space-y-2">
                 {rooms.map((room) => (
                   <label key={room.id} className="flex items-center gap-3 cursor-pointer group">
@@ -162,9 +167,9 @@ export function CalendarView() {
                       type="checkbox" 
                       checked={selectedRooms.includes(room.id)}
                       onChange={() => toggleRoom(room.id)}
-                      className="w-4 h-4 rounded border-[#E0E0E0] dark:border-slate-700 text-[#1E5FA5] focus:ring-[#1E5FA5]"
+                      className="w-4 h-4 rounded border-[#E0E0E0] dark:border-slate-700 text-[#1E5FA5] dark:text-blue-400 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
                     />
-                    <span className="text-[13px] text-[#212121] dark:text-slate-300 group-hover:text-[#1E5FA5] dark:group-hover:text-blue-400 transition-colors">{room.name}</span>
+                    <span className="text-[13px] text-[#212121] dark:text-slate-300 group-hover:text-[#1E5FA5] dark:text-blue-400 dark:group-hover:text-blue-400 transition-colors">{room.name}</span>
                   </label>
                 ))}
               </div>
@@ -173,34 +178,34 @@ export function CalendarView() {
         </div>
 
         {/* Legend */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-[#E0E0E0] dark:border-slate-800 p-4 space-y-3 transition-colors duration-300">
-          <h4 className="text-[13px] font-bold text-[#212121] dark:text-slate-200">Chú thích trạng thái</h4>
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 p-4 space-y-3 transition-colors duration-300">
+          <h4 className="text-[13px] font-bold text-[#212121] dark:text-slate-200">{t("status_legend")}</h4>
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-700 rounded-sm"></div>
-              <span className="text-[13px] text-[#757575] dark:text-slate-400">Trống (Có thể đặt)</span>
+              <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("status_empty_available")}</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 bg-[#F5F5F5] dark:bg-slate-800/50 border border-[#E0E0E0] dark:border-slate-700 rounded-sm flex items-center justify-center"><Lock className="w-3 h-3 text-[#9E9E9E] dark:text-slate-500" /></div>
-              <span className="text-[13px] text-[#757575] dark:text-slate-400">Đã có người đặt / Khóa</span>
+              <div className="w-4 h-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-sm flex items-center justify-center"><Lock className="w-3 h-3 text-red-500 dark:text-red-400" /></div>
+              <span className="text-[13px] font-bold text-red-500 dark:text-red-400">{t("status_booked_locked")}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-[#FFF8E1] dark:bg-yellow-900/30 border border-[#FFE082] dark:border-yellow-700/50 rounded-sm"></div>
-              <span className="text-[13px] text-[#757575] dark:text-slate-400">Đang chờ duyệt của bạn</span>
+              <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("status_pending_yours")}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-[#D6E4F7] dark:bg-blue-900/30 border border-[#1E5FA5] dark:border-blue-700/50 rounded-sm"></div>
-              <span className="text-[13px] text-[#757575] dark:text-slate-400">Lịch của bạn (Approved)</span>
+              <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("status_approved_yours")}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Calendar Area */}
-      <div className="flex-1 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col min-w-0 relative transition-colors duration-300">
+      <div className="flex-1 bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col min-w-0 relative transition-colors duration-300">
         {isLoading && (
-          <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
-            <LoadingSpinner size={32} text="Đang tải lịch..." />
+          <div className="absolute inset-0 bg-white dark:bg-slate-900/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
+            <LoadingSpinner size={32} text={t("loading_calendar")} />
           </div>
         )}
         
@@ -224,25 +229,25 @@ export function CalendarView() {
                   setCurrentDate(new Date(e.target.value));
                 }
               }}
-              className="px-2 py-1.5 text-[13px] font-medium text-[#212121] dark:text-slate-200 bg-white dark:bg-slate-800 border border-[#E0E0E0] dark:border-slate-700 hover:border-[#1E5FA5] rounded transition-colors focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] cursor-pointer cursor-text color-scheme-light dark:color-scheme-dark"
-              title="Chọn một ngày bất kỳ"
+              className="px-2 py-1.5 text-[13px] font-medium text-[#212121] dark:text-slate-200 bg-white dark:bg-slate-800 border border-[#E0E0E0] dark:border-slate-700 hover:border-[#1E5FA5] rounded transition-colors focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50 cursor-pointer cursor-text color-scheme-light dark:color-scheme-dark"
+              title={t("choose_any_day")}
             />
             <button 
               onClick={() => setCurrentDate(new Date())}
-              className="px-3 py-1.5 text-[13px] font-bold text-[#757575] dark:text-slate-300 bg-white dark:bg-slate-800 border border-[#E0E0E0] dark:border-slate-700 hover:bg-[#F5F5F5] dark:hover:bg-slate-700 hover:text-[#212121] dark:hover:text-white rounded transition-colors"
+              className="px-3 py-1.5 text-[13px] font-bold text-[#757575] dark:text-slate-300 bg-white dark:bg-slate-800 border border-[#E0E0E0] dark:border-slate-700 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-700 hover:text-[#212121] dark:text-slate-100 dark:hover:text-white rounded transition-colors"
             >
               Hôm nay
             </button>
             <div className="w-px h-6 bg-[#E0E0E0] dark:bg-slate-700 mx-1"></div>
             <button 
               onClick={() => setCurrentDate(addDays(currentDate, -7))}
-              className="p-1.5 text-[#757575] dark:text-slate-400 border border-[#E0E0E0] dark:border-slate-700 hover:bg-[#F5F5F5] dark:hover:bg-slate-700 hover:text-[#212121] dark:hover:text-white rounded transition-colors"
+              className="p-1.5 text-[#757575] dark:text-slate-400 border border-[#E0E0E0] dark:border-slate-700 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-700 hover:text-[#212121] dark:text-slate-100 dark:hover:text-white rounded transition-colors"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setCurrentDate(addDays(currentDate, 7))}
-              className="p-1.5 text-[#757575] dark:text-slate-400 border border-[#E0E0E0] dark:border-slate-700 hover:bg-[#F5F5F5] dark:hover:bg-slate-700 hover:text-[#212121] dark:hover:text-white rounded transition-colors"
+              className="p-1.5 text-[#757575] dark:text-slate-400 border border-[#E0E0E0] dark:border-slate-700 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-700 hover:text-[#212121] dark:text-slate-100 dark:hover:text-white rounded transition-colors"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -251,7 +256,7 @@ export function CalendarView() {
 
         {/* Calendar Grid */}
         <div className="flex-1 overflow-auto bg-[#F5F5F5] dark:bg-slate-950 relative p-4 transition-colors duration-300">
-          <div className="min-w-[800px] bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded-lg overflow-hidden shadow-sm">
+          <div className="min-w-[800px] bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded-lg overflow-hidden shadow-sm dark:shadow-slate-900/50">
             
             {/* Days Header Row */}
             <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-[#E0E0E0] dark:border-slate-800 bg-[#FAFAFA] dark:bg-slate-800/50">
@@ -261,7 +266,7 @@ export function CalendarView() {
               {DAYS.map((d, i) => {
                 const isToday = isSameDay(d.fullDate, new Date());
                 return (
-                  <div key={i} className={`p-3 border-r border-[#E0E0E0] dark:border-slate-800 text-center ${isToday ? 'bg-[#D6E4F7]/30 dark:bg-blue-900/20' : ''}`}>
+                  <div key={i} className={`p-3 border-r border-[#E0E0E0] dark:border-slate-800 text-center ${isToday ? 'bg-[#D6E4F7] dark:bg-blue-900/30/30 dark:bg-blue-900/20' : ''}`}>
                     <div className={`text-[14px] font-bold ${isToday ? 'text-[#1E5FA5] dark:text-blue-400' : 'text-[#212121] dark:text-slate-200'}`}>{d.name}</div>
                     <div className={`text-[12px] mt-0.5 ${isToday ? 'text-[#1E5FA5] dark:text-blue-400 font-semibold' : 'text-[#757575] dark:text-slate-400'}`}>{d.date}</div>
                   </div>
@@ -286,14 +291,14 @@ export function CalendarView() {
                     let content = null;
 
                     if (!slot) {
-                      cellClasses += "bg-white dark:bg-slate-900 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 cursor-pointer hover:scale-[1.02] hover:z-10 hover:shadow-md";
+                      cellClasses += "bg-white dark:bg-slate-900 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-800 cursor-pointer hover:scale-[1.02] hover:z-10 hover:shadow-md dark:shadow-slate-900/50";
                     } else if (slot.type === "locked") {
-                      cellClasses += "bg-[#F5F5F5] dark:bg-slate-800/50 cursor-not-allowed";
+                      cellClasses += "bg-red-50 dark:bg-red-900/10 cursor-not-allowed";
                       if (slot.duration) {
                         content = (
-                          <div className="w-full h-full flex items-center justify-center flex-col opacity-60 text-[#757575] dark:text-slate-400">
+                          <div className="w-full h-full flex items-center justify-center flex-col text-red-500 dark:text-red-400">
                             <Lock className="w-4 h-4 mb-1" />
-                            <span className="text-[10px] font-medium">Đã đặt</span>
+                            <span className="text-[10px] font-bold">{t("booked")}</span>
                           </div>
                         );
                       }
@@ -304,7 +309,7 @@ export function CalendarView() {
                           <div className="w-full h-full p-1 overflow-hidden">
                             <div className="text-[12px] font-bold text-[#F57F17] dark:text-yellow-500 line-clamp-1 leading-tight">{slot.title}</div>
                             <div className="text-[10px] text-[#F57F17] dark:text-yellow-600 mt-1 flex items-center gap-1">
-                              <Info className="w-3 h-3" /> Chờ duyệt
+                              <Info className="w-3 h-3" /> {t("pending_approval")}
                             </div>
                           </div>
                         );
@@ -315,7 +320,7 @@ export function CalendarView() {
                         content = (
                           <div className="w-full h-full p-1 overflow-hidden">
                             <div className="text-[12px] font-bold text-[#1E5FA5] dark:text-blue-400 line-clamp-1 leading-tight">{slot.title}</div>
-                            <div className="text-[10px] text-[#1E5FA5] dark:text-blue-500 mt-1 font-medium">Lịch của bạn</div>
+                            <div className="text-[10px] text-[#1E5FA5] dark:text-blue-500 mt-1 font-medium">{t("your_schedule")}</div>
                           </div>
                         );
                       }
@@ -349,100 +354,101 @@ export function CalendarView() {
       {/* Booking Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#FAFAFA]">
-              <h3 className="font-bold text-[#212121] text-[16px]">Đặt phòng / Thiết bị</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] hover:bg-[#E0E0E0] rounded transition-colors">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+              <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{t("book_room_device")}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleCreateBooking} className="p-6 space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Mục đích sử dụng <span className="text-red-500">*</span></label>
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">Mục đích sử dụng <span className="text-red-500">*</span></label>
                 <input 
                   required
                   type="text" 
                   value={formData.purpose}
                   onChange={e => setFormData({...formData, purpose: e.target.value})}
-                  placeholder="VD: Thực hành Hóa vô cơ..." 
-                  className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] focus:ring-1 focus:ring-[#1E5FA5]"
+                  placeholder={t("ex_purpose")} 
+                  className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
                   disabled={isSubmitting}
                 />
               </div>
               
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Chọn phòng Lab <span className="text-red-500">*</span></label>
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">Chọn phòng Lab <span className="text-red-500">*</span></label>
                 <select 
                   required
                   value={formData.room_id}
                   onChange={e => setFormData({...formData, room_id: e.target.value})}
-                  className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] focus:ring-1 focus:ring-[#1E5FA5]"
+                  className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
                   disabled={isSubmitting}
                 >
-                  <option value="">-- Chọn phòng --</option>
+                  <option value="">{t("select_room")}</option>
                   {rooms.map(r => (
-                    <option key={r.id} value={r.id}>{r.name} (Sức chứa: {r.capacity})</option>
+                    <option key={r.id} value={r.id}>{r.name} ({t("capacity")}: {r.capacity})</option>
                   ))}
                 </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[13px] font-medium text-[#757575] mb-1">Ngày <span className="text-red-500">*</span></label>
+                  <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">Ngày <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="date" 
                     value={formData.date}
                     onChange={e => setFormData({...formData, date: e.target.value})}
-                    className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                    className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
                     disabled={isSubmitting}
+                    min={format(new Date(), "yyyy-MM-dd")}
                   />
                 </div>
                 <div>
-                  <label className="block text-[13px] font-medium text-[#757575] mb-1">Giờ bắt đầu <span className="text-red-500">*</span></label>
+                  <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">Giờ bắt đầu <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="time" 
                     value={formData.startTime}
                     onChange={e => setFormData({...formData, startTime: e.target.value})}
-                    className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                    className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
                     disabled={isSubmitting}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Thời lượng (Giờ) <span className="text-red-500">*</span></label>
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">Thời lượng (Giờ) <span className="text-red-500">*</span></label>
                 <select 
                   value={formData.duration}
                   onChange={e => setFormData({...formData, duration: e.target.value})}
-                  className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                  className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
                   disabled={isSubmitting}
                 >
-                  <option value="1">1 giờ</option>
-                  <option value="2">2 giờ</option>
-                  <option value="3">3 giờ</option>
-                  <option value="4">4 giờ</option>
-                  <option value="5">5 giờ</option>
+                  <option value="1">{t("hour_1")}</option>
+                  <option value="2">{t("hour_2")}</option>
+                  <option value="3">{t("hour_3")}</option>
+                  <option value="4">{t("hour_4")}</option>
+                  <option value="5">{t("hour_5")}</option>
                 </select>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]">
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
                 <button 
                   type="button" 
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-[14px] font-medium text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors"
+                  className="px-4 py-2 text-[14px] font-medium text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors"
                   disabled={isSubmitting}
                 >
                   Hủy
                 </button>
                 <button 
                   type="submit" 
-                  className="px-4 py-2 text-[14px] font-bold text-white bg-[#1E5FA5] hover:bg-[#154a85] rounded-md transition-colors flex items-center gap-2"
+                  className="px-4 py-2 text-[14px] font-bold text-white bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 rounded-md transition-colors flex items-center gap-2"
                   disabled={isSubmitting}
                 >
                   {isSubmitting && <LoadingSpinner size={16} className="p-0 text-white" />} 
-                  {isSubmitting ? "Đang xử lý..." : "Xác nhận đặt"}
+                  {isSubmitting ? t("processing") : t("confirm_booking")}
                 </button>
               </div>
             </form>

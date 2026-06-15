@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Search, Edit2, Trash2, AlertCircle, RefreshCw, ShieldAlert, CheckCircle2, AlertTriangle, FileText, FileClock } from "lucide-react";
 import { equipmentService, roomService } from "../../services";
 import { format } from "date-fns";
@@ -8,22 +9,24 @@ import { CommentSection } from "../../components/common/CommentSection";
 import { DatabaseBackup, MessageSquare } from "lucide-react";
 
 function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+
   const getBadgeStyle = (status: string) => {
     switch (status) {
-      case 'AVAILABLE': return 'bg-[#E8F5E9] text-[#2E7D32]'; // Khả dụng
-      case 'IN_USE': return 'bg-[#D6E4F7] text-[#1E5FA5]'; // Đang dùng
-      case 'MAINTENANCE': return 'bg-[#FFF3E0] text-[#E65100]'; // Bảo trì
-      case 'BROKEN': return 'bg-[#FDEDED] text-[#C62828]'; // Hỏng
-      default: return 'bg-[#F5F5F5] text-[#757575]';
+      case 'AVAILABLE': return 'bg-[#E8F5E9] dark:bg-green-900/30 text-[#2E7D32]'; // Khả dụng
+      case 'IN_USE': return 'bg-[#D6E4F7] dark:bg-blue-900/30 text-[#1E5FA5] dark:text-blue-400'; // Đang dùng
+      case 'MAINTENANCE': return 'bg-[#FFF3E0] dark:bg-orange-900/30 text-[#E65100]'; // Bảo trì
+      case 'BROKEN': return 'bg-[#FDEDED] dark:bg-red-900/30 text-[#C62828]'; // Hỏng
+      default: return 'bg-[#F5F5F5] dark:bg-slate-800/50 text-[#757575] dark:text-slate-400';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'AVAILABLE': return 'Khả dụng';
-      case 'IN_USE': return 'Đang dùng';
-      case 'MAINTENANCE': return 'Bảo trì';
-      case 'BROKEN': return 'Hỏng hóc';
+      case 'AVAILABLE': return t('status_available');
+      case 'IN_USE': return t('status_in_use');
+      case 'MAINTENANCE': return t('status_maintenance');
+      case 'BROKEN': return t('status_broken');
       default: return status;
     }
   };
@@ -36,6 +39,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function DeviceManagement() {
+  const { t } = useTranslation();
+
   const [devices, setDevices] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -62,8 +67,9 @@ export function DeviceManagement() {
     try {
       const res = await equipmentService.getAll();
       setDevices(res.data || []);
-    } catch {
-      setFetchError("Lỗi máy chủ (500). Không thể tải danh sách thiết bị.");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("load_devices_error");
+      setFetchError(Array.isArray(msg) ? msg[0] : msg);
       setDevices([]);
     } finally {
       setIsLoading(false);
@@ -91,12 +97,13 @@ export function DeviceManagement() {
     e.preventDefault();
     try {
       await equipmentService.create(newDevice);
-      toast.success("Thêm thiết bị thành công!");
+      toast.success(t("add_device_success"));
       setIsAddingDevice(false);
       setNewDevice({ name: "", serial_number: "", room_id: rooms[0]?.id || 0, status: "AVAILABLE" });
       fetchData();
-    } catch {
-      // toast handles it
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("add_device_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -109,11 +116,12 @@ export function DeviceManagement() {
         room_id: editingDevice.room_id,
         status: editingDevice.status
       });
-      toast.success("Cập nhật thiết bị thành công!");
+      toast.success(t("update_device_success"));
       setIsEditingDevice(false);
       fetchData();
-    } catch {
-      // toast handles it
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("update_device_failed");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -122,9 +130,10 @@ export function DeviceManagement() {
       try {
         await equipmentService.delete(deleteConfirmId.toString());
         setDevices(devices.filter(d => d.id !== deleteConfirmId));
-        toast.success("Xóa thiết bị thành công!");
-      } catch (error) {
-        // apiClient.ts sẽ hiển thị toast lỗi chung
+        toast.success(t("delete_device_success"));
+      } catch (error: any) {
+        const msg = error.response?.data?.message || t("delete_device_failed");
+        toast.error(Array.isArray(msg) ? msg[0] : msg);
       }
       setDeleteConfirmId(null);
     }
@@ -148,76 +157,76 @@ export function DeviceManagement() {
       {/* Header + Stats */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-[24px] font-bold text-[#212121]">Quản lý Thiết bị</h1>
+          <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("manage_devices")}</h1>
           <button
-            className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]"
+            className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]"
             onClick={openAddModal}
           >
             <Plus className="w-4 h-4" />
-            Thêm thiết bị mới
+            {t("add_new_device")}
           </button>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatMini label="Tổng thiết bị" value={stats.total} icon={<FileText className="w-5 h-5" />} color="text-[#1E5FA5]" />
-          <StatMini label="Khả dụng" value={stats.available} icon={<CheckCircle2 className="w-5 h-5" />} color="text-[#2E7D32]" />
-          <StatMini label="Đang dùng" value={stats.inUse} icon={<FileClock className="w-5 h-5" />} color="text-[#1E5FA5]" />
-          <StatMini label="Bảo trì" value={stats.maintenance} icon={<AlertTriangle className="w-5 h-5" />} color="text-[#E65100]" />
-          <StatMini label="Hỏng hóc" value={stats.broken} icon={<ShieldAlert className="w-5 h-5" />} color="text-[#C62828]" />
+          <StatMini label={t("total_devices")} value={stats.total} icon={<FileText className="w-5 h-5" />} color="text-[#1E5FA5] dark:text-blue-400" />
+          <StatMini label={t("status_available")} value={stats.available} icon={<CheckCircle2 className="w-5 h-5" />} color="text-[#2E7D32]" />
+          <StatMini label={t("status_in_use")} value={stats.inUse} icon={<FileClock className="w-5 h-5" />} color="text-[#1E5FA5] dark:text-blue-400" />
+          <StatMini label={t("status_maintenance")} value={stats.maintenance} icon={<AlertTriangle className="w-5 h-5" />} color="text-[#E65100]" />
+          <StatMini label={t("status_broken")} value={stats.broken} icon={<ShieldAlert className="w-5 h-5" />} color="text-[#C62828]" />
         </div>
       </div>
 
       {/* Error State */}
       {fetchError && (
-        <div className="bg-[#FDEDED] border border-[#C62828] text-[#C62828] p-4 rounded-md flex items-center justify-between">
+        <div className="bg-[#FDEDED] dark:bg-red-900/30 border border-[#C62828] text-[#C62828] p-4 rounded-md flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5" />
             <span className="text-[14px] font-medium">{fetchError}</span>
           </div>
-          <button onClick={fetchData} className="flex items-center gap-1 text-[13px] bg-white px-3 py-1.5 rounded border border-[#C62828] hover:bg-red-50">
-            <RefreshCw className="w-4 h-4" /> Thử lại
+          <button onClick={fetchData} className="flex items-center gap-1 text-[13px] bg-white dark:bg-slate-900 px-3 py-1.5 rounded border border-[#C62828] hover:bg-red-50">
+            <RefreshCw className="w-4 h-4" /> {t("retry")}
           </button>
         </div>
       )}
 
       {/* Table Area */}
-      <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-4 border-b border-[#E0E0E0] bg-[#F5F5F5] flex flex-wrap gap-3 items-center justify-between">
+        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative w-[240px]">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575]" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
               <input 
                 type="text" 
-                placeholder="Tìm tên hoặc mã thiết bị..." 
+                placeholder={t("search_device_placeholder")} 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+                className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
               />
             </div>
           </div>
-          <button onClick={fetchData} className="p-2 text-[#757575] hover:text-[#1E5FA5] hover:bg-white rounded border border-transparent hover:border-[#E0E0E0] transition-colors bg-white">
+          <button onClick={fetchData} className="p-2 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-white dark:bg-slate-900 rounded border border-transparent hover:border-[#E0E0E0] dark:border-slate-800 transition-colors bg-white dark:bg-slate-900">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-white">
-                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575]">ID & Tên thiết bị</th>
-                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575]">Serial Number</th>
-                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575]">Phòng Lab</th>
-                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575]">Trạng thái</th>
-                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575]">Bảo trì lần cuối</th>
-                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] text-right">Hành động</th>
+              <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50">
+                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("device_id_name")}</th>
+                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("serial_number")}</th>
+                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room")}</th>
+                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("status")}</th>
+                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("last_maintenance")}</th>
+                <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-right">{t("action")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
               
               {isLoading && Array.from({ length: 4 }).map((_, i) => (
-                <tr key={`skel-${i}`} className="animate-pulse bg-white">
+                <tr key={`skel-${i}`} className="animate-pulse bg-white dark:bg-slate-900">
                   <td className="px-4 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-32 mb-1"></div></td>
                   <td className="px-4 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-20"></div></td>
                   <td className="px-4 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-24"></div></td>
@@ -228,16 +237,16 @@ export function DeviceManagement() {
               ))}
 
               {!isLoading && filteredDevices.map((dev, i) => (
-                <tr key={i} className="hover:bg-[#F5F5F5] bg-white transition-colors">
+                <tr key={i} className="hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 bg-white dark:bg-slate-900 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="text-[14px] font-medium text-[#212121]">{dev.name}</div>
-                    <div className="text-[12px] text-[#757575]">ID: {dev.id}</div>
+                    <div className="text-[14px] font-medium text-[#212121] dark:text-slate-100">{dev.name}</div>
+                    <div className="text-[12px] text-[#757575] dark:text-slate-400">ID: {dev.id}</div>
                   </td>
-                  <td className="px-4 py-3 text-[14px] text-[#212121] font-mono">{dev.serial_number}</td>
-                  <td className="px-4 py-3 text-[14px] text-[#212121]">{dev.room?.name || 'Chưa xếp phòng'}</td>
+                  <td className="px-4 py-3 text-[14px] text-[#212121] dark:text-slate-100 font-mono">{dev.serial_number}</td>
+                  <td className="px-4 py-3 text-[14px] text-[#212121] dark:text-slate-100">{dev.room?.name || t("no_room_assigned")}</td>
                   <td className="px-4 py-3"><StatusBadge status={dev.status} /></td>
-                  <td className="px-4 py-3 text-[14px] text-[#212121]">
-                    {dev.last_maintenance ? format(new Date(dev.last_maintenance), "dd/MM/yyyy") : "Chưa bảo trì"}
+                  <td className="px-4 py-3 text-[14px] text-[#212121] dark:text-slate-100">
+                    {dev.last_maintenance ? format(new Date(dev.last_maintenance), "dd/MM/yyyy") : t("never_maintained")}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
@@ -245,7 +254,7 @@ export function DeviceManagement() {
                         e.stopPropagation();
                         setSelectedDevice(dev);
                         setIsDetailModalOpen(true);
-                      }} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded" title="Bình luận & Chi tiết">
+                      }} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-[#D6E4F7] dark:bg-blue-900/30 rounded" title={t("comments_details")}>
                         <MessageSquare className="w-4 h-4" />
                       </button>
                       <button onClick={(e) => { 
@@ -253,13 +262,13 @@ export function DeviceManagement() {
                         setEditingDevice({ id: dev.id, name: dev.name, serial_number: dev.serial_number, room_id: dev.room_id || 0, status: dev.status }); 
                         fetchRooms(); 
                         setIsEditingDevice(true); 
-                      }} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded" title="Sửa">
+                      }} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-[#D6E4F7] dark:bg-blue-900/30 rounded" title={t("edit")}>
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={(e) => {
                         e.stopPropagation();
                         setDeleteConfirmId(dev.id);
-                      }} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded" title="Xóa">
+                      }} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded" title={t("delete")}>
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -269,10 +278,10 @@ export function DeviceManagement() {
 
               {!isLoading && filteredDevices.length === 0 && !fetchError && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#757575]">
+                  <td colSpan={6} className="py-12 text-center text-[#757575] dark:text-slate-400">
                     <DatabaseBackup className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
-                    <p className="mb-4">Chưa có thiết bị nào</p>
-                    <button onClick={openAddModal} className="px-4 py-2 bg-[#1E5FA5] text-white rounded-md text-[14px]">Thêm thiết bị ngay</button>
+                    <p className="mb-4">{t("no_devices_found")}</p>
+                    <button onClick={openAddModal} className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 text-white rounded-md text-[14px]">{t("add_device_now")}</button>
                   </td>
                 </tr>
               )}
@@ -284,15 +293,15 @@ export function DeviceManagement() {
       {/* Detail & Comment Modal */}
       {isDetailModalOpen && selectedDevice && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F5F5F5]">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#F5F5F5] dark:bg-slate-800/50">
               <div>
-                <h2 className="text-[20px] font-bold text-[#212121]">Chi tiết thiết bị #{selectedDevice.id}</h2>
-                <p className="text-[14px] text-[#757575] mt-1">{selectedDevice.name}</p>
+                <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100">{t("device_details")} #{selectedDevice.id}</h2>
+                <p className="text-[14px] text-[#757575] dark:text-slate-400 mt-1">{selectedDevice.name}</p>
               </div>
               <button 
                 onClick={() => setIsDetailModalOpen(false)}
-                className="text-[#757575] hover:text-[#212121] p-2 bg-white rounded-full"
+                className="text-[#757575] dark:text-slate-400 hover:text-[#212121] dark:text-slate-100 p-2 bg-white dark:bg-slate-900 rounded-full"
               >
                 ✕
               </button>
@@ -302,26 +311,26 @@ export function DeviceManagement() {
               <div className="space-y-4 mb-8">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[13px] text-[#757575]">Số Serial:</span>
-                    <p className="text-[14px] font-medium text-[#212121] font-mono">{selectedDevice.serial_number}</p>
+                    <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("serial_num_label")}</span>
+                    <p className="text-[14px] font-medium text-[#212121] dark:text-slate-100 font-mono">{selectedDevice.serial_number}</p>
                   </div>
                   <div>
-                    <span className="text-[13px] text-[#757575]">Trạng thái:</span>
+                    <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("status_label")}</span>
                     <div><StatusBadge status={selectedDevice.status} /></div>
                   </div>
                   <div>
-                    <span className="text-[13px] text-[#757575]">Phòng Lab:</span>
-                    <p className="text-[14px] font-medium text-[#212121]">{selectedDevice.room?.name || 'Chưa xếp phòng'}</p>
+                    <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("lab_room_label")}</span>
+                    <p className="text-[14px] font-medium text-[#212121] dark:text-slate-100">{selectedDevice.room?.name || t("no_room_assigned")}</p>
                   </div>
                   <div>
-                    <span className="text-[13px] text-[#757575]">Ngày thêm:</span>
-                    <p className="text-[14px] font-medium text-[#212121]">{format(new Date(selectedDevice.created_at), "dd/MM/yyyy")}</p>
+                    <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("date_added_label")}</span>
+                    <p className="text-[14px] font-medium text-[#212121] dark:text-slate-100">{format(new Date(selectedDevice.created_at), "dd/MM/yyyy")}</p>
                   </div>
                 </div>
               </div>
 
               {/* Tích hợp Component Comment */}
-              <div className="border-t border-[#E0E0E0] pt-6">
+              <div className="border-t border-[#E0E0E0] dark:border-slate-800 pt-6">
                 <CommentSection
                   entityType="equipment"
                   entityId={selectedDevice.id}
@@ -335,9 +344,9 @@ export function DeviceManagement() {
 
       <ConfirmModal
         isOpen={deleteConfirmId !== null}
-        title="Xóa thiết bị"
-        message="Bạn có chắc chắn muốn xóa thiết bị này không? Hành động này không thể hoàn tác."
-        confirmText="Xóa thiết bị"
+        title={t("delete_device")}
+        message={t("delete_device_confirm")}
+        confirmText={t("delete_device")}
         isDestructive={true}
         onConfirm={executeDelete}
         onCancel={() => setDeleteConfirmId(null)}
@@ -345,28 +354,28 @@ export function DeviceManagement() {
 
       {isAddingDevice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Thêm thiết bị mới</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("add_new_device")}</h2>
             <form onSubmit={handleAddDevice} className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên thiết bị</label>
-                <input required type="text" value={newDevice.name} onChange={e => setNewDevice({...newDevice, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("device_name")}</label>
+                <input required type="text" value={newDevice.name} onChange={e => setNewDevice({...newDevice, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Số Serial</label>
-                <input required type="text" value={newDevice.serial_number} onChange={e => setNewDevice({...newDevice, serial_number: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("serial_number_label")}</label>
+                <input required type="text" value={newDevice.serial_number} onChange={e => setNewDevice({...newDevice, serial_number: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Phòng Lab</label>
-                <select value={newDevice.room_id} onChange={e => setNewDevice({...newDevice, room_id: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("lab_room")}</label>
+                <select value={newDevice.room_id} onChange={e => setNewDevice({...newDevice, room_id: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500">
                   {rooms.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsAddingDevice(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Lưu thiết bị</button>
+                <button type="button" onClick={() => setIsAddingDevice(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors">{t("save_device")}</button>
               </div>
             </form>
           </div>
@@ -375,29 +384,29 @@ export function DeviceManagement() {
 
       {isEditingDevice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
-            <h2 className="text-[20px] font-bold text-[#212121] mb-4">Sửa thông tin thiết bị</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full max-w-md p-6">
+            <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("edit_device_info")}</h2>
             <form onSubmit={handleUpdateDevice} className="space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên thiết bị</label>
-                <input required type="text" value={editingDevice.name} onChange={e => setEditingDevice({...editingDevice, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("device_name")}</label>
+                <input required type="text" value={editingDevice.name} onChange={e => setEditingDevice({...editingDevice, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Số Serial</label>
-                <input required type="text" value={editingDevice.serial_number} onChange={e => setEditingDevice({...editingDevice, serial_number: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("serial_number_label")}</label>
+                <input required type="text" value={editingDevice.serial_number} onChange={e => setEditingDevice({...editingDevice, serial_number: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Phòng Lab</label>
-                <select value={editingDevice.room_id} onChange={e => setEditingDevice({...editingDevice, room_id: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
-                  <option value={0}>Không xếp phòng</option>
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("lab_room")}</label>
+                <select value={editingDevice.room_id} onChange={e => setEditingDevice({...editingDevice, room_id: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500">
+                  <option value={0}>{t("no_room_assigned_option")}</option>
                   {rooms.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Trạng thái</label>
-                <select value={editingDevice.status} onChange={e => setEditingDevice({...editingDevice, status: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md focus:outline-none focus:border-[#1E5FA5]">
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("status")}</label>
+                <select value={editingDevice.status} onChange={e => setEditingDevice({...editingDevice, status: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500">
                   <option value="AVAILABLE">Khả dụng</option>
                   <option value="IN_USE">Đang dùng</option>
                   <option value="MAINTENANCE">Bảo trì</option>
@@ -405,8 +414,8 @@ export function DeviceManagement() {
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsEditingDevice(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors">Cập nhật</button>
+                <button type="button" onClick={() => setIsEditingDevice(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors">{t("update")}</button>
               </div>
             </form>
           </div>
@@ -418,12 +427,12 @@ export function DeviceManagement() {
 
 function StatMini({ label, value, icon, color }: any) {
   return (
-    <div className="bg-white p-4 rounded-xl border border-[#E0E0E0] shadow-sm flex items-center justify-between">
+    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-[#E0E0E0] dark:border-slate-800 shadow-sm dark:shadow-slate-900/50 flex items-center justify-between">
       <div>
-        <div className="text-[12px] text-[#757575] font-medium mb-1">{label}</div>
-        <div className={`text-[20px] font-bold text-[#212121]`}>{value}</div>
+        <div className="text-[12px] text-[#757575] dark:text-slate-400 font-medium mb-1">{label}</div>
+        <div className={`text-[20px] font-bold text-[#212121] dark:text-slate-100`}>{value}</div>
       </div>
-      <div className={`p-2 rounded-md bg-[#F5F5F5] ${color}`}>
+      <div className={`p-2 rounded-md bg-[#F5F5F5] dark:bg-slate-800/50 ${color}`}>
         {icon}
       </div>
     </div>

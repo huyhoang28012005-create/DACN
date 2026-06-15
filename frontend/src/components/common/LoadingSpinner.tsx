@@ -9,8 +9,8 @@ interface LoadingSpinnerProps {
 export function LoadingSpinner({ size = 24, className = "", text }: LoadingSpinnerProps) {
   return (
     <div className={`flex flex-col items-center justify-center p-4 ${className}`}>
-      <Loader2 className="animate-spin text-[#1E5FA5]" size={size} />
-      {text && <p className="mt-2 text-[14px] text-[#757575] font-medium animate-pulse">{text}</p>}
+      <Loader2 className="animate-spin text-[#1E5FA5] dark:text-blue-400" size={size} />
+      {text && <p className="mt-2 text-[14px] text-[#757575] dark:text-slate-400 font-medium animate-pulse">{text}</p>}
     </div>
   );
 }

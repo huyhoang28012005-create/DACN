@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, Check, X, CheckSquare, RefreshCw, CalendarX } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Search, Check, X, CheckSquare, RefreshCw, CalendarX, Download } from "lucide-react";
 import { bookingService } from "../../services";
 import { format } from "date-fns";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
@@ -7,6 +8,8 @@ import { toast } from "react-hot-toast";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
 
 export function Approvals() {
+  const { t } = useTranslation();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("PENDING");
   const [requests, setRequests] = useState<any[]>([]);
@@ -22,8 +25,9 @@ export function Approvals() {
     try {
       const res = await bookingService.getAll();
       setRequests(res.data || []);
-    } catch (error) {
-      // apiClient.ts đã xử lý toast
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("load_approvals_error");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsLoading(false);
     }
@@ -33,16 +37,17 @@ export function Approvals() {
     try {
       await bookingService.update(id.toString(), { status });
       setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-      toast.success("Cập nhật trạng thái thành công");
-    } catch (error) {
-      // apiClient.ts đã xử lý toast
+      toast.success(t("status_update_success"));
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("status_update_error");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
   const handleApproveAll = () => {
     const pendingReqs = requests.filter(r => r.status === "PENDING");
     if (pendingReqs.length === 0) {
-      toast.error("Không có đơn chờ duyệt");
+      toast.error(t("no_pending_requests"));
       return;
     }
     setConfirmState({ isOpen: true, type: 'APPROVE_ALL' });
@@ -53,10 +58,11 @@ export function Approvals() {
       const pendingReqs = requests.filter(r => r.status === "PENDING");
       try {
         await Promise.all(pendingReqs.map(r => bookingService.update(r.id.toString(), { status: "APPROVED" })));
-        toast.success(`Đã duyệt ${pendingReqs.length} đơn`);
+        toast.success(`${t("approved_n_requests")} ${pendingReqs.length}`);
         fetchData();
-      } catch (error) {
-        // apiClient.ts đã xử lý toast
+      } catch (error: any) {
+        const msg = error.response?.data?.message || t("approve_all_error");
+        toast.error(Array.isArray(msg) ? msg[0] : msg);
       }
     } else if (confirmState.type === 'REJECT' && confirmState.id) {
       handleUpdateStatus(confirmState.id, "REJECTED");
@@ -72,87 +78,126 @@ export function Approvals() {
     return matchStatus && matchSearch;
   });
 
+  const handleExportCSV = () => {
+    if (filteredRequests.length === 0) {
+      toast.error(t("no_data_export"));
+      return;
+    }
+
+    const headers = ["ID", "Tên Sinh Viên", "Email", "Phòng/Thiết bị", "Mục đích", "Ngày", "Giờ bắt đầu", "Giờ kết thúc", "Trạng thái"];
+    
+    const rows = filteredRequests.map(req => {
+      return [
+        req.id,
+        `"${req.user?.name || ''}"`,
+        `"${req.user?.email || ''}"`,
+        `"${req.room?.name || ''}"`,
+        `"${req.purpose || ''}"`,
+        format(new Date(req.start_time), "dd/MM/yyyy"),
+        format(new Date(req.start_time), "HH:mm"),
+        format(new Date(req.end_time), "HH:mm"),
+        req.status
+      ].join(",");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `baocao_datphong_${format(new Date(), "ddMMyyyy")}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Đã xuất báo cáo CSV");
+  };
+
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300">
       <div className="flex justify-between items-center">
-        <h1 className="text-[24px] font-bold text-[#212121]">Duyệt yêu cầu</h1>
+        <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("approve_requests")}</h1>
         <button 
           onClick={handleApproveAll}
-          className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2.5 rounded-md font-medium transition-colors text-[14px]"
+          className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2.5 rounded-md font-medium transition-colors text-[14px]"
         >
-          <CheckSquare className="w-4 h-4" /> Duyệt tất cả
+          <CheckSquare className="w-4 h-4" /> {t("approve_all")}
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-[#E0E0E0] bg-[#F5F5F5] flex justify-between items-center flex-wrap gap-4">
+        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between items-center flex-wrap gap-4">
           <div className="relative w-[320px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575]" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
             <input 
               type="text" 
-              placeholder="Tìm theo người đăng ký hoặc tài nguyên..." 
+              placeholder={t("search_request_placeholder")} 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
             />
           </div>
           <div className="flex gap-2 items-center">
-            <button onClick={fetchData} className="p-2 text-[#757575] hover:text-[#1E5FA5] hover:bg-white rounded border border-transparent hover:border-[#E0E0E0] transition-colors bg-white">
+            <button onClick={fetchData} className="p-2 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-white dark:bg-slate-900 rounded border border-transparent hover:border-[#E0E0E0] dark:border-slate-800 transition-colors bg-white dark:bg-slate-900">
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] text-[#212121] outline-none"
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] text-[#212121] dark:text-slate-100 outline-none"
             >
-              <option value="PENDING">Trạng thái đơn: Chờ duyệt</option>
-              <option value="APPROVED">Trạng thái đơn: Đã duyệt</option>
-              <option value="REJECTED">Trạng thái đơn: Đã từ chối</option>
+              <option value="PENDING">{t("status_filter_pending")}</option>
+              <option value="APPROVED">{t("status_filter_approved")}</option>
+              <option value="REJECTED">{t("status_filter_rejected")}</option>
             </select>
+            <button 
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-[#10B981] hover:bg-[#059669] text-white rounded font-medium text-[14px] transition-colors ml-2"
+            >
+              <Download className="w-4 h-4" /> {t("export_csv")}
+            </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-white">
-                <th className="px-4 py-4 w-12 text-center"><input type="checkbox" className="rounded text-[#1E5FA5] border-[#E0E0E0]" /></th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575]">Người đăng ký</th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575]">Phòng / Thiết bị</th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575]">Mục đích</th>
-                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575]">Thời gian yêu cầu</th>
-                {statusFilter === "PENDING" && <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] text-center w-32">Hành động</th>}
+              <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50">
+                <th className="px-4 py-4 w-12 text-center"><input type="checkbox" className="rounded text-[#1E5FA5] dark:text-blue-400 border-[#E0E0E0] dark:border-slate-800" /></th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("requester")}</th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("room_device")}</th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("purpose")}</th>
+                <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("request_time")}</th>
+                {statusFilter === "PENDING" && <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-center w-32">{t("action")}</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="py-12">
-                    <LoadingSpinner text="Đang tải danh sách đơn..." />
+                    <LoadingSpinner text={t("loading_requests")} />
                   </td>
                 </tr>
               ) : filteredRequests.map((req) => (
-                <tr key={req.id} className="hover:bg-[#F5F5F5] bg-white transition-colors">
-                  <td className="px-4 py-4 text-center"><input type="checkbox" className="rounded text-[#1E5FA5] border-[#E0E0E0]" /></td>
+                <tr key={req.id} className="hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 bg-white dark:bg-slate-900 transition-colors">
+                  <td className="px-4 py-4 text-center"><input type="checkbox" className="rounded text-[#1E5FA5] dark:text-blue-400 border-[#E0E0E0] dark:border-slate-800" /></td>
                   <td className="px-4 py-4">
-                    <div className="text-[14px] font-bold text-[#212121]">{req.user?.name}</div>
-                    <div className="text-[12px] text-[#757575]">{req.user?.email}</div>
+                    <div className="text-[14px] font-bold text-[#212121] dark:text-slate-100">{req.user?.name}</div>
+                    <div className="text-[12px] text-[#757575] dark:text-slate-400">{req.user?.email}</div>
                   </td>
-                  <td className="px-4 py-4 text-[14px] text-[#212121] font-medium">{req.room?.name || 'Không có phòng'}</td>
-                  <td className="px-4 py-4 text-[14px] text-[#212121]">{req.purpose}</td>
+                  <td className="px-4 py-4 text-[14px] text-[#212121] dark:text-slate-100 font-medium">{req.room?.name || t('no_room')}</td>
+                  <td className="px-4 py-4 text-[14px] text-[#212121] dark:text-slate-100">{req.purpose}</td>
                   <td className="px-4 py-4">
-                    <div className="text-[14px] text-[#212121] font-medium">{format(new Date(req.start_time), "dd/MM/yyyy")}</div>
-                    <div className="text-[12px] text-[#757575]">{format(new Date(req.start_time), "HH:mm")} - {format(new Date(req.end_time), "HH:mm")}</div>
+                    <div className="text-[14px] text-[#212121] dark:text-slate-100 font-medium">{format(new Date(req.start_time), "dd/MM/yyyy")}</div>
+                    <div className="text-[12px] text-[#757575] dark:text-slate-400">{format(new Date(req.start_time), "HH:mm")} - {format(new Date(req.end_time), "HH:mm")}</div>
                   </td>
                   {statusFilter === "PENDING" && (
                     <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => handleUpdateStatus(req.id, "APPROVED")} className="p-1.5 bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#C8E6C9] rounded transition-colors" title="Phê duyệt">
+                        <button onClick={() => handleUpdateStatus(req.id, "APPROVED")} className="p-1.5 bg-[#E8F5E9] dark:bg-green-900/30 text-[#2E7D32] hover:bg-[#C8E6C9] rounded transition-colors" title={t("approve")}>
                           <Check className="w-4 h-4" />
                         </button>
-                        <button onClick={() => setConfirmState({ isOpen: true, type: 'REJECT', id: req.id })} className="p-1.5 bg-[#FDEDED] text-[#C62828] hover:bg-[#FFCDD2] rounded transition-colors" title="Từ chối">
+                        <button onClick={() => setConfirmState({ isOpen: true, type: 'REJECT', id: req.id })} className="p-1.5 bg-[#FDEDED] dark:bg-red-900/30 text-[#C62828] hover:bg-[#FFCDD2] rounded transition-colors" title={t("reject")}>
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -162,9 +207,9 @@ export function Approvals() {
               ))}
               {!isLoading && filteredRequests.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-[#757575]">
+                  <td colSpan={6} className="py-12 text-center text-[#757575] dark:text-slate-400">
                     <CalendarX className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
-                    <p>Không có yêu cầu đặt lịch nào</p>
+                    <p>{t("no_booking_requests")}</p>
                   </td>
                 </tr>
               )}
@@ -175,11 +220,11 @@ export function Approvals() {
 
       <ConfirmModal
         isOpen={confirmState.isOpen}
-        title={confirmState.type === 'APPROVE_ALL' ? "Duyệt tất cả" : "Từ chối yêu cầu"}
+        title={confirmState.type === 'APPROVE_ALL' ? t("approve_all") : t("reject_request")}
         message={confirmState.type === 'APPROVE_ALL' 
-          ? "Bạn có chắc chắn muốn phê duyệt tất cả các đơn đang chờ duyệt không?" 
-          : "Bạn có chắc chắn muốn từ chối yêu cầu đặt phòng này?"}
-        confirmText={confirmState.type === 'APPROVE_ALL' ? "Duyệt tất cả" : "Từ chối"}
+          ? t("approve_all_confirm") 
+          : t("reject_request_confirm")}
+        confirmText={confirmState.type === 'APPROVE_ALL' ? t("approve_all") : t("reject")}
         isDestructive={confirmState.type === 'REJECT'}
         onConfirm={executeConfirmAction}
         onCancel={() => setConfirmState({ ...confirmState, isOpen: false })}

@@ -10,11 +10,14 @@ interface CommentProps {
   currentUser: any;
 }
 
+import { useTranslation } from 'react-i18next';
+
 export function CommentSection({ entityType, entityId, currentUser }: CommentProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState<{ id: number; name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchComments();
@@ -57,7 +60,7 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa bình luận này?')) return;
+    if (!window.confirm(t('confirm_delete_comment'))) return;
     try {
       await commentService.delete(id);
       fetchComments();
@@ -73,23 +76,23 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
     return (
       <div key={comment.id} className={`flex gap-3 ${isReply ? 'ml-10 mt-3 relative' : 'mt-4'}`}>
         {isReply && (
-          <div className="absolute -left-6 top-0 w-4 h-6 border-l-2 border-b-2 border-[#E0E0E0] rounded-bl-lg" />
+          <div className="absolute -left-6 top-0 w-4 h-6 border-l-2 border-b-2 border-[#E0E0E0] dark:border-slate-800 rounded-bl-lg" />
         )}
         <div className="flex-shrink-0 mt-1">
           {comment.user?.avatar_url ? (
-            <img src={comment.user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover border border-[#E0E0E0]" />
+            <img src={comment.user.avatar_url} alt="avatar" className="w-8 h-8 rounded-full object-cover border border-[#E0E0E0] dark:border-slate-800" />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-[#1E5FA5]/10 flex items-center justify-center text-[#1E5FA5]">
+            <div className="w-8 h-8 rounded-full bg-[#1E5FA5] dark:bg-blue-600/10 flex items-center justify-center text-[#1E5FA5] dark:text-blue-400">
               <UserIcon className="w-4 h-4" />
             </div>
           )}
         </div>
-        <div className="flex-1 min-w-0 bg-[#F5F5F5] rounded-2xl rounded-tl-none p-3 relative group">
+        <div className="flex-1 min-w-0 bg-[#F5F5F5] dark:bg-slate-800/50 rounded-2xl rounded-tl-none p-3 relative group">
           <div className="flex justify-between items-start mb-1">
-            <span className="font-bold text-[13px] text-[#212121]">
-              {comment.user?.name || 'Người dùng'} 
-              {comment.user?.role === 'ADMIN' && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">ADMIN</span>}
-              {comment.user?.role === 'TECHNICIAN' && <span className="ml-2 text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">KỸ THUẬT</span>}
+            <span className="font-bold text-[13px] text-[#212121] dark:text-slate-100">
+              {comment.user?.name || t('user_role')} 
+              {comment.user?.role === 'ADMIN' && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">{t('admin_role')}</span>}
+              {comment.user?.role === 'TECHNICIAN' && <span className="ml-2 text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">{t('technician_role')}</span>}
             </span>
             <span className="text-[11px] text-[#9E9E9E]">
               {format(new Date(comment.created_at), 'HH:mm - dd/MM/yyyy', { locale: vi })}
@@ -101,7 +104,7 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
             {!isReply && (
               <button 
                 onClick={() => setReplyTo({ id: comment.id, name: comment.user?.name })}
-                className="text-[11px] font-bold text-[#757575] hover:text-[#1E5FA5] transition-colors flex items-center gap-1"
+                className="text-[11px] font-bold text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 transition-colors flex items-center gap-1"
               >
                 <CornerDownRight className="w-3 h-3" /> Phản hồi
               </button>
@@ -109,7 +112,7 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
             {canDelete && (
               <button 
                 onClick={() => handleDelete(comment.id)}
-                className="text-[11px] font-bold text-[#757575] hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1"
+                className="text-[11px] font-bold text-[#757575] dark:text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 flex items-center gap-1"
               >
                 <Trash2 className="w-3 h-3" /> Xóa
               </button>
@@ -121,17 +124,17 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
   };
 
   return (
-    <div className="flex flex-col h-full bg-white border-t border-[#E0E0E0]">
-      <div className="p-4 border-b border-[#E0E0E0] bg-[#FAFAFA] flex items-center gap-2">
-        <MessageSquare className="w-4 h-4 text-[#757575]" />
-        <h3 className="font-bold text-[#212121] text-[14px]">Thảo luận ({comments.length + comments.reduce((acc, c) => acc + (c.replies?.length || 0), 0)})</h3>
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-t border-[#E0E0E0] dark:border-slate-800">
+      <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#FAFAFA] dark:bg-slate-800/30 flex items-center gap-2">
+        <MessageSquare className="w-4 h-4 text-[#757575] dark:text-slate-400" />
+        <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[14px]">{t('discussion')} ({comments.length + comments.reduce((acc, c) => acc + (c.replies?.length || 0), 0)})</h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 bg-white">
+      <div className="flex-1 overflow-y-auto p-4 bg-white dark:bg-slate-900">
         {comments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-[#9E9E9E]">
             <MessageSquare className="w-8 h-8 mb-2 opacity-20" />
-            <p className="text-[13px]">Chưa có thảo luận nào</p>
+            <p className="text-[13px]">{t('no_discussion')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -145,21 +148,21 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
         )}
       </div>
 
-      <div className="p-4 border-t border-[#E0E0E0] bg-[#FAFAFA]">
+      <div className="p-4 border-t border-[#E0E0E0] dark:border-slate-800 bg-[#FAFAFA] dark:bg-slate-800/30">
         {replyTo && (
-          <div className="flex items-center justify-between mb-2 px-3 py-1.5 bg-[#E3F2FD] text-[#1E5FA5] rounded-md text-[12px] font-medium border border-[#BBDEFB]">
+          <div className="flex items-center justify-between mb-2 px-3 py-1.5 bg-[#E3F2FD] text-[#1E5FA5] dark:text-blue-400 rounded-md text-[12px] font-medium border border-[#BBDEFB]">
             <span className="flex items-center gap-2">
-              <CornerDownRight className="w-3 h-3" /> Đang trả lời <strong>{replyTo.name}</strong>
+              <CornerDownRight className="w-3 h-3" /> {t('replying_to')} <strong>{replyTo.name}</strong>
             </span>
-            <button onClick={() => setReplyTo(null)} className="hover:text-red-500">Hủy</button>
+            <button onClick={() => setReplyTo(null)} className="hover:text-red-500">{t('cancel')}</button>
           </div>
         )}
         <form onSubmit={handleSubmit} className="flex items-end gap-2 relative">
           <textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            placeholder={replyTo ? `Nhập phản hồi cho ${replyTo.name}...` : "Viết bình luận mới..."}
-            className="flex-1 resize-none bg-white border border-[#E0E0E0] rounded-xl px-4 py-3 text-[13px] focus:outline-none focus:border-[#1E5FA5] focus:ring-1 focus:ring-[#1E5FA5] min-h-[44px] max-h-[120px]"
+            placeholder={replyTo ? `${t("enter_reply_for")}${replyTo.name}...` : t("write_new_comment")}
+            className="flex-1 resize-none bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded-xl px-4 py-3 text-[13px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50 min-h-[44px] max-h-[120px]"
             rows={1}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -171,7 +174,7 @@ export function CommentSection({ entityType, entityId, currentUser }: CommentPro
           <button 
             type="submit" 
             disabled={isLoading || !newComment.trim()}
-            className="w-[44px] h-[44px] flex items-center justify-center bg-[#1E5FA5] text-white rounded-xl hover:bg-[#154a85] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-[44px] h-[44px] flex items-center justify-center bg-[#1E5FA5] dark:bg-blue-600 text-white rounded-xl hover:bg-[#154a85] dark:hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-4 h-4" />
           </button>

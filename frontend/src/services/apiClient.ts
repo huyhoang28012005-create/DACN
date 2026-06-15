@@ -108,17 +108,12 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // Xử lý các lỗi khác
+    // Xử lý các lỗi khác (400, 404, 500 sẽ do từng component tự bắt và hiển thị)
     if (status === 403) {
       toast.error('Bạn không có quyền thực hiện hành động này.');
     } else if (status === 409) {
       const msg = data.message || data.error || 'Tài nguyên đã bị thay đổi bởi một người dùng khác. Vui lòng tải lại dữ liệu.';
       toast.error(Array.isArray(msg) ? msg[0] : msg);
-    } else if (status === 400 || status === 404) {
-      const msg = data.message || data.error || 'Yêu cầu không hợp lệ.';
-      toast.error(Array.isArray(msg) ? msg[0] : msg);
-    } else if (status >= 500) {
-      toast.error('Lỗi hệ thống nội bộ. Vui lòng thử lại sau.');
     }
 
     return Promise.reject(error);

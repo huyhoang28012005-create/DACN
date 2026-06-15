@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Search, Edit2, Trash2, Beaker, ClipboardList, X } from "lucide-react";
 import { chemicalService } from "../../services";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
@@ -6,6 +7,8 @@ import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
 
 export function ChemicalManagement() {
+  const { t } = useTranslation();
+
   const [chemicals, setChemicals] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,8 +30,9 @@ export function ChemicalManagement() {
     try {
       const res = await chemicalService.getAll();
       setChemicals(res.data || []);
-    } catch {
-      toast.error("Lỗi khi tải dữ liệu hóa chất");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("load_chemicals_error");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsLoading(false);
     }
@@ -69,15 +73,16 @@ export function ChemicalManagement() {
       
       if (isEditing) {
         await chemicalService.update(formData.id.toString(), payload);
-        toast.success("Cập nhật hóa chất thành công");
+        toast.success(t("update_chemical_success"));
       } else {
         await chemicalService.create(payload);
-        toast.success("Thêm mới hóa chất thành công");
+        toast.success(t("add_chemical_success"));
       }
       setIsModalOpen(false);
       fetchChemicals();
-    } catch {
-      toast.error(isEditing ? "Cập nhật thất bại" : "Thêm mới thất bại");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || (isEditing ? t("update_chemical_failed") : t("add_chemical_failed"));
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -89,11 +94,12 @@ export function ChemicalManagement() {
         bookingId: usageData.booking_id.toString(),
         amountUsed: Number(usageData.quantity_used)
       });
-      toast.success("Ghi nhận sử dụng thành công!");
+      toast.success(t("record_usage_success"));
       setIsUsageModalOpen(false);
       fetchChemicals();
-    } catch {
-      toast.error("Có lỗi xảy ra hoặc số lượng không đủ");
+    } catch (error: any) {
+      const msg = error.response?.data?.message || t("record_usage_error");
+      toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
   };
 
@@ -101,11 +107,12 @@ export function ChemicalManagement() {
     if (deleteConfirmId) {
       try {
         await chemicalService.delete(deleteConfirmId.toString());
-        toast.success("Xóa hóa chất thành công");
+        toast.success(t("delete_chemical_success"));
         setDeleteConfirmId(null);
         fetchChemicals();
-      } catch {
-        toast.error("Xóa thất bại. Hóa chất này có thể đang có lịch sử sử dụng.");
+      } catch (error: any) {
+        const msg = error.response?.data?.message || t("delete_chemical_failed");
+        toast.error(Array.isArray(msg) ? msg[0] : msg);
       }
     }
   };
@@ -116,67 +123,77 @@ export function ChemicalManagement() {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#E0E0E0] flex flex-col h-full overflow-hidden">
-      <div className="p-4 border-b border-[#E0E0E0] bg-[#F5F5F5] flex justify-between">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex flex-col h-full overflow-hidden">
+      <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between">
         <div className="relative w-[300px]">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575]" />
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
           <input 
             type="text" 
-            placeholder="Tìm theo tên, công thức..." 
+            placeholder={t("search_chemical_placeholder")} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-[#E0E0E0] rounded text-[14px] focus:outline-none focus:border-[#1E5FA5]"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
           />
         </div>
-        <button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
+        <button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
           <Plus className="w-4 h-4" /> Thêm Hóa chất
         </button>
       </div>
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto min-h-[400px]">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#E0E0E0] bg-white sticky top-0">
-              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] w-[20%]">Tên hóa chất</th>
-              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] w-[15%]">Công thức</th>
-              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] w-[15%] text-right">Tồn kho</th>
-              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] w-[15%] text-center">Đơn vị</th>
-              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] w-[15%]">Hạn sử dụng</th>
-              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] text-right">Hành động</th>
+            <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50 sticky top-0">
+              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[20%]">{t("chemical_name")}</th>
+              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%]">{t("formula")}</th>
+              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%] text-right">{t("stock_quantity")}</th>
+              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%] text-center">{t("unit")}</th>
+              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%]">{t("expiration_date")}</th>
+              <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-right">{t("action")}</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#E0E0E0]">
-            {isLoading ? (
-              <tr><td colSpan={6} className="py-12"><LoadingSpinner text="Đang tải dữ liệu..." /></td></tr>
-            ) : filteredChemicals.length === 0 ? (
+          <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
+              {isLoading && Array.from({ length: 4 }).map((_, i) => (
+                <tr key={`skel-${i}`} className="animate-pulse bg-white dark:bg-slate-900">
+                  <td className="px-6 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-32"></div></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-20"></div></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-16 ml-auto"></div></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-12 mx-auto"></div></td>
+                  <td className="px-6 py-4"><div className="h-4 bg-[#E0E0E0] rounded w-24"></div></td>
+                  <td className="px-6 py-4"><div className="h-6 bg-[#E0E0E0] rounded w-20 ml-auto"></div></td>
+                </tr>
+              ))}
+
+              {!isLoading && filteredChemicals.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12 text-center text-[#757575]">
+                <td colSpan={6} className="py-12 text-center text-[#757575] dark:text-slate-400">
                   <Beaker className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
-                  <p>Không tìm thấy hóa chất nào</p>
+                  <p className="mb-4">{t("no_chemicals_found")}</p>
+                  <button onClick={() => { setFormData({ id: 0, name: '', formula: '', quantity_stock: 0, unit: 'ml', expiration_date: '' }); setIsEditing(false); setIsModalOpen(true); }} className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 text-white rounded-md text-[14px]">{t("add_chemical_now")}</button>
                 </td>
               </tr>
-            ) : filteredChemicals.map((c) => {
+              ) : !isLoading && filteredChemicals.map((c) => {
               const isLowStock = c.quantity_stock <= 5;
               return (
-              <tr key={c.id} className="hover:bg-[#F5F5F5] transition-colors">
-                <td className="px-6 py-4 text-[14px] font-bold text-[#1E5FA5]">{c.name}</td>
-                <td className="px-6 py-4 text-[14px] text-[#212121]">{c.formula || '-'}</td>
+              <tr key={c.id} className="hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 transition-colors">
+                <td className="px-6 py-4 text-[14px] font-bold text-[#1E5FA5] dark:text-blue-400">{c.name}</td>
+                <td className="px-6 py-4 text-[14px] text-[#212121] dark:text-slate-100">{c.formula || '-'}</td>
                 <td className="px-6 py-4 text-[14px] text-right">
-                  <span className={`font-semibold ${isLowStock ? 'text-red-500' : 'text-[#212121]'}`}>{c.quantity_stock}</span>
+                  <span className={`font-semibold ${isLowStock ? 'text-red-500' : 'text-[#212121] dark:text-slate-100'}`}>{c.quantity_stock}</span>
                 </td>
-                <td className="px-6 py-4 text-[14px] text-center text-[#757575]">{c.unit}</td>
-                <td className="px-6 py-4 text-[14px] text-[#757575]">
+                <td className="px-6 py-4 text-[14px] text-center text-[#757575] dark:text-slate-400">{c.unit}</td>
+                <td className="px-6 py-4 text-[14px] text-[#757575] dark:text-slate-400">
                   {c.expiration_date ? new Date(c.expiration_date).toLocaleDateString('vi-VN') : '-'}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-1">
-                    <button onClick={() => handleOpenUsageModal(c)} className="p-1.5 text-[#757575] hover:text-[#2E7D32] hover:bg-[#E8F5E9] rounded transition-colors" title="Ghi nhận sử dụng">
+                    <button onClick={() => handleOpenUsageModal(c)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#2E7D32] hover:bg-[#E8F5E9] dark:bg-green-900/30 rounded transition-colors" title={t("record_usage")}>
                       <ClipboardList className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleOpenModal(c)} className="p-1.5 text-[#757575] hover:text-[#1E5FA5] hover:bg-[#D6E4F7] rounded transition-colors" title="Chỉnh sửa">
+                    <button onClick={() => handleOpenModal(c)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-[#D6E4F7] dark:bg-blue-900/30 rounded transition-colors" title={t("edit")}>
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setDeleteConfirmId(c.id)} className="p-1.5 text-[#757575] hover:text-[#C62828] hover:bg-[#FDEDED] rounded transition-colors" title="Xóa">
+                    <button onClick={() => setDeleteConfirmId(c.id)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded transition-colors" title={t("delete")}>
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -189,28 +206,28 @@ export function ChemicalManagement() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="p-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#FAFAFA]">
-              <h3 className="font-bold text-[#212121] text-[16px]">{isEditing ? 'Sửa thông tin hóa chất' : 'Thêm hóa chất mới'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] hover:bg-[#E0E0E0] rounded transition-colors"><X className="w-5 h-5" /></button>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden">
+            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+              <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{isEditing ? t('edit_chemical_info') : t('add_new_chemical')}</h3>
+              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Tên hóa chất <span className="text-red-500">*</span></label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("chemical_name")} <span className="text-red-500">*</span></label>
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Công thức hóa học</label>
-                <input type="text" value={formData.formula} onChange={e => setFormData({...formData, formula: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]" placeholder="Vd: H2SO4" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("chemical_formula_label")}</label>
+                <input type="text" value={formData.formula} onChange={e => setFormData({...formData, formula: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" placeholder="Vd: H2SO4" />
               </div>
               <div className="flex gap-4">
                 <div className="flex-1">
-                  <label className="block text-[13px] font-medium text-[#757575] mb-1">Số lượng tồn <span className="text-red-500">*</span></label>
-                  <input required type="number" step="0.1" value={formData.quantity_stock} onChange={e => setFormData({...formData, quantity_stock: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]" />
+                  <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("quantity_stock_label")} <span className="text-red-500">*</span></label>
+                  <input required type="number" step="0.1" value={formData.quantity_stock} onChange={e => setFormData({...formData, quantity_stock: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
                 </div>
                 <div className="w-1/3">
-                  <label className="block text-[13px] font-medium text-[#757575] mb-1">Đơn vị <span className="text-red-500">*</span></label>
-                  <select required value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]">
+                  <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("unit")} <span className="text-red-500">*</span></label>
+                  <select required value={formData.unit} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]">
                     <option value="ml">ml</option>
                     <option value="l">l</option>
                     <option value="g">g</option>
@@ -219,12 +236,12 @@ export function ChemicalManagement() {
                 </div>
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Hạn sử dụng</label>
-                <input type="date" value={formData.expiration_date} onChange={e => setFormData({...formData, expiration_date: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("expiration_date")}</label>
+                <input type="date" value={formData.expiration_date} onChange={e => setFormData({...formData, expiration_date: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
               </div>
-              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors text-[14px]">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] hover:bg-[#154a85] text-white rounded-md transition-colors text-[14px]">{isEditing ? 'Cập nhật' : 'Thêm mới'}</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors text-[14px]">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors text-[14px]">{isEditing ? t('update') : t('add_new_btn')}</button>
               </div>
             </form>
           </div>
@@ -233,23 +250,23 @@ export function ChemicalManagement() {
 
       {isUsageModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div className="p-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#FAFAFA]">
-              <h3 className="font-bold text-[#212121] text-[16px]">Ghi nhận sử dụng</h3>
-              <button onClick={() => setIsUsageModalOpen(false)} className="p-1.5 text-[#757575] hover:bg-[#E0E0E0] rounded transition-colors"><X className="w-5 h-5" /></button>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-sm overflow-hidden">
+            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+              <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{t('record_usage')}</h3>
+              <button onClick={() => setIsUsageModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleRecordUsage} className="p-6 space-y-4">
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Mã lịch đặt (Booking ID)</label>
-                <input required type="number" value={usageData.booking_id} onChange={e => setUsageData({...usageData, booking_id: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t('booking_id_label')}</label>
+                <input required type="number" value={usageData.booking_id} onChange={e => setUsageData({...usageData, booking_id: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
               </div>
               <div>
-                <label className="block text-[13px] font-medium text-[#757575] mb-1">Số lượng sử dụng <span className="text-red-500">*</span></label>
-                <input required type="number" step="0.1" value={usageData.quantity_used} onChange={e => setUsageData({...usageData, quantity_used: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-md text-[14px]" />
+                <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t('usage_quantity_label')} <span className="text-red-500">*</span></label>
+                <input required type="number" step="0.1" value={usageData.quantity_used} onChange={e => setUsageData({...usageData, quantity_used: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
               </div>
-              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]">
-                <button type="button" onClick={() => setIsUsageModalOpen(false)} className="px-4 py-2 text-[#757575] hover:bg-[#F5F5F5] rounded-md transition-colors text-[14px]">Hủy</button>
-                <button type="submit" className="px-4 py-2 bg-[#2E7D32] hover:bg-[#1B5E20] text-white rounded-md transition-colors text-[14px]">Ghi nhận</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
+                <button type="button" onClick={() => setIsUsageModalOpen(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors text-[14px]">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-[#2E7D32] hover:bg-[#1B5E20] text-white rounded-md transition-colors text-[14px]">{t('record_btn')}</button>
               </div>
             </form>
           </div>
@@ -258,9 +275,9 @@ export function ChemicalManagement() {
 
       <ConfirmModal
         isOpen={deleteConfirmId !== null}
-        title="Xóa hóa chất"
-        message="Bạn có chắc chắn muốn xóa hóa chất này không? Hành động này không thể hoàn tác!"
-        confirmText="Xóa hóa chất"
+        title={t("delete_chemical")}
+        message={t("delete_chemical_confirm")}
+        confirmText={t("delete_chemical")}
         isDestructive={true}
         onConfirm={executeDelete}
         onCancel={() => setDeleteConfirmId(null)}

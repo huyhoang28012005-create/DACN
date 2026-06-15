@@ -13,6 +13,24 @@ Dự án không chỉ dừng lại ở các thao tác CRUD cơ bản mà giải 
 - 🤖 **Zero-cost AI Chatbot (Client-side NLP):** Tích hợp trợ lý ảo điều khiển hệ thống bằng giọng nói/văn bản. Regex NLP Engine chạy độc lập trên trình duyệt giúp độ trễ bằng 0 và không tốn chi phí API.
 - 🚧 **Throttler & Security Headers:** Hệ thống chặn DDoS bằng Rate Limit qua Redis, chống XSS bằng Helmet CSP, chặn BOPLA (Mass Assignment) bằng ValidationPipes.
 
+## 🛡️ Kiến trúc Bảo mật 15 Lớp (Enterprise Security)
+Dự án được xây dựng với tư duy "Security-First", đáp ứng xuất sắc các tiêu chuẩn OWASP:
+1. **Password Hashing:** Bcrypt (10 rounds).
+2. **Password Strength:** Regex bắt buộc độ phức tạp cao.
+3. **CORS Strict Policy:** Khóa chặt tài nguyên từ nguồn lạ.
+4. **Data Validation Pipes:** Chống SQL/NoSQL Injection.
+5. **JWT Authentication:** Xác thực không trạng thái (Stateless).
+6. **Role-based Access Control (RBAC):** Phân quyền nghiêm ngặt cấp Endpoint.
+7. **Rate Limiting (Redis):** Chống DDoS và Brute-force.
+8. **Helmet Security Headers:** Chống Clickjacking & MIME-sniffing.
+9. **Global XSS Sanitizer:** Bộ lọc toàn cục làm sạch HTML độc hại.
+10. **Pessimistic Locking:** Chống Race Condition ở cấp Database.
+11. **Account Lockout:** Đóng băng tài khoản 15 phút sau 5 lần nhập sai.
+12. **Military-grade Encryption (AES-256-GCM):** Mã hóa dữ liệu nhạy cảm trước khi lưu DB.
+13. **Hash-chaining Audit Logs:** Nhật ký không thể chối bỏ (Non-repudiation).
+14. **Ghost Session Rejection:** Check Liveness của JWT theo thời gian thực (Real-time).
+15. **Anti-IDOR Ownership Checks:** Ngăn chặn truy cập chéo tài nguyên trái phép.
+
 ## 🛠️ Technology Stack
 
 - **Backend:** NestJS (TypeScript), Prisma ORM, MySQL 8.0, Redis (Caching & Rate Limit).

@@ -19,14 +19,33 @@ model User {
   is_active        Boolean         @default(true)
   refresh_token    String?         @db.Text
   blacklist_reason String?         @db.Text
+  failed_login_attempts Int        @default(0)
+  locked_until     DateTime?
+  mfa_secret       String?         @db.VarChar(255)
+  is_mfa_enabled   Boolean         @default(false)
   audit_logs       AuditLog[]
   bookings         Booking[]
   check_in_records CheckInRecord[]
   comments         Comment[]
   courses          Course[]
   reports          Report[]
+  notifications    Notification[]
 
   @@map("users")
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  title      String   @db.VarChar(255)
+  message    String   @db.Text
+  type       String   @default("info") @db.VarChar(50)
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "notifications_user_id_fkey")
+  @@map("notifications")
 }
 
 model Course {
@@ -146,6 +165,8 @@ model AuditLog {
   record_id  Int
   user_id    Int?
   details    String?  @db.Text
+  previous_hash String? @db.VarChar(64)
+  current_hash  String? @db.VarChar(64)
   timestamp  DateTime @default(now())
   user       User?    @relation(fields: [user_id], references: [id])
 

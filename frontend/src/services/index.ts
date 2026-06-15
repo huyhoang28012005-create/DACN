@@ -7,6 +7,10 @@ export const authService = {
   login: (data: { email: string; password: string }) =>
     apiClient.post('/api/auth/login', data),
 
+  generateMfa: () => apiClient.post('/api/auth/mfa/generate'),
+  verifyMfa: (data: { userId: number; code: string }) => apiClient.post('/api/auth/mfa/verify', data),
+  disableMfa: () => apiClient.post('/api/auth/mfa/disable'),
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

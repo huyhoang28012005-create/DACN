@@ -74,4 +74,60 @@ export class UsersService {
       where: { id },
     });
   }
+
+  async incrementFailedLogin(id: number) {
+    const user = await this.findById(id);
+    if (!user) return;
+    const newAttempts = user.failed_login_attempts + 1;
+    let lockedUntil = null;
+    if (newAttempts >= 5) {
+      // Khóa 15 phút
+      lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+    }
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        failed_login_attempts: newAttempts,
+        locked_until: lockedUntil,
+      },
+    });
+  }
+
+  async resetFailedLogin(id: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        failed_login_attempts: 0,
+        locked_until: null,
+      },
+    });
+  }
+
+  async updateMfaSecret(id: number, secret: string) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        mfa_secret: secret,
+      },
+    });
+  }
+
+  async enableMfa(id: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        is_mfa_enabled: true,
+      },
+    });
+  }
+
+  async disableMfa(id: number) {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        is_mfa_enabled: false,
+        mfa_secret: null,
+      },
+    });
+  }
 }
