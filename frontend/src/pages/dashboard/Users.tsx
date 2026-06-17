@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Edit2, Plus, Users as UsersIcon, Trash2 } from "lucide-react";
+import { Search, Edit2, Plus, Users as UsersIcon, Trash2, ShieldCheck, UserCheck, GraduationCap, UserX } from "lucide-react";
 import { userService } from "../../services";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { toast } from "react-hot-toast";
+import { StatMini } from "../../components/ui/StatMini";
 
 export function Users() {
   const { t } = useTranslation();
@@ -127,15 +128,33 @@ export function Users() {
     (filterStatus === "ALL" || (filterStatus === "BLACKLIST" && u.is_active === false))
   );
 
+  const stats = useMemo(() => ({
+    total: users.length,
+    admins: users.filter(u => u.role === 'ADMIN' || u.role === 'TECHNICIAN').length,
+    instructors: users.filter(u => u.role === 'LECTURER').length,
+    students: users.filter(u => u.role === 'STUDENT').length,
+    blacklisted: users.filter(u => u.is_active === false).length
+  }), [users]);
+
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center">
-        <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("manage_users")}</h1>
-        <button 
-          onClick={() => setIsAddingUser(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">
-          <Plus className="w-4 h-4" /> {t("add_new_account")}
-        </button>
+    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("manage_users")}</h1>
+          <button 
+            onClick={() => setIsAddingUser(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">
+            <Plus className="w-4 h-4" /> {t("add_new_account")}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <StatMini label={t("total_users", "Tổng tài khoản")} value={stats.total} icon={<UsersIcon className="w-5 h-5" />} color="text-blue-600" bgColor="bg-blue-600" />
+          <StatMini label={t("role_admin", "Admin & Kỹ thuật")} value={stats.admins} icon={<ShieldCheck className="w-5 h-5" />} color="text-purple-600" bgColor="bg-purple-600" />
+          <StatMini label={t("role_instructor", "Giảng viên")} value={stats.instructors} icon={<UserCheck className="w-5 h-5" />} color="text-emerald-600" bgColor="bg-emerald-600" />
+          <StatMini label={t("role_student", "Sinh viên")} value={stats.students} icon={<GraduationCap className="w-5 h-5" />} color="text-orange-500" bgColor="bg-orange-500" />
+          <StatMini label={t("blacklist_list", "Bị chặn")} value={stats.blacklisted} icon={<UserX className="w-5 h-5" />} color="text-red-600" bgColor="bg-red-600" />
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">

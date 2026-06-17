@@ -250,7 +250,7 @@ export class BookingsService {
       // 🛡️ BẢO MẬT: CHẶN USER TỰ DUYỆT ĐƠN (ANTI-HACK STATUS)
       // -----------------------------------------------------------------------
       // Chỉ cho phép hệ thống nhận 'WAITLISTED' hoặc mặc định là 'PENDING'.
-      let finalStatus = 'PENDING';
+      let finalStatus: 'PENDING' | 'WAITLISTED' = 'PENDING';
       if (createBookingDto.status === 'WAITLISTED') {
         finalStatus = 'WAITLISTED';
         

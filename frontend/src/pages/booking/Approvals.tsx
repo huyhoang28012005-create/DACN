@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Check, X, CheckSquare, RefreshCw, CalendarX, Download } from "lucide-react";
+import { Search, Check, X, CheckSquare, RefreshCw, CalendarX, Download, CheckCircle, XCircle, Clock, FileCheck } from "lucide-react";
 import { bookingService } from "../../services";
 import { format } from "date-fns";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { toast } from "react-hot-toast";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
+import { StatMini } from "../../components/ui/StatMini";
 
 export function Approvals() {
   const { t } = useTranslation();
@@ -70,6 +71,13 @@ export function Approvals() {
     setConfirmState({ ...confirmState, isOpen: false });
   };
 
+  const stats = useMemo(() => ({
+    total: requests.length,
+    pending: requests.filter(r => r.status === 'PENDING').length,
+    approved: requests.filter(r => r.status === 'APPROVED').length,
+    rejected: requests.filter(r => r.status === 'REJECTED').length,
+  }), [requests]);
+
   const filteredRequests = requests.filter(r => {
     const matchStatus = r.status === statusFilter;
     const matchSearch = r.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -112,15 +120,24 @@ export function Approvals() {
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300">
-      <div className="flex justify-between items-center">
-        <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("approve_requests")}</h1>
-        <button 
-          onClick={handleApproveAll}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 text-[14px] hover:-translate-y-0.5"
-        >
-          <CheckSquare className="w-4 h-4" /> {t("approve_all")}
-        </button>
+    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("approve_requests")}</h1>
+          <button 
+            onClick={handleApproveAll}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 text-[14px] hover:-translate-y-0.5"
+          >
+            <CheckSquare className="w-4 h-4" /> {t("approve_all")}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatMini label={t("total_requests", "Tổng đơn")} value={stats.total} icon={<FileCheck className="w-5 h-5" />} color="text-blue-600" bgColor="bg-blue-600" />
+          <StatMini label={t("status_filter_pending", "Chờ duyệt")} value={stats.pending} icon={<Clock className="w-5 h-5" />} color="text-orange-500" bgColor="bg-orange-500" />
+          <StatMini label={t("status_filter_approved", "Đã duyệt")} value={stats.approved} icon={<CheckCircle className="w-5 h-5" />} color="text-emerald-600" bgColor="bg-emerald-600" />
+          <StatMini label={t("status_filter_rejected", "Từ chối")} value={stats.rejected} icon={<XCircle className="w-5 h-5" />} color="text-red-600" bgColor="bg-red-600" />
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">

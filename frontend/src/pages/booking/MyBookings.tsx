@@ -71,9 +71,9 @@ export function MyBookings() {
         <h1 className="text-[24px] font-bold text-[#0F172A] dark:text-slate-100 tracking-tight">{t("my_bookings")}</h1>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#E2E8F0] dark:border-slate-800 overflow-hidden">
+      <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between items-center">
+        <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between items-center">
           <div className="relative w-[300px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
             <input 
@@ -81,7 +81,7 @@ export function MyBookings() {
               placeholder={t("search_booking_placeholder")} 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
+              className="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
         </div>
@@ -90,7 +90,7 @@ export function MyBookings() {
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("booking_code")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("purpose")}</th>
@@ -124,7 +124,7 @@ export function MyBookings() {
                   <td className="px-6 py-4">{getStatusBadge(bk.status)}</td>
                   <td className="px-6 py-4 text-right">
                     {bk.status === "PENDING" && (
-                      <button onClick={() => setCancelConfirmId(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#C62828] text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded text-[13px] font-medium transition-colors">
+                      <button onClick={() => setCancelConfirmId(bk.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-200 text-[#C62828] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-[13px] font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm">
                         <XCircle className="w-4 h-4" /> {t("cancel_booking")}
                       </button>
                     )}
@@ -144,7 +144,7 @@ export function MyBookings() {
                       </p>
                       <button 
                         onClick={() => navigate('/calendar')} 
-                        className="mt-4 px-6 py-2.5 bg-[#1E40AF] hover:bg-[#1D4ED8] text-white rounded-lg text-[14px] font-medium shadow-md dark:shadow-slate-900/50 shadow-blue-500/20 hover:shadow-lg dark:shadow-slate-900/50 hover:-translate-y-0.5 transition-all duration-200"
+                        className="mt-4 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[14px] font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 transition-all duration-300"
                       >
                         Đặt lịch ngay
                       </button>

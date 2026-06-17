@@ -54,7 +54,7 @@ export class CoursesController {
 
   @Delete(':id')
   @UseGuards(ThrottlerGuard) // Bổ sung Rate Limit chống tool gọi xóa liên tục
-  @Roles(Role.ADMIN) // Chỉ quyền lực cao nhất (ADMIN) mới được xóa khóa học
+  @Roles(Role.ADMIN) // Chỉ Admin mới được quyền xóa khóa học
   remove(@Param('id') id: string) {
     return this.coursesService.remove(+id);
   }

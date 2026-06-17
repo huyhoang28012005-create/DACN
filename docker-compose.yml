@@ -46,7 +46,8 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: super-secret-jwt-key-dacn-lab-management-2026-secure
+      JWT_SECRET: ${JWT_SECRET:-super-secret-jwt-key-dacn-lab-management-2026-secure}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-12345678901234567890123456789012}
     ports:
       - "3000:3000"
     depends_on:

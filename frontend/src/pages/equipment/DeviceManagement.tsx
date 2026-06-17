@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Edit2, Trash2, AlertCircle, RefreshCw, ShieldAlert, CheckCircle2, AlertTriangle, FileText, FileClock, DatabaseBackup, MessageSquare } from "lucide-react";
 import { equipmentService, roomService } from "../../services";
+import { StatMini } from "../../components/ui/StatMini";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
@@ -173,11 +174,11 @@ export function DeviceManagement() {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatMini label={t("total_devices")} value={stats.total} icon={<FileText className="w-5 h-5" />} color="text-[#1E5FA5] dark:text-blue-400" />
-          <StatMini label={t("status_available")} value={stats.available} icon={<CheckCircle2 className="w-5 h-5" />} color="text-[#2E7D32]" />
-          <StatMini label={t("status_in_use")} value={stats.inUse} icon={<FileClock className="w-5 h-5" />} color="text-[#1E5FA5] dark:text-blue-400" />
-          <StatMini label={t("status_maintenance")} value={stats.maintenance} icon={<AlertTriangle className="w-5 h-5" />} color="text-[#E65100]" />
-          <StatMini label={t("status_broken")} value={stats.broken} icon={<ShieldAlert className="w-5 h-5" />} color="text-[#C62828]" />
+          <StatMini label={t("total_devices")} value={stats.total} icon={<FileText className="w-5 h-5" />} color="text-blue-600" bgColor="bg-blue-600" />
+          <StatMini label={t("status_available")} value={stats.available} icon={<CheckCircle2 className="w-5 h-5" />} color="text-green-600" bgColor="bg-green-600" />
+          <StatMini label={t("status_in_use")} value={stats.inUse} icon={<FileClock className="w-5 h-5" />} color="text-indigo-600" bgColor="bg-indigo-600" />
+          <StatMini label={t("status_maintenance")} value={stats.maintenance} icon={<AlertTriangle className="w-5 h-5" />} color="text-amber-500" bgColor="bg-amber-500" />
+          <StatMini label={t("status_broken")} value={stats.broken} icon={<ShieldAlert className="w-5 h-5" />} color="text-red-600" bgColor="bg-red-600" />
         </div>
       </div>
 
@@ -334,16 +335,4 @@ export function DeviceManagement() {
   );
 }
 
-function StatMini({ label, value, icon, color }: any) {
-  return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 dark:border-slate-800/50 shadow-sm dark:shadow-slate-900/50 flex items-center justify-between hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-      <div>
-        <div className="text-[12px] text-[#757575] dark:text-slate-400 font-medium mb-1">{label}</div>
-        <div className={`text-[20px] font-bold text-[#212121] dark:text-slate-100`}>{value}</div>
-      </div>
-      <div className={`p-2 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 ${color} backdrop-blur-sm`}>
-        {icon}
-      </div>
-    </div>
-  );
-}
+

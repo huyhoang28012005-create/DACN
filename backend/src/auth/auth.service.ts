@@ -14,12 +14,14 @@ import { Role, User } from '@prisma/client';
 import * as crypto from 'crypto';
 import { authenticator } from 'otplib';
 import * as qrcode from 'qrcode';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private prisma: PrismaService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -57,6 +59,18 @@ export class AuthService {
           args: { reason },
         }) || `Tài khoản của bạn đã bị khóa. Lý do: ${reason}`,
       );
+    }
+
+    // -----------------------------------------------------------------------
+    // 🛡️ KIỂM TRA CHẾ ĐỘ BẢO TRÌ
+    // -----------------------------------------------------------------------
+    if (user.role === Role.STUDENT || user.role === Role.INSTRUCTOR) {
+      const maintenanceMode = await this.prisma.systemSetting.findUnique({
+        where: { key: 'MAINTENANCE_MODE' },
+      });
+      if (maintenanceMode && maintenanceMode.value === 'true') {
+        throw new ForbiddenException('Hệ thống đang bảo trì, vui lòng quay lại sau!');
+      }
     }
 
     // -----------------------------------------------------------------------

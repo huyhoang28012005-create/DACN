@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Plus, Search, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Home, CheckCircle2, Wind } from "lucide-react";
 import { DeviceManagement } from "../equipment/DeviceManagement";
 import { ChemicalManagement } from "./ChemicalManagement";
 import { roomService } from "../../services";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
+import { StatMini } from "../../components/ui/StatMini";
 import { toast } from "react-hot-toast";
 
 export function ResourceManagement() {
@@ -109,24 +110,30 @@ export function ResourceManagement() {
         )}
 
         {activeTab === "Phòng Lab" && (
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex-1 flex flex-col overflow-hidden">
-             <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between">
+          <div className="flex-1 flex flex-col space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-2">
+              <StatMini label={t("total_rooms", "Tổng số phòng")} value={rooms.length} icon={<Home className="w-5 h-5" />} color="text-indigo-600" bgColor="bg-indigo-600" />
+              <StatMini label={t("available_rooms", "Đang khả dụng")} value={rooms.length} icon={<CheckCircle2 className="w-5 h-5" />} color="text-green-600" bgColor="bg-green-600" />
+              <StatMini label={t("with_ac", "Có điều hòa")} value={rooms.filter(r => r.has_air_conditioner).length} icon={<Wind className="w-5 h-5" />} color="text-blue-500" bgColor="bg-blue-500" />
+            </div>
+            <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 flex-1 flex flex-col overflow-hidden">
+               <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between">
                <div className="relative w-[300px]">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
                 <input 
                   type="text" 
                   placeholder={t("search_room_placeholder")} 
-                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
+                  className="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
-              <button onClick={() => setIsAddingRoom(true)} className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
+              <button onClick={() => setIsAddingRoom(true)} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">
                 <Plus className="w-4 h-4" /> Thêm Phòng
               </button>
             </div>
             <div className="flex-1 overflow-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0">
+                  <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0">
                     <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">ID</th>
                     <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room_name")}</th>
                     <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("location")}</th>
@@ -173,6 +180,7 @@ export function ResourceManagement() {
               </table>
             </div>
           </div>
+          </div>
         )}
 
         {activeTab === "Hóa chất" && (
@@ -184,29 +192,29 @@ export function ResourceManagement() {
       </div>
 
       {isAddingRoom && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
             <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("add_new_lab_room")}</h2>
             <form onSubmit={handleAddRoom} className="space-y-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("lab_room_name_label")}</label>
-                <input required type="text" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+                <input required type="text" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("location_label")}</label>
-                <input required type="text" value={newRoom.location} onChange={e => setNewRoom({...newRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+                <input required type="text" value={newRoom.location} onChange={e => setNewRoom({...newRoom, location: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("capacity_label")}</label>
-                <input required type="number" min="1" value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+                <input required type="number" min="1" value={newRoom.capacity} onChange={e => setNewRoom({...newRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="has_air" checked={newRoom.has_air_conditioner} onChange={e => setNewRoom({...newRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0] dark:border-slate-800" />
                 <label htmlFor="has_air" className="text-[14px] text-[#212121] dark:text-slate-100">{t("has_air_conditioner")}</label>
               </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsAddingRoom(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors">{t("add_room_btn")}</button>
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#E0E0E0]/50 dark:border-slate-800/50">
+                <button type="button" onClick={() => setIsAddingRoom(false)} className="px-4 py-2 text-[14px] font-medium text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 rounded-lg transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 text-[14px] font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5">{t("add_room_btn")}</button>
               </div>
             </form>
           </div>
@@ -214,29 +222,29 @@ export function ResourceManagement() {
       )}
 
       {isEditingRoom && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg dark:shadow-slate-900/50 w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
             <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 mb-4">{t("edit_lab_room_info")}</h2>
             <form onSubmit={handleUpdateRoom} className="space-y-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("lab_room_name_label")}</label>
-                <input required type="text" value={editingRoom.name} onChange={e => setEditingRoom({...editingRoom, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+                <input required type="text" value={editingRoom.name} onChange={e => setEditingRoom({...editingRoom, name: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("location_label")}</label>
-                <input required type="text" value={editingRoom.location} onChange={e => setEditingRoom({...editingRoom, location: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+                <input required type="text" value={editingRoom.location} onChange={e => setEditingRoom({...editingRoom, location: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("capacity_label")}</label>
-                <input required type="number" min="1" value={editingRoom.capacity} onChange={e => setEditingRoom({...editingRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+                <input required type="number" min="1" value={editingRoom.capacity} onChange={e => setEditingRoom({...editingRoom, capacity: parseInt(e.target.value)})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="edit_has_air" checked={editingRoom.has_air_conditioner} onChange={e => setEditingRoom({...editingRoom, has_air_conditioner: e.target.checked})} className="rounded border-[#E0E0E0] dark:border-slate-800" />
                 <label htmlFor="edit_has_air" className="text-[14px] text-[#212121] dark:text-slate-100">{t("has_air_conditioner")}</label>
               </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsEditingRoom(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors">{t("update")}</button>
+              <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-[#E0E0E0]/50 dark:border-slate-800/50">
+                <button type="button" onClick={() => setIsEditingRoom(false)} className="px-4 py-2 text-[14px] font-medium text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 rounded-lg transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 text-[14px] font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5">{t("update")}</button>
               </div>
             </form>
           </div>

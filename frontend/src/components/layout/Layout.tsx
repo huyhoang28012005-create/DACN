@@ -26,11 +26,26 @@ export function Layout() {
   // Read user from localStorage
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  const storedRole = localStorage.getItem("userRole") || (user?.role?.toLowerCase());
-  const isAdminPath = ["/admin-dashboard", "/approvals", "/resources", "/courses", "/users", "/reports"].includes(location.pathname);
-  const isAdmin = storedRole === "admin" || (!storedRole && isAdminPath);
-  const isInstructor = storedRole === "instructor" || (!storedRole && location.pathname === "/instructor-dashboard");
-  const actualRole = user?.role || (isAdmin ? 'ADMIN' : isInstructor ? 'INSTRUCTOR' : 'STUDENT');
+  // Secure Role UI: Chỉ lấy role từ thông tin user JWT, không phụ thuộc localStorage dễ bị can thiệp
+  const actualRole = user?.role || 'STUDENT';
+  const isAdmin = actualRole === 'ADMIN';
+  const isInstructor = actualRole === 'INSTRUCTOR';
+
+  // Điều hướng người dùng nếu truy cập trái phép
+  useEffect(() => {
+    const adminOnlyPaths = ["/admin-dashboard", "/resources", "/users"];
+    const instructorAdminPaths = ["/approvals", "/courses"];
+    const instructorOnlyPaths = ["/instructor-dashboard"];
+    // Các trang /reports, /calendar, /my-bookings dùng chung
+    
+    if (adminOnlyPaths.includes(location.pathname) && !isAdmin) {
+      navigate(isInstructor ? '/instructor-dashboard' : '/student-dashboard', { replace: true });
+    } else if (instructorAdminPaths.includes(location.pathname) && !isAdmin && !isInstructor) {
+      navigate('/student-dashboard', { replace: true });
+    } else if (instructorOnlyPaths.includes(location.pathname) && !isInstructor) {
+      navigate(isAdmin ? '/admin-dashboard' : '/student-dashboard', { replace: true });
+    }
+  }, [location.pathname, isAdmin, isInstructor, navigate]);
 
   const [bookings, setBookings] = useState([]);
   const [equipment, setEquipment] = useState([]);
@@ -61,6 +76,10 @@ export function Layout() {
           setSearchResults(res.data);
           setShowSearchDropdown(true);
         })
+        .catch(err => {
+          console.error("Search error:", err);
+          setSearchResults([]);
+        })
         .finally(() => setIsSearching(false));
     }, 300);
 
@@ -87,22 +106,30 @@ export function Layout() {
 
     // Kết nối Socket.io để nhận thông báo realtime
     const socket = socketService.connect();
+    
+    const handleNotification = (data: any) => {
+      if (data.type === 'success') toast.success(data.message, { duration: 4000 });
+      else if (data.type === 'error') toast.error(data.message, { duration: 4000 });
+      else toast(data.message);
+
+      setNotifications(prev => [{ ...data, id: Date.now(), is_read: false, created_at: new Date() }, ...prev]);
+
+      // Tự động tải lại danh sách Booking khi có sự thay đổi
+      if (user) {
+        apiClient.get('/api/bookings').then(res => setBookings(res.data)).catch(() => {});
+      }
+    };
+
     if (socket) {
-      socket.on('notification', (data: any) => {
-        if (data.type === 'success') toast.success(data.message, { duration: 4000 });
-        else if (data.type === 'error') toast.error(data.message, { duration: 4000 });
-        else toast(data.message);
-
-        setNotifications(prev => [{ ...data, id: Date.now(), is_read: false, created_at: new Date() }, ...prev]);
-
-        // Tự động tải lại danh sách Booking khi có sự thay đổi
-        if (user) {
-          apiClient.get('/api/bookings').then(res => setBookings(res.data)).catch(() => {});
-        }
-      });
+      // Dọn dẹp listener cũ trước khi đăng ký mới để chống memory leak
+      socket.off('notification', handleNotification);
+      socket.on('notification', handleNotification);
     }
 
     return () => {
+      if (socket) {
+        socket.off('notification', handleNotification);
+      }
       socketService.disconnect();
       document.removeEventListener("mousedown", handleClickOutside);
     };

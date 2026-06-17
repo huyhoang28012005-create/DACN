@@ -33,7 +33,7 @@
   "settings_ui_personalize": "Cá nhân hóa UI",
   "settings_default_lang": "Ngôn ngữ mặc định",
   "settings_maintenance_mode": "Chế độ bảo trì hệ thống",
-  "settings_maintenance_desc": "Khi bật chế độ bảo trì, toàn bộ hệ thống đặt phòng sẽ bị vô hiệu hóa. Sinh viên không thể tạo Booking mới.",
+  "settings_maintenance_desc": "Khi bật chế độ bảo trì, toàn bộ hệ thống đặt phòng sẽ bị vô hiệu hóa. Sinh viên và Giảng viên sẽ không thể đăng nhập.",
   "settings_on": "Đang bật",
   "settings_off": "Đang tắt",
   "greeting": "Xin chào, {{name}}",

@@ -82,7 +82,7 @@ export class SettingsService implements OnModuleInit {
         key: 'MAINTENANCE_MODE',
         value: 'false',
         category: 'SYSTEM',
-        description: 'Chế độ bảo trì (Ngăn chặn đặt phòng mới)',
+        description: 'Khi bật chế độ bảo trì, toàn bộ hệ thống đặt phòng sẽ bị vô hiệu hóa. Sinh viên không thể tạo Booking mới.',
       },
     ];
 

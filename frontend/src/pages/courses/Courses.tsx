@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Search, Edit2, Plus, Trash2, BookOpen, X } from "lucide-react";
+import { Search, Edit2, Plus, Trash2, BookOpen, X, User } from "lucide-react";
 import { courseService, userService } from "../../services";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
+import { StatMini } from "../../components/ui/StatMini";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
 
@@ -24,6 +25,8 @@ export function Courses() {
   const currentUserStr = localStorage.getItem("user");
   const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
   const isAdminOrTechnician = currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN';
+  const isInstructor = currentUser?.role === 'INSTRUCTOR';
+  const canManage = isAdminOrTechnician || isInstructor;
 
   useEffect(() => {
     fetchData();
@@ -35,21 +38,25 @@ export function Courses() {
       let coursesData = [];
       let usersData = [];
 
-      if (isAdminOrTechnician) {
+      if (canManage) {
         const [coursesRes, usersRes] = await Promise.all([
           courseService.getAll(),
-          userService.getAll()
+          isAdminOrTechnician ? userService.getAll() : Promise.resolve({ data: [currentUser] })
         ]);
         coursesData = coursesRes.data || [];
-        usersData = usersRes.data || [];
+        usersData = usersRes.data || [currentUser];
       } else {
         const coursesRes = await courseService.getAll();
         coursesData = coursesRes.data || [];
       }
       
+      // Nếu là giảng viên, chỉ hiển thị các khóa học do mình phụ trách
+      if (isInstructor) {
+        coursesData = coursesData.filter((c: any) => c.instructor_id === currentUser.id);
+      }
       setCourses(coursesData);
       
-      if (isAdminOrTechnician) {
+      if (canManage) {
         const instrs = usersData.filter((u: any) => u.role === 'INSTRUCTOR' || u.role === 'ADMIN');
         setInstructors(instrs);
       }
@@ -120,19 +127,34 @@ export function Courses() {
     c.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const stats = useMemo(() => {
+    const uniqueInstructors = new Set(courses.map(c => c.instructor?.id)).size;
+    return {
+      total: courses.length,
+      instructors: uniqueInstructors
+    };
+  }, [courses]);
+
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
       {/* Header */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100 mb-2">{t("manage_courses")}</h1>
-          <p className="text-[#757575] dark:text-slate-400 text-[14px]">{t("manage_courses_desc")}</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100 mb-2">{t("manage_courses")}</h1>
+            <p className="text-[#757575] dark:text-slate-400 text-[14px]">{t("manage_courses_desc")}</p>
+          </div>
+          {canManage && (
+            <button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">
+              <Plus className="w-4 h-4" /> {t("add_new_course")}
+            </button>
+          )}
         </div>
-        {isAdminOrTechnician && (
-          <button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">
-            <Plus className="w-4 h-4" /> {t("add_new_course")}
-          </button>
-        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-[600px]">
+          <StatMini label={t("total_courses", "Tổng học phần")} value={stats.total} icon={<BookOpen className="w-5 h-5" />} color="text-indigo-600" bgColor="bg-indigo-600" />
+          <StatMini label={t("total_instructors_involved", "Giảng viên tham gia")} value={stats.instructors} icon={<User className="w-5 h-5" />} color="text-teal-600" bgColor="bg-teal-600" />
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">
@@ -157,7 +179,7 @@ export function Courses() {
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[35%]">{t("course_name")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[25%]">{t("course_instructor")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%]">{t("created_date")}</th>
-                {isAdminOrTechnician && <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-right">{t("action")}</th>}
+                {canManage && <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 text-right">{t("action")}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
@@ -176,15 +198,17 @@ export function Courses() {
                   <td className="px-6 py-4 text-[14px] font-medium text-[#212121] dark:text-slate-100">{c.name}</td>
                   <td className="px-6 py-4 text-[14px] text-[#212121] dark:text-slate-100">{c.instructor?.name || t("unassigned")}</td>
                   <td className="px-6 py-4 text-[14px] text-[#757575] dark:text-slate-400">{format(new Date(c.created_at), "dd/MM/yyyy")}</td>
-                  {isAdminOrTechnician && (
+                  {canManage && (
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-1">
                         <button onClick={() => handleOpenModal(c)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-[#D6E4F7] dark:bg-blue-900/30 rounded transition-colors" title={t("edit")}>
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button onClick={() => setDeleteConfirmId(c.id)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded transition-colors" title={t("delete")}>
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {isAdminOrTechnician && (
+                          <button onClick={() => setDeleteConfirmId(c.id)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:text-[#C62828] hover:bg-[#FDEDED] dark:bg-red-900/30 rounded transition-colors" title={t("delete")}>
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   )}

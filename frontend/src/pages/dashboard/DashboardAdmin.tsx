@@ -151,77 +151,89 @@ export function DashboardAdmin() {
       {/* Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Widget
-          icon={<Activity className="w-6 h-6 text-orange-600" />}
-          bg="bg-orange-50"
+          icon={<Activity className="w-8 h-8 text-orange-600" />}
+          bgColor="bg-orange-600"
           label={t("pending_requests")}
           value={isLoading ? "..." : stats.pendingRequests}
           trend={t("needs_action")}
+          trendColor="text-orange-600"
         />
         <Widget
-          icon={<MonitorPlay className="w-6 h-6 text-blue-600" />}
-          bg="bg-blue-50"
+          icon={<MonitorPlay className="w-8 h-8 text-blue-600" />}
+          bgColor="bg-blue-600"
           label={t("total_devices")}
           value={isLoading ? "..." : stats.devicesTotal}
           trend={t("managing")}
+          trendColor="text-blue-600"
         />
         <Widget
-          icon={<Users className="w-6 h-6 text-green-600" />}
-          bg="bg-green-50"
+          icon={<Users className="w-8 h-8 text-green-600" />}
+          bgColor="bg-green-600"
           label={t("total_rooms")}
           value={isLoading ? "..." : stats.roomsTotal}
           trend={t("active")}
+          trendColor="text-green-600"
         />
       </div>
 
       {/* ── Charts Section ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Booking Status Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 transition-all duration-300">
-          <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-1">{t("booking_status_ratio")}</h2>
-          <p className="text-sm text-neutral-500 dark:text-slate-400 mb-6">{t("booking_status_desc")}</p>
+        <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-7 transition-all duration-300 hover:shadow-md relative overflow-hidden group">
+          <div className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full bg-blue-500 opacity-20 blur-3xl group-hover:opacity-40 transition-opacity duration-700 pointer-events-none"></div>
+          <div className="relative z-10">
+            <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-1">{t("booking_status_ratio")}</h2>
+            <p className="text-sm text-neutral-500 dark:text-slate-400 mb-6">{t("booking_status_desc")}</p>
+          </div>
           {isLoading ? (
             <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("loading")}</div>
           ) : bookingChartData.length === 0 ? (
             <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("no_data")}</div>
           ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={bookingChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
-                  {bookingChartData.map((entry, index) => (
-                    <Cell key={`bk-cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--tooltip-bg, #fff)",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                  }}
-                  formatter={(value: number, name: string) => [`${value} ${t("units_bookings")}`, name]}
-                />
-                <Legend
-                  formatter={(value) => (
-                    <span className="text-[13px] text-neutral-700 dark:text-slate-300">{value}</span>
-                  )}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="relative z-10">
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie
+                    data={bookingChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {bookingChartData.map((entry, index) => (
+                      <Cell key={`bk-cell-${index}`} fill={entry.color} className="drop-shadow-sm hover:opacity-80 transition-opacity" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "var(--tooltip-bg, #fff)",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                    }}
+                    formatter={(value: number, name: string) => [`${value} ${t("units_bookings")}`, name]}
+                  />
+                  <Legend
+                    formatter={(value) => (
+                      <span className="text-[13px] font-medium text-neutral-700 dark:text-slate-300">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
 
         {/* Equipment Status Chart */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 transition-all duration-300">
-          <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-1">{t("equipment_status_ratio")}</h2>
-          <p className="text-sm text-neutral-500 dark:text-slate-400 mb-6">{t("equipment_status_desc")}</p>
+        <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-7 transition-all duration-300 hover:shadow-md relative overflow-hidden group">
+          <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-emerald-500 opacity-20 blur-3xl group-hover:opacity-40 transition-opacity duration-700 pointer-events-none"></div>
+          <div className="relative z-10">
+            <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white mb-1">{t("equipment_status_ratio")}</h2>
+            <p className="text-sm text-neutral-500 dark:text-slate-400 mb-6">{t("equipment_status_desc")}</p>
+          </div>
           {isLoading ? (
             <div className="h-56 flex items-center justify-center text-neutral-400 dark:text-slate-500">{t("loading")}</div>
           ) : equipmentChartData.length === 0 ? (
@@ -263,7 +275,7 @@ export function DashboardAdmin() {
       </div>
 
       {/* ── Recent Bookings Section ── */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 transition-all duration-300 overflow-hidden">
+      <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-7 transition-all duration-300 hover:shadow-md overflow-hidden">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-lg font-extrabold text-neutral-900 dark:text-white">{t("pending_approval_requests")}</h2>
@@ -274,7 +286,7 @@ export function DashboardAdmin() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-neutral-200 dark:border-slate-800 bg-neutral-50 dark:bg-slate-800/80">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Student Name</th>
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Lab Room</th>
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Time Requested</th>
@@ -363,23 +375,25 @@ function SkeletonRow() {
   );
 }
 
-function Widget({ icon, bg, label, value, trend }: any) {
+function Widget({ icon, bgColor, label, value, trend, trendColor }: any) {
+  const bgHighlightClass = bgColor ? `${bgColor}/10` : '';
+  
   return (
     <motion.div
       whileHover={{ y: -5, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-xl dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 flex flex-col transition-all duration-300 cursor-pointer overflow-hidden relative group"
+      className={`bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-md border border-[#E0E0E0]/50 dark:border-slate-800/50 p-7 cursor-pointer transition-all duration-300 relative overflow-hidden group`}
     >
-      <div className={`absolute -right-6 -top-6 w-32 h-32 rounded-full ${bg} opacity-40 blur-3xl dark:opacity-10 group-hover:opacity-60 transition-opacity duration-500 pointer-events-none`}></div>
+      <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full ${bgColor} opacity-20 blur-2xl group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`}></div>
       <div className="flex items-center gap-4 mb-4 relative z-10">
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 ${bg} dark:bg-opacity-20 shadow-inner`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${bgHighlightClass} dark:bg-opacity-20 shadow-inner`}>
           {icon}
         </div>
-        <h3 className="text-[15px] font-bold text-neutral-600 dark:text-slate-300 tracking-wide">{label}</h3>
+        <h3 className="text-sm font-semibold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">{label}</h3>
       </div>
       <div className="relative z-10">
         <div className="text-4xl font-extrabold text-neutral-900 dark:text-white tracking-tight">{value}</div>
-        <div className="text-sm font-medium text-neutral-500 dark:text-slate-400 mt-2">{trend}</div>
+        <div className={`text-[13px] font-medium mt-2 ${trendColor}`}>{trend}</div>
       </div>
     </motion.div>
   );

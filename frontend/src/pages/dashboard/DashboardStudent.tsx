@@ -126,13 +126,14 @@ END:VCALENDAR`;
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
       {/* Greeting Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-neutral-100 dark:border-slate-800 flex justify-between items-center shadow-sm dark:shadow-slate-900/50 transition-all duration-300 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100 dark:bg-blue-900/20 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-        <div>
-          <h1 className="text-[28px] font-bold text-[#212121] dark:text-slate-100">{t("greeting", { name: userName })} 👋</h1>
-          <p className="text-[14px] text-[#757575] dark:text-slate-400 mt-1">{today}</p>
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-8 flex justify-between items-center shadow-lg shadow-blue-500/20 transition-all duration-300 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
+        <div className="relative z-10">
+          <h1 className="text-[28px] font-bold text-white">{t("greeting", { name: userName })} 👋</h1>
+          <p className="text-[14px] text-blue-100 mt-1">{today}</p>
         </div>
-        <div className="w-16 h-16 rounded-full bg-[#1E5FA5] dark:bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-md dark:shadow-slate-900/50 border-4 border-white dark:border-slate-800">
+        <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm text-white flex items-center justify-center text-xl font-bold shadow-lg border-4 border-white/30 relative z-10">
           {userInitial}
         </div>
       </div>
@@ -175,7 +176,7 @@ END:VCALENDAR`;
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column 65% - Lịch đặt sắp tới */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300">
+        <div className="lg:col-span-8 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
           <div className="px-7 py-6 border-b border-neutral-100 dark:border-slate-800 flex justify-between items-center">
             <h2 className="text-lg font-extrabold text-neutral-900 dark:text-slate-100">{t("upcoming_schedule")}</h2>
             <Link to="/calendar" className="text-[14px] font-medium text-[#1E5FA5] dark:text-blue-400 hover:underline">
@@ -245,7 +246,7 @@ END:VCALENDAR`;
         </div>
 
         {/* Right Column 35% - Thông báo gần đây */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-md dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 overflow-hidden flex flex-col transition-all duration-300">
+        <div className="lg:col-span-4 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
           <div className="px-7 py-6 border-b border-neutral-100 dark:border-slate-800">
             <h2 className="text-lg font-extrabold text-neutral-900 dark:text-slate-100">{t("recent_notifications")}</h2>
           </div>
@@ -284,12 +285,12 @@ END:VCALENDAR`;
             {availableRooms.map((lab) => {
               const isAvailable = lab.status === "AVAILABLE";
               return (
-                <div key={lab.id} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 p-5 hover:shadow-md dark:shadow-slate-900/50 transition-shadow">
+                <div key={lab.id} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-5 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="w-12 h-12 bg-[#F5F5F5] dark:bg-slate-800 rounded-lg flex items-center justify-center">
-                      <LayoutGrid className="w-6 h-6 text-[#757575] dark:text-slate-400" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl flex items-center justify-center">
+                      <LayoutGrid className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <span className={`px-2 py-1 rounded text-[12px] font-medium ${
+                    <span className={`px-2 py-1 rounded-lg text-[12px] font-medium ${
                       isAvailable
                         ? "bg-[#E8F5E9] dark:bg-green-900/30 text-[#2E7D32] dark:text-green-400"
                         : "bg-[#FDEDED] dark:bg-red-900/30 text-[#C62828] dark:text-red-400"
@@ -303,9 +304,9 @@ END:VCALENDAR`;
                   </p>
                   <Link
                     to="/calendar"
-                    className={`w-full py-2 rounded flex justify-center items-center text-[14px] font-medium transition-colors ${
+                    className={`w-full py-2.5 rounded-xl flex justify-center items-center text-[14px] font-bold transition-all duration-300 ${
                       isAvailable
-                        ? "bg-[#D6E4F7] dark:bg-blue-900/30 text-[#1E5FA5] dark:text-blue-400 hover:bg-[#1E5FA5] dark:bg-blue-600 dark:hover:bg-blue-600 hover:text-white"
+                        ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30"
                         : "bg-[#F5F5F5] dark:bg-slate-800 text-[#757575] dark:text-slate-500 cursor-not-allowed pointer-events-none"
                     }`}
                   >
@@ -340,18 +341,23 @@ function SkeletonBookingItem() {
 }
 
 function StatCard({ icon, value, label, trend, trendColor, color }: any) {
-  // Translate borderColor to background highlight for Bento Grid effect
-  const bgHighlightClass = color.replace('border-l-', 'bg-') + '/10';
-  
+  const colorMap: Record<string, { bg: string; gradient: string; shadow: string }> = {
+    'border-l-[#E65100]': { bg: 'bg-orange-50 dark:bg-orange-900/20', gradient: 'from-orange-500 to-amber-500', shadow: 'shadow-orange-500/20' },
+    'border-l-[#2E7D32]': { bg: 'bg-emerald-50 dark:bg-emerald-900/20', gradient: 'from-emerald-500 to-teal-500', shadow: 'shadow-emerald-500/20' },
+    'border-l-[#673AB7]': { bg: 'bg-purple-50 dark:bg-purple-900/20', gradient: 'from-purple-500 to-violet-500', shadow: 'shadow-purple-500/20' },
+    'border-l-[#C62828]': { bg: 'bg-rose-50 dark:bg-rose-900/20', gradient: 'from-rose-500 to-pink-500', shadow: 'shadow-rose-500/20' },
+  };
+  const colors = colorMap[color] || { bg: 'bg-blue-50', gradient: 'from-blue-500 to-indigo-500', shadow: 'shadow-blue-500/20' };
+
   return (
     <motion.div
       whileHover={{ y: -5, scale: 1.02 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className={`bg-white dark:bg-slate-900 rounded-3xl shadow-sm dark:shadow-slate-900/50 hover:shadow-xl dark:shadow-slate-900/50 border border-neutral-100 dark:border-slate-800 p-7 cursor-pointer transition-all duration-300 relative overflow-hidden group`}
+      className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-sm hover:shadow-xl border border-[#E0E0E0]/50 dark:border-slate-800/50 p-6 cursor-pointer transition-all duration-300 relative overflow-hidden group`}
     >
-      <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full ${color.replace('border-l-', 'bg-')} opacity-20 blur-2xl group-hover:opacity-40 transition-opacity duration-500 pointer-events-none`}></div>
+      <div className={`absolute -right-4 -top-4 w-28 h-28 rounded-full bg-gradient-to-br ${colors.gradient} opacity-15 blur-2xl group-hover:opacity-30 transition-opacity duration-500 pointer-events-none`}></div>
       <div className="flex items-center gap-4 mb-4 relative z-10">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${bgHighlightClass} dark:bg-opacity-20 shadow-inner`}>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
           {icon}
         </div>
         <h3 className="text-sm font-semibold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">{label}</h3>
