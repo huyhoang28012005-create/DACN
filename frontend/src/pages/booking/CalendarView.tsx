@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronLeft, ChevronRight, Lock, Clock, Calendar, Filter, Plus, Info, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Clock, Calendar, Filter, Plus, Info, X, Hourglass } from "lucide-react";
 import { bookingService, roomService } from "../../services";
 import { format, startOfWeek, addDays, getHours, getDay, differenceInHours, isSameDay } from "date-fns";
 import { toast } from "react-hot-toast";
@@ -22,6 +22,7 @@ export function CalendarView() {
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isWaitlist, setIsWaitlist] = useState(false);
   const [formData, setFormData] = useState({
     purpose: "",
     date: format(new Date(), "yyyy-MM-dd"),
@@ -114,10 +115,13 @@ export function CalendarView() {
           type = currentUser && b.user_id === currentUser.id ? "pending" : "locked";
         } else if (b.status === "APPROVED") {
           type = currentUser && b.user_id === currentUser.id ? "approved" : "locked";
+        } else if (b.status === "WAITLISTED") {
+          type = "waitlisted";
         }
 
         // Only place the slot in the starting hour cell
         if (startHour >= 7 && startHour <= 22) {
+          const room = rooms.find(r => r.id === b.room_id);
           // If there's already a booking, we might need an array, but for now we just assign
           if (!gridBookings[`${dayIdx}-${startHour}`]) {
             gridBookings[`${dayIdx}-${startHour}`] = [];
@@ -126,7 +130,9 @@ export function CalendarView() {
             type,
             title: b.purpose,
             startMinute,
-            durationMinutes
+            durationMinutes,
+            roomName: room ? room.name : "",
+            isPast: end < new Date()
           });
         }
       }
@@ -149,6 +155,7 @@ export function CalendarView() {
         roomId: formData.room_id,
         startTime: startDate,
         endTime: endDate,
+        status: isWaitlist ? "WAITLISTED" : undefined,
       });
       
       toast.success(t("booking_success_pending"));
@@ -169,7 +176,7 @@ export function CalendarView() {
       <div className="w-full md:w-[260px] flex flex-col gap-6 flex-shrink-0">
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="w-full bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 shadow-sm dark:shadow-slate-900/50 text-[14px]"
+          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 px-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 text-[14px] hover:-translate-y-0.5"
         >
           <Plus className="w-5 h-5" /> {t("book_room_device")}
         </button>
@@ -220,6 +227,10 @@ export function CalendarView() {
               <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("status_pending_yours")}</span>
             </div>
             <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 rounded-sm flex items-center justify-center shadow-sm"><Hourglass className="w-3 h-3 text-amber-500 dark:text-amber-400" /></div>
+              <span className="text-[13px] font-bold text-amber-500 dark:text-amber-400">{t("status_waitlist")}</span>
+            </div>
+            <div className="flex items-center gap-3">
               <div className="w-4 h-4 bg-[#D6E4F7] dark:bg-blue-900/30 border border-[#1E5FA5] dark:border-blue-700/50 rounded-sm"></div>
               <span className="text-[13px] text-[#757575] dark:text-slate-400">{t("status_approved_yours")}</span>
             </div>
@@ -230,20 +241,24 @@ export function CalendarView() {
       {/* Main Calendar Area */}
       <div className="flex-1 bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col min-w-0 relative transition-colors duration-300">
         {isLoading && (
-          <div className="absolute inset-0 bg-white dark:bg-slate-900/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
-            <LoadingSpinner size={32} text={t("loading_calendar")} />
+          <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md z-20 flex flex-col items-center justify-center animate-in fade-in duration-300">
+            <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-600 rounded-full animate-spin shadow-lg"></div>
+            <p className="mt-4 text-[14px] font-medium text-slate-600 dark:text-slate-300 animate-pulse">{t("loading_calendar")}</p>
           </div>
         )}
         
         {/* Calendar Header */}
-        <div className="h-[64px] border-b border-[#E0E0E0] dark:border-slate-800 px-6 flex items-center justify-between bg-white dark:bg-slate-900 flex-shrink-0 transition-colors duration-300">
-          <div className="flex items-center gap-4">
-            <div className="p-2 bg-[#F5F5F5] dark:bg-slate-800 rounded-md text-[#212121] dark:text-slate-200">
-              <Calendar className="w-5 h-5" />
+        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-10">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2 text-[#1E5FA5] dark:text-blue-400 mb-1">
+              <Calendar className="w-4 h-4" />
+              <span className="text-[12px] font-bold uppercase tracking-wider">{t("schedule")}</span>
             </div>
-            <div>
-              <h2 className="text-[18px] font-bold text-[#212121] dark:text-slate-100">{format(startOfCurrentWeek, "dd/MM/yyyy")} - {format(addDays(startOfCurrentWeek, 6), "dd/MM/yyyy")}</h2>
-            </div>
+            <h2 className="text-[20px] font-bold text-[#212121] dark:text-slate-100 flex items-center gap-2">
+              {format(startOfCurrentWeek, "dd/MM/yyyy")} 
+              <span className="text-[#9E9E9E] dark:text-slate-500 font-medium text-[18px]">→</span> 
+              {format(addDays(startOfCurrentWeek, 6), "dd/MM/yyyy")}
+            </h2>
           </div>
           
           <div className="flex items-center gap-2">
@@ -313,26 +328,47 @@ export function CalendarView() {
                   {DAYS.map((_, dayIdx) => {
                     const slots = getSlot(dayIdx, hour) || [];
                     
+                    const cellDate = new Date(DAYS[dayIdx].fullDate);
+                    cellDate.setHours(hour, 0, 0, 0);
+                    const isPast = cellDate < new Date();
+                    
                     let cellClasses = "border-b border-r border-[#E0E0E0] dark:border-slate-800 transition-all relative h-[60px] p-0 ";
                     if (dayIdx === 6) cellClasses = cellClasses.replace("border-r", "");
+
+                    if (isPast) {
+                      cellClasses += "bg-slate-50 dark:bg-slate-800/30 cursor-not-allowed ";
+                    } else {
+                      cellClasses += "bg-white dark:bg-slate-900 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 cursor-pointer ";
+                    }
 
                     return (
                       <div 
                         key={dayIdx} 
-                        className={cellClasses + "bg-white dark:bg-slate-900 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 cursor-pointer"} 
+                        className={cellClasses} 
                         onClick={() => {
+                          if (isPast) return;
                           setFormData(prev => ({ ...prev, date: format(DAYS[dayIdx].fullDate, "yyyy-MM-dd"), startTime: `${hour.toString().padStart(2, '0')}:00` }));
                           setIsModalOpen(true);
                         }}
                       >
                         {slots.map((slot: any, idx: number) => {
-                          let slotClasses = "absolute left-1 right-1 rounded-sm overflow-hidden z-10 shadow-sm ";
-                          if (slot.type === "locked") {
+                          let slotClasses = "absolute left-1 right-1 rounded-sm overflow-hidden z-10 shadow-sm mix-blend-multiply dark:mix-blend-screen ";
+                          
+                          if (slot.isPast) {
+                            slotClasses += "bg-gray-100/90 dark:bg-slate-800/80 border border-gray-300 dark:border-slate-700 cursor-not-allowed text-gray-400 dark:text-gray-500 flex items-center justify-center flex-col ";
+                          } else if (slot.type === "locked") {
                             slotClasses += "bg-red-50 dark:bg-red-900/40 border border-red-200 dark:border-red-800/50 cursor-not-allowed text-red-500 dark:text-red-400 flex items-center justify-center flex-col";
+                          } else if (slot.type === "waitlisted") {
+                            slotClasses += "bg-amber-50/90 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800/50 cursor-not-allowed text-amber-500 dark:text-amber-400 flex items-center justify-center flex-col";
                           } else if (slot.type === "pending") {
                             slotClasses += "bg-[#FFF8E1] dark:bg-yellow-900/40 border-l-4 border-l-[#FFC107] dark:border-l-yellow-600 border-t border-r border-b border-[#FFE082] dark:border-yellow-700/50 cursor-pointer p-1";
                           } else if (slot.type === "approved") {
                             slotClasses += "bg-[#D6E4F7] dark:bg-blue-900/40 border-l-4 border-l-[#1E5FA5] dark:border-l-blue-500 border-t border-r border-b border-[#BBDEFB] dark:border-blue-800/50 cursor-pointer p-1";
+                          }
+
+                          if (isPast) {
+                            slotClasses += " grayscale opacity-[0.85] cursor-not-allowed";
+                            // Remove hover effects if any by ensuring it's cursor-not-allowed
                           }
 
                           return (
@@ -346,15 +382,34 @@ export function CalendarView() {
                               }}
                               onClick={(e) => e.stopPropagation()} // Prevent triggering cell click
                             >
-                              {slot.type === "locked" ? (
+                              {slot.isPast ? (
+                                <>
+                                  <Clock className="w-3 h-3 mb-0.5 opacity-50" />
+                                  <span className="text-[10px] font-bold text-center px-1 leading-tight line-clamp-2 opacity-60">
+                                    {slot.roomName || t("booked")}
+                                  </span>
+                                </>
+                              ) : slot.type === "locked" ? (
                                 <>
                                   <Lock className="w-3 h-3 mb-0.5" />
-                                  {slot.durationMinutes >= 30 && <span className="text-[9px] font-bold">{t("booked")}</span>}
+                                  <span className="text-[10px] font-bold text-center px-1 leading-tight line-clamp-2">
+                                    {slot.roomName || t("booked")}
+                                  </span>
+                                </>
+                              ) : slot.type === "waitlisted" ? (
+                                <>
+                                  <Hourglass className="w-3 h-3 mb-0.5" />
+                                  <span className="text-[10px] font-bold text-center px-1 leading-tight line-clamp-2">
+                                    {slot.roomName || t("waitlist_short")}
+                                  </span>
                                 </>
                               ) : (
                                 <>
                                   <div className={`text-[11px] font-bold line-clamp-1 leading-tight ${slot.type === 'pending' ? 'text-[#F57F17] dark:text-yellow-500' : 'text-[#1E5FA5] dark:text-blue-400'}`}>
                                     {slot.title}
+                                  </div>
+                                  <div className={`text-[10px] line-clamp-1 leading-tight opacity-80 ${slot.type === 'pending' ? 'text-[#F57F17] dark:text-yellow-500' : 'text-[#1E5FA5] dark:text-blue-400'}`}>
+                                    {slot.roomName}
                                   </div>
                                   {slot.durationMinutes >= 45 && (
                                     <div className={`text-[9px] mt-0.5 flex items-center gap-1 ${slot.type === 'pending' ? 'text-[#F57F17] dark:text-yellow-600' : 'text-[#1E5FA5] dark:text-blue-500'}`}>
@@ -373,15 +428,24 @@ export function CalendarView() {
               ))}
             </div>
             
+            {Object.values(gridBookings).flat().length === 0 && !isLoading && (
+              <div className="absolute inset-0 z-0 flex flex-col items-center justify-center pointer-events-none opacity-60">
+                <div className="w-32 h-32 mb-4 rounded-full bg-blue-50 dark:bg-slate-800/50 flex items-center justify-center shadow-inner">
+                  <Calendar className="w-16 h-16 text-blue-300 dark:text-slate-600" />
+                </div>
+                <p className="text-[#94A3B8] font-medium">Hôm nay phòng Lab đang trống</p>
+                <p className="text-[12px] text-[#94A3B8]">Hãy là người đầu tiên đặt phòng nhé!</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Booking Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-opacity duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20 dark:border-slate-700/50">
+            <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 flex justify-between items-center bg-[#FAFAFA]/50 dark:bg-slate-800/30">
               <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{t("book_room_device")}</h3>
               <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors">
                 <X className="w-5 h-5" />
@@ -459,6 +523,19 @@ export function CalendarView() {
                 </select>
               </div>
 
+              <div className="pt-2">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={isWaitlist}
+                    onChange={(e) => setIsWaitlist(e.target.checked)}
+                    className="w-4 h-4 rounded border-[#E0E0E0] dark:border-slate-700 text-amber-500 focus:ring-amber-500/50"
+                  />
+                  <span className="text-[13px] font-medium text-[#212121] dark:text-slate-300 group-hover:text-amber-500 transition-colors">
+                    {t("join_waitlist_checkbox")}
+                  </span>
+                </label>
+              </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
                 <button 
                   type="button" 
@@ -470,11 +547,11 @@ export function CalendarView() {
                 </button>
                 <button 
                   type="submit" 
-                  className="px-4 py-2 text-[14px] font-bold text-white bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 rounded-md transition-colors flex items-center gap-2"
+                  className={`px-4 py-2 text-[14px] font-bold text-white rounded-md transition-all duration-300 flex items-center gap-2 shadow-sm ${isWaitlist ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'}`}
                   disabled={isSubmitting}
                 >
                   {isSubmitting && <LoadingSpinner size={16} className="p-0 text-white" />} 
-                  {isSubmitting ? t("processing") : t("confirm_booking")}
+                  {isSubmitting ? t("processing") : (isWaitlist ? t("btn_join_waitlist") : t("confirm_booking"))}
                 </button>
               </div>
             </form>

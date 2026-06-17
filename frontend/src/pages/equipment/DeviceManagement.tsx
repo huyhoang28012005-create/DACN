@@ -164,7 +164,7 @@ export function DeviceManagement() {
         <div className="flex items-center justify-between">
           <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("manage_devices")}</h1>
           <button
-            className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]"
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]"
             onClick={openAddModal}
           >
             <Plus className="w-4 h-4" />
@@ -197,7 +197,7 @@ export function DeviceManagement() {
       {/* Table Area */}
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex flex-wrap gap-3 items-center justify-between">
+        <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
           <div className="flex flex-wrap gap-3 flex-1">
             <div className="relative w-[240px]">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
@@ -206,7 +206,7 @@ export function DeviceManagement() {
                 placeholder={t("search_device_placeholder")} 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
+                className="w-full pl-9 pr-3 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>
           </div>
@@ -219,7 +219,7 @@ export function DeviceManagement() {
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
                 <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("device_id_name")}</th>
                 <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("serial_number")}</th>
                 <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room")}</th>
@@ -286,7 +286,7 @@ export function DeviceManagement() {
                   <td colSpan={6} className="py-12 text-center text-[#757575] dark:text-slate-400">
                     <DatabaseBackup className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
                     <p className="mb-4">{t("no_devices_found")}</p>
-                    <button onClick={openAddModal} className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 text-white rounded-md text-[14px]">{t("add_device_now")}</button>
+                    <button onClick={openAddModal} className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-[14px] transition-all shadow-lg shadow-blue-500/30 hover:-translate-y-0.5">{t("add_device_now")}</button>
                   </td>
                 </tr>
               )}
@@ -336,12 +336,12 @@ export function DeviceManagement() {
 
 function StatMini({ label, value, icon, color }: any) {
   return (
-    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-[#E0E0E0] dark:border-slate-800 shadow-sm dark:shadow-slate-900/50 flex items-center justify-between">
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-white/20 dark:border-slate-800/50 shadow-sm dark:shadow-slate-900/50 flex items-center justify-between hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
       <div>
         <div className="text-[12px] text-[#757575] dark:text-slate-400 font-medium mb-1">{label}</div>
         <div className={`text-[20px] font-bold text-[#212121] dark:text-slate-100`}>{value}</div>
       </div>
-      <div className={`p-2 rounded-md bg-[#F5F5F5] dark:bg-slate-800/50 ${color}`}>
+      <div className={`p-2 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 ${color} backdrop-blur-sm`}>
         {icon}
       </div>
     </div>

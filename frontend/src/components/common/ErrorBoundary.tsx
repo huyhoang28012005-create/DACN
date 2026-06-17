@@ -8,6 +8,9 @@ export function ErrorBoundary() {
     <div className="p-4 bg-red-100 text-red-900 border border-red-300 rounded">
       <h1 className="font-bold">Đã xảy ra lỗi hệ thống!</h1>
       <p className="mt-2 text-sm">Vui lòng tải lại trang hoặc liên hệ quản trị viên.</p>
+      <pre className="mt-4 p-2 bg-white text-red-600 rounded text-xs overflow-auto">
+        {error?.stack || error?.message || JSON.stringify(error)}
+      </pre>
     </div>
   );
 }

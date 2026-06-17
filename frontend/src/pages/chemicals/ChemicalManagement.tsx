@@ -124,7 +124,7 @@ export function ChemicalManagement() {
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex flex-col h-full overflow-hidden">
-      <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between">
+      <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between">
         <div className="relative w-[300px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
           <input 
@@ -132,10 +132,10 @@ export function ChemicalManagement() {
             placeholder={t("search_chemical_placeholder")} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
+            className="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
         </div>
-        <button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors text-[14px]">
+        <button onClick={() => handleOpenModal()} className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">
           <Plus className="w-4 h-4" /> Thêm Hóa chất
         </button>
       </div>
@@ -143,7 +143,7 @@ export function ChemicalManagement() {
       <div className="flex-1 overflow-auto min-h-[400px]">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50 sticky top-0">
+            <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0">
               <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[20%]">{t("chemical_name")}</th>
               <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%]">{t("formula")}</th>
               <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%] text-right">{t("stock_quantity")}</th>
@@ -169,7 +169,7 @@ export function ChemicalManagement() {
                 <td colSpan={6} className="py-12 text-center text-[#757575] dark:text-slate-400">
                   <Beaker className="w-12 h-12 mx-auto mb-3 text-[#E0E0E0]" />
                   <p className="mb-4">{t("no_chemicals_found")}</p>
-                  <button onClick={() => { setFormData({ id: 0, name: '', formula: '', quantity_stock: 0, unit: 'ml', expiration_date: '' }); setIsEditing(false); setIsModalOpen(true); }} className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 text-white rounded-md text-[14px]">{t("add_chemical_now")}</button>
+                  <button onClick={() => { setFormData({ id: 0, name: '', formula: '', quantity_stock: 0, unit: 'ml', expiration_date: '' }); setIsEditing(false); setIsModalOpen(true); }} className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold text-[14px] transition-all duration-300 shadow-lg shadow-blue-500/30 hover:-translate-y-0.5">{t("add_chemical_now")}</button>
                 </td>
               </tr>
               ) : !isLoading && filteredChemicals.map((c) => {
@@ -205,16 +205,16 @@ export function ChemicalManagement() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden">
-            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden border border-white/20 dark:border-slate-700/50 animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
               <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{isEditing ? t('edit_chemical_info') : t('add_new_chemical')}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("chemical_name")} <span className="text-red-500">*</span></label>
-                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
+                <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("chemical_formula_label")}</label>
@@ -239,9 +239,9 @@ export function ChemicalManagement() {
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("expiration_date")}</label>
                 <input type="date" value={formData.expiration_date} onChange={e => setFormData({...formData, expiration_date: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
               </div>
-              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors text-[14px]">{t("cancel")}</button>
-                <button type="submit" className="px-4 py-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white rounded-md transition-colors text-[14px]">{isEditing ? t('update') : t('add_new_btn')}</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]/50 dark:border-slate-800/50 mt-6">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 rounded-lg transition-colors text-[14px] font-medium">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px]">{isEditing ? t('update') : t('add_new_btn')}</button>
               </div>
             </form>
           </div>
@@ -249,11 +249,11 @@ export function ChemicalManagement() {
       )}
 
       {isUsageModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-sm overflow-hidden">
-            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl dark:shadow-slate-900/50 w-full max-w-sm overflow-hidden border border-white/20 dark:border-slate-700/50 animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
               <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{t('record_usage')}</h3>
-              <button onClick={() => setIsUsageModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsUsageModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleRecordUsage} className="p-6 space-y-4">
               <div>
@@ -264,9 +264,9 @@ export function ChemicalManagement() {
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t('usage_quantity_label')} <span className="text-red-500">*</span></label>
                 <input required type="number" step="0.1" value={usageData.quantity_used} onChange={e => setUsageData({...usageData, quantity_used: Number(e.target.value)})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px]" />
               </div>
-              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
-                <button type="button" onClick={() => setIsUsageModalOpen(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors text-[14px]">{t("cancel")}</button>
-                <button type="submit" className="px-4 py-2 bg-[#2E7D32] hover:bg-[#1B5E20] text-white rounded-md transition-colors text-[14px]">{t('record_btn')}</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]/50 dark:border-slate-800/50 mt-6">
+                <button type="button" onClick={() => setIsUsageModalOpen(false)} className="px-4 py-2 text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 rounded-lg transition-colors text-[14px] font-medium">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-bold transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 text-[14px]">{t('record_btn')}</button>
               </div>
             </form>
           </div>

@@ -233,7 +233,7 @@ export function Layout() {
       <div className="flex-1 flex flex-col min-w-0 bg-[#F8FAFC] dark:bg-slate-950 transition-colors duration-300">
         
         {/* Topbar (64px) */}
-        <header className="h-[64px] bg-white dark:bg-slate-900 border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between px-6 flex-shrink-0 z-10 sticky top-0 transition-colors duration-300">
+        <header className="h-[64px] bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-[#E2E8F0] dark:border-slate-800 flex items-center justify-between px-6 flex-shrink-0 z-40 sticky top-0 transition-colors duration-300">
           {/* Breadcrumb */}
           <div className="flex items-center text-[14px] font-medium text-[#64748B] dark:text-slate-400">
             {t("home")} <span className="mx-2 text-[#CBD5E1]">/</span> <span className="text-[#0F172A] dark:text-slate-100 font-semibold">{pageTitle}</span>

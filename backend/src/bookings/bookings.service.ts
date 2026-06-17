@@ -168,18 +168,21 @@ export class BookingsService {
         const isRealConflict =
           roomConflict.start_time < endTime &&
           roomConflict.end_time > startTime;
-        if (isRealConflict) {
-          throw new ConflictException(
-            I18nContext.current()?.t('messages.errors.ROOM_CONFLICT') ||
-              'Phòng Lab đã được đặt trong khoảng thời gian này',
-          );
-        } else {
-          throw new ConflictException(
-            I18nContext.current()?.t('messages.errors.BUFFER_TIME_REQUIRED', {
-              args: { buffer: bufferMinutes },
-            }) ||
-              `Cần ít nhất ${bufferMinutes} phút trống giữa 2 ca để dọn dẹp`,
-          );
+          
+        if (createBookingDto.status !== 'WAITLISTED') {
+          if (isRealConflict) {
+            throw new ConflictException(
+              I18nContext.current()?.t('messages.errors.ROOM_CONFLICT') ||
+                'Phòng Lab đã được đặt trong khoảng thời gian này',
+            );
+          } else {
+            throw new ConflictException(
+              I18nContext.current()?.t('messages.errors.BUFFER_TIME_REQUIRED', {
+                args: { buffer: bufferMinutes },
+              }) ||
+                `Cần ít nhất ${bufferMinutes} phút trống giữa 2 ca để dọn dẹp`,
+            );
+          }
         }
       }
 
@@ -206,7 +209,7 @@ export class BookingsService {
           );
         }
 
-        const equipmentConflict = await tx.booking.findFirst({
+        let equipmentConflict = await tx.booking.findFirst({
           where: {
             equipment_id,
             status: { in: ['PENDING', 'APPROVED', 'IN_USE'] },
@@ -219,18 +222,21 @@ export class BookingsService {
           const isRealConflict =
             equipmentConflict.start_time < endTime &&
             equipmentConflict.end_time > startTime;
-          if (isRealConflict) {
-            throw new ConflictException(
-              I18nContext.current()?.t('messages.errors.EQUIPMENT_CONFLICT') ||
-                'Thiết bị đã được đặt trong khoảng thời gian này',
-            );
-          } else {
-            throw new ConflictException(
-              I18nContext.current()?.t('messages.errors.BUFFER_TIME_REQUIRED', {
-                args: { buffer: bufferMinutes },
-              }) ||
-                `Cần ít nhất ${bufferMinutes} phút trống giữa 2 ca để dọn dẹp`,
-            );
+            
+          if (createBookingDto.status !== 'WAITLISTED') {
+            if (isRealConflict) {
+              throw new ConflictException(
+                I18nContext.current()?.t('messages.errors.EQUIPMENT_CONFLICT') ||
+                  'Thiết bị đã được đặt trong khoảng thời gian này',
+              );
+            } else {
+              throw new ConflictException(
+                I18nContext.current()?.t('messages.errors.BUFFER_TIME_REQUIRED', {
+                  args: { buffer: bufferMinutes },
+                }) ||
+                  `Cần ít nhất ${bufferMinutes} phút trống giữa 2 ca để dọn dẹp`,
+              );
+            }
           }
         }
       }
@@ -239,6 +245,33 @@ export class BookingsService {
       // 🛡️ BẢO MẬT: ENCRYPTION AT REST (Mã hóa CSDL)
       // -----------------------------------------------------------------------
       const encryptedPurpose = EncryptionUtil.encrypt(purpose);
+
+      // -----------------------------------------------------------------------
+      // 🛡️ BẢO MẬT: CHẶN USER TỰ DUYỆT ĐƠN (ANTI-HACK STATUS)
+      // -----------------------------------------------------------------------
+      // Chỉ cho phép hệ thống nhận 'WAITLISTED' hoặc mặc định là 'PENDING'.
+      let finalStatus = 'PENDING';
+      if (createBookingDto.status === 'WAITLISTED') {
+        finalStatus = 'WAITLISTED';
+        
+        // Nếu user chọn WAITLISTED nhưng thực tế slot đó HOÀN TOÀN TRỐNG, ta đôn lên PENDING luôn
+        if (!roomConflict) {
+          if (equipment_id) {
+            // Phải gọi lại equipmentConflict nếu lúc trước chưa check (ở trên equipmentConflict khai báo bằng let)
+            const eqConflict = await tx.booking.findFirst({
+              where: {
+                equipment_id,
+                status: { in: ['PENDING', 'APPROVED', 'IN_USE'] },
+                start_time: { lt: endWithBuffer },
+                end_time: { gt: startWithBuffer },
+              },
+            });
+            if (!eqConflict) finalStatus = 'PENDING';
+          } else {
+            finalStatus = 'PENDING';
+          }
+        }
+      }
 
       const newBooking = await tx.booking.create({
         data: {
@@ -249,7 +282,7 @@ export class BookingsService {
           start_time: startTime,
           end_time: endTime,
           purpose: encryptedPurpose,
-          status: 'PENDING',
+          status: finalStatus,
         },
       });
       return newBooking;
@@ -281,10 +314,14 @@ export class BookingsService {
   async findAll(startDate?: string, endDate?: string) {
     const whereClause: any = { is_deleted: false };
     if (startDate && endDate) {
-      whereClause.start_time = {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
-      };
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+        whereClause.start_time = {
+          gte: start,
+          lte: end,
+        };
+      }
     }
 
     const bookings = await this.prisma.booking.findMany({
@@ -422,6 +459,13 @@ export class BookingsService {
     // Phát sự kiện cập nhật lịch
     this.notificationsService.broadcastCalendarUpdate();
 
+    // Tự động kiểm tra danh sách chờ nếu có đơn bị Hủy/Từ chối
+    if (updateBookingDto.status && ['REJECTED', 'CANCELED'].includes(updateBookingDto.status)) {
+      this.processWaitlist(result.room_id, result.equipment_id).catch((err) =>
+        console.error('Lỗi khi đôn lịch:', err),
+      );
+    }
+
     return result;
   }
 
@@ -446,8 +490,13 @@ export class BookingsService {
         row_version: { increment: 1 },
       },
     });
-    
     this.notificationsService.broadcastCalendarUpdate();
+    
+    // Đôn lịch
+    this.processWaitlist(booking.room_id, booking.equipment_id).catch((err) =>
+      console.error('Lỗi khi đôn lịch:', err),
+    );
+    
     return result;
   }
 
@@ -459,5 +508,69 @@ export class BookingsService {
     });
     this.notificationsService.broadcastCalendarUpdate();
     return result;
+  }
+
+  private async processWaitlist(room_id: number, equipment_id: number | null) {
+    const waitlistedBookings = await this.prisma.booking.findMany({
+      where: {
+        room_id,
+        status: 'WAITLISTED',
+        ...(equipment_id && { equipment_id }),
+      },
+      orderBy: { created_at: 'asc' },
+    });
+
+    if (waitlistedBookings.length === 0) return;
+
+    const bufferString = await this.settingsService.get('BUFFER_TIME_MINUTES', '15');
+    const bufferMinutes = parseInt(bufferString, 10) || 15;
+
+    for (const waitlisted of waitlistedBookings) {
+      const startWithBuffer = new Date(waitlisted.start_time.getTime() - bufferMinutes * 60000);
+      const endWithBuffer = new Date(waitlisted.end_time.getTime() + bufferMinutes * 60000);
+
+      const roomConflict = await this.prisma.booking.findFirst({
+        where: {
+          room_id: waitlisted.room_id,
+          id: { not: waitlisted.id },
+          status: { in: ['PENDING', 'APPROVED', 'IN_USE'] },
+          start_time: { lt: endWithBuffer },
+          end_time: { gt: startWithBuffer },
+        },
+      });
+
+      let hasConflict = !!roomConflict;
+
+      if (!hasConflict && waitlisted.equipment_id) {
+        const equipmentConflict = await this.prisma.booking.findFirst({
+          where: {
+            equipment_id: waitlisted.equipment_id,
+            id: { not: waitlisted.id },
+            status: { in: ['PENDING', 'APPROVED', 'IN_USE'] },
+            start_time: { lt: endWithBuffer },
+            end_time: { gt: startWithBuffer },
+          },
+        });
+        if (equipmentConflict) hasConflict = true;
+      }
+
+      if (!hasConflict) {
+        await this.prisma.booking.update({
+          where: { id: waitlisted.id },
+          data: { status: 'PENDING' },
+        });
+
+        this.notificationsService.createNotification(
+          waitlisted.user_id,
+          'Đơn xếp hàng đã được đôn lên!',
+          `Phòng Lab đã có chỗ trống. Đơn đặt phòng #${waitlisted.id} của bạn đã được chuyển sang trạng thái chờ duyệt.`,
+          'info',
+        );
+        
+        this.notificationsService.broadcastCalendarUpdate();
+        // Thoát vòng lặp để tránh đôn quá nhiều đơn cùng lúc gây quá tải, 1 slot trống đôn 1 đơn là an toàn nhất.
+        break;
+      }
+    }
   }
 }

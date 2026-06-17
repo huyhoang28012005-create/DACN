@@ -117,7 +117,7 @@ export function Approvals() {
         <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("approve_requests")}</h1>
         <button 
           onClick={handleApproveAll}
-          className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2.5 rounded-md font-medium transition-colors text-[14px]"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 text-[14px] hover:-translate-y-0.5"
         >
           <CheckSquare className="w-4 h-4" /> {t("approve_all")}
         </button>
@@ -125,7 +125,7 @@ export function Approvals() {
 
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between items-center flex-wrap gap-4">
+        <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between items-center flex-wrap gap-4">
           <div className="relative w-[320px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
             <input 
@@ -133,7 +133,7 @@ export function Approvals() {
               placeholder={t("search_request_placeholder")} 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500"
+              className="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
           </div>
           <div className="flex gap-2 items-center">
@@ -143,7 +143,7 @@ export function Approvals() {
             <select 
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] text-[#212121] dark:text-slate-100 outline-none"
+              className="px-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] text-[#212121] dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
             >
               <option value="PENDING">{t("status_filter_pending")}</option>
               <option value="APPROVED">{t("status_filter_approved")}</option>
@@ -151,7 +151,7 @@ export function Approvals() {
             </select>
             <button 
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-[#10B981] hover:bg-[#059669] text-white rounded font-medium text-[14px] transition-colors ml-2"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-bold text-[14px] transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 ml-2"
             >
               <Download className="w-4 h-4" /> {t("export_csv")}
             </button>
@@ -162,7 +162,7 @@ export function Approvals() {
         <div className="overflow-x-auto min-h-[400px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-slate-50">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
                 <th className="px-4 py-4 w-12 text-center"><input type="checkbox" className="rounded text-[#1E5FA5] dark:text-blue-400 border-[#E0E0E0] dark:border-slate-800" /></th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("requester")}</th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("room_device")}</th>

@@ -164,21 +164,21 @@ export function Reports() {
                     activeTab === tab ? 'border-[#1E5FA5] text-[#1E5FA5] dark:text-blue-400' : 'border-transparent text-[#757575] dark:text-slate-400 hover:text-[#212121] dark:text-slate-100'
                   }`}
                 >
-                  {tab}
+                  {tab === 'statistics' ? t('tab_statistics') : t('tab_incidents')}
                 </button>
               ))}
             </div>
           )}
         </div>
         {activeTab === "statistics" && (
-          <button onClick={handleExportCSV} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 text-[#212121] dark:text-slate-100 px-4 py-2.5 rounded-md font-medium transition-colors text-[14px] shadow-sm dark:shadow-slate-900/50 mb-2">
+          <button onClick={handleExportCSV} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 text-[14px] mb-2">
             <Download className="w-4 h-4" /> {t("export_report_btn")}
           </button>
         )}
         {activeTab === "incidents" && (
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 text-white px-4 py-2.5 rounded-md font-medium transition-colors text-[14px] shadow-sm dark:shadow-slate-900/50 mb-2"
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 text-[14px] mb-2"
           >
             <Plus className="w-4 h-4" /> {t("report_incident_btn")}
           </button>
@@ -195,14 +195,14 @@ export function Reports() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 p-6 flex flex-col">
+            <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-6 flex flex-col">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-[16px] font-bold text-[#212121] dark:text-slate-100">{t("incident_chart")}</h2>
                 <input 
                   type="month" 
                   value={chartMonth}
                   onChange={(e) => setChartMonth(e.target.value)}
-                  className="px-3 py-1.5 border border-[#E0E0E0] dark:border-slate-800 rounded text-[13px] text-[#757575] dark:text-slate-400 focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500 outline-none"
+                  className="px-3 py-1.5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[13px] text-[#757575] dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
                 />
               </div>
               <div className="h-[200px] w-full">
@@ -218,7 +218,7 @@ export function Reports() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 p-6">
+            <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-6">
               <h2 className="text-[16px] font-bold text-[#212121] dark:text-slate-100 mb-6">{t("status_ratio")}</h2>
               <div className="h-[280px] flex items-center">
                 <ResponsiveContainer width="100%" height="100%">
@@ -260,13 +260,13 @@ export function Reports() {
       )}
 
       {activeTab === "incidents" && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex-1 flex flex-col overflow-hidden animate-in fade-in duration-300">
-          <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 bg-[#F5F5F5] dark:bg-slate-800/50 flex justify-between items-center">
+        <div className="bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 flex-1 flex flex-col overflow-hidden animate-in fade-in duration-300">
+          <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between items-center">
             <div className="relative w-[300px]">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
-              <input type="text" placeholder={t("search_reports")} className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-[#E0E0E0] dark:border-slate-800 rounded text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" />
+              <input type="text" placeholder={t("search_reports")} className="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
             </div>
-            <button onClick={fetchData} className="p-2 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-white dark:bg-slate-900 rounded border border-transparent hover:border-[#E0E0E0] dark:border-slate-800 transition-colors bg-white dark:bg-slate-900">
+            <button onClick={fetchData} className="p-2 text-[#757575] dark:text-slate-400 hover:text-[#1E5FA5] dark:text-blue-400 hover:bg-white dark:bg-slate-900 rounded-lg border border-transparent hover:border-[#E0E0E0] dark:border-slate-800 transition-colors bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
           </div>
@@ -274,7 +274,7 @@ export function Reports() {
           <div className="flex-1 overflow-auto">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="border-b border-[#E0E0E0] dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-10">
+                <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0 z-10">
                   <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("report_date")}</th>
                   <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("reporter")}</th>
                   <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("title")}</th>
@@ -339,40 +339,40 @@ export function Reports() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl dark:shadow-slate-900/50 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-4 border-b border-[#E0E0E0] dark:border-slate-800 flex justify-between items-center bg-[#FAFAFA] dark:bg-slate-800/30">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md">
               <h3 className="font-bold text-[#212121] dark:text-slate-100 text-[16px]">{t("report_incident_modal_title")}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="p-1.5 text-[#757575] dark:text-slate-400 hover:bg-[#E0E0E0] dark:hover:bg-slate-700 rounded-lg transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleCreateReport} className="p-6 space-y-4">
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("incident_title")} <span className="text-red-500">*</span></label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" placeholder={t("example_title")} />
+                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder={t("example_title")} />
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("broken_equipment_optional")}</label>
-                <select value={formData.equipment_id} onChange={e => setFormData({...formData, equipment_id: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500">
+                <select value={formData.equipment_id} onChange={e => setFormData({...formData, equipment_id: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                   <option value="">{t("no_equipment_specified")}</option>
                   {equipments.map(e => <option key={e.id} value={e.id}>{e.name} ({e.serial_number})</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("broken_room_optional")}</label>
-                <select value={formData.room_id} onChange={e => setFormData({...formData, room_id: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500">
+                <select value={formData.room_id} onChange={e => setFormData({...formData, room_id: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                   <option value="">{t("no_room_specified")}</option>
                   {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{t("detailed_description")} <span className="text-red-500">*</span></label>
-                <textarea required rows={4} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500" placeholder={t("describe_issue")}></textarea>
+                <textarea required rows={4} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 bg-white/80 dark:bg-slate-900/80 border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder={t("describe_issue")}></textarea>
               </div>
-              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0] dark:border-slate-800">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[14px] font-medium text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors">{t("cancel")}</button>
-                <button type="submit" className="px-4 py-2 text-[14px] font-bold text-white bg-[#1E5FA5] dark:bg-blue-600 hover:bg-[#154a85] dark:hover:bg-blue-700 rounded-md transition-colors">{t("submit_report")}</button>
+              <div className="pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]/50 dark:border-slate-800/50">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-[14px] font-medium text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 rounded-lg transition-colors">{t("cancel")}</button>
+                <button type="submit" className="px-4 py-2 text-[14px] font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5">{t("submit_report")}</button>
               </div>
             </form>
           </div>
@@ -394,8 +394,8 @@ export function Reports() {
 
 function KPICard({title, value, sub, icon, bg}: any) {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 p-5 flex items-start gap-4">
-      <div className={`w-12 h-12 rounded-lg ${bg} flex items-center justify-center flex-shrink-0`}>{icon}</div>
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 p-5 flex items-start gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
+      <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>{icon}</div>
       <div>
         <div className="text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">{title}</div>
         <div className="text-[24px] font-bold text-[#212121] dark:text-slate-100 leading-none mb-2">{value}</div>

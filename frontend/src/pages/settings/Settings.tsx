@@ -141,7 +141,7 @@ export function Settings() {
   if (loading) return <div className="p-6">{t("loading_settings")}</div>;
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm dark:shadow-slate-900/50 p-6 max-w-4xl mx-auto">
+    <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50 p-6 max-w-4xl mx-auto animate-in fade-in duration-300">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[#1E5FA5] dark:text-blue-400">{t("settings_title")}</h1>
@@ -150,7 +150,7 @@ export function Settings() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-[#1E5FA5] dark:bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-2 hover:bg-[#15467A] disabled:opacity-50"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
         >
           <Save className="w-4 h-4" />
           {saving ? t("settings_saving") : t("settings_save")}
@@ -158,7 +158,7 @@ export function Settings() {
       </div>
 
       <Tabs defaultValue="booking" className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-5 bg-[#F5F5F5] dark:bg-slate-800/50 p-1 rounded-md">
+        <TabsList className="mb-6 grid w-full grid-cols-5 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md p-1.5 rounded-xl border border-[#E0E0E0]/50 dark:border-slate-800/50">
           <TabsTrigger value="booking">{t("settings_tab_booking")}</TabsTrigger>
           <TabsTrigger value="automation">{t("settings_tab_auto")}</TabsTrigger>
           <TabsTrigger value="ui">{t("settings_tab_ui")}</TabsTrigger>
@@ -167,28 +167,28 @@ export function Settings() {
         </TabsList>
 
         <TabsContent value="booking" className="space-y-4">
-          <div className="border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-5">
+          <div className="border border-[#E0E0E0]/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-4 text-[#212121] dark:text-slate-100">{t("settings_booking_hours")}</h3>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_start_hour")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_start_hour")}</label>
                 <input
                   type="number"
                   min="0"
                   max="23"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('BOOKING_START_HOUR')}
                   onChange={(e) => handleChange('BOOKING_START_HOUR', e.target.value)}
                 />
                 <p className="text-xs text-[#757575] dark:text-slate-400 mt-1">{getDesc('BOOKING_START_HOUR')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_end_hour")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_end_hour")}</label>
                 <input
                   type="number"
                   min="0"
                   max="23"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('BOOKING_END_HOUR')}
                   onChange={(e) => handleChange('BOOKING_END_HOUR', e.target.value)}
                 />
@@ -197,33 +197,33 @@ export function Settings() {
             </div>
             <div className="grid grid-cols-2 gap-6 mt-6">
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("MIN_BOOKING_MINUTES")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("MIN_BOOKING_MINUTES")}</label>
                 <input
                   type="number"
                   min="1"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('MIN_BOOKING_MINUTES')}
                   onChange={(e) => handleChange('MIN_BOOKING_MINUTES', e.target.value)}
                 />
                 <p className="text-xs text-[#757575] dark:text-slate-400 mt-1">{getDesc('MIN_BOOKING_MINUTES')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("MAX_BOOKING_MINUTES")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("MAX_BOOKING_MINUTES")}</label>
                 <input
                   type="number"
                   min="1"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('MAX_BOOKING_MINUTES')}
                   onChange={(e) => handleChange('MAX_BOOKING_MINUTES', e.target.value)}
                 />
                 <p className="text-xs text-[#757575] dark:text-slate-400 mt-1">{getDesc('MAX_BOOKING_MINUTES')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("BOOKING_BUFFER_MINUTES")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("BOOKING_BUFFER_MINUTES")}</label>
                 <input
                   type="number"
                   min="0"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('BOOKING_BUFFER_MINUTES')}
                   onChange={(e) => handleChange('BOOKING_BUFFER_MINUTES', e.target.value)}
                 />
@@ -232,14 +232,14 @@ export function Settings() {
             </div>
           </div>
 
-          <div className="border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-5">
+          <div className="border border-[#E0E0E0]/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-4 text-[#212121] dark:text-slate-100">{t("settings_booking_limits")}</h3>
             <div>
-              <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_max_per_day")}</label>
+              <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_max_per_day")}</label>
               <input
                 type="number"
                 min="1"
-                className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 value={getValue('MAX_BOOKINGS_PER_DAY')}
                 onChange={(e) => handleChange('MAX_BOOKINGS_PER_DAY', e.target.value)}
               />
@@ -249,26 +249,26 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="automation" className="space-y-4">
-          <div className="border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-5">
+          <div className="border border-[#E0E0E0]/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-4 text-[#212121] dark:text-slate-100">{t("settings_auto_cancel")}</h3>
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_cancel_pending")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_cancel_pending")}</label>
                 <input
                   type="number"
                   min="1"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('CANCEL_PENDING_HOURS')}
                   onChange={(e) => handleChange('CANCEL_PENDING_HOURS', e.target.value)}
                 />
                 <p className="text-xs text-[#757575] dark:text-slate-400 mt-1">{getDesc('CANCEL_PENDING_HOURS')}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_no_show")}</label>
+                <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_no_show")}</label>
                 <input
                   type="number"
                   min="0"
-                  className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                  className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   value={getValue('NO_SHOW_MINUTES')}
                   onChange={(e) => handleChange('NO_SHOW_MINUTES', e.target.value)}
                 />
@@ -279,12 +279,12 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="ui" className="space-y-4">
-          <div className="border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-5">
+          <div className="border border-[#E0E0E0]/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
             <h3 className="font-semibold text-lg mb-4 text-[#212121] dark:text-slate-100">{t("settings_ui_personalize")}</h3>
             <div>
-              <label className="block text-sm font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_default_lang")}</label>
+              <label className="block text-[13px] font-medium mb-2 text-[#757575] dark:text-slate-400">{t("settings_default_lang")}</label>
               <select
-                className="w-full border border-[#E0E0E0] dark:border-slate-800 rounded p-2 focus:outline-none focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                className="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-2.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 value={getValue('DEFAULT_LANGUAGE')}
                 onChange={(e) => handleChange('DEFAULT_LANGUAGE', e.target.value)}
               >
@@ -297,7 +297,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
-          <div className="border border-[#E0E0E0] dark:border-slate-800 rounded-lg p-5 bg-slate-50 dark:bg-slate-900">
+          <div className="border border-[#E0E0E0]/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-blue-100 text-blue-600 rounded-full dark:bg-blue-900/50 dark:text-blue-400">
                 <ShieldCheck className="w-6 h-6" />
@@ -328,7 +328,7 @@ export function Settings() {
                   <button
                     onClick={handleGenerateMfa}
                     disabled={setupLoading}
-                    className="bg-[#1E5FA5] dark:bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-[#0F172A] transition-colors"
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5"
                   >
                     {setupLoading ? t("mfa_processing") : t("mfa_setup_btn")}
                   </button>
@@ -352,7 +352,7 @@ export function Settings() {
                       <button
                         onClick={handleVerifyMfaSetup}
                         disabled={setupLoading || mfaCode.length !== 6}
-                        className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 rounded-md font-medium transition-colors"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                       >
                         Xác nhận
                       </button>
@@ -365,7 +365,7 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="maintenance" className="space-y-4">
-          <div className="border border-[#C62828] rounded-lg p-5 bg-[#FFEBEE]">
+          <div className="border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/10 backdrop-blur-sm rounded-2xl p-6 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="p-2 bg-[#C62828] text-white rounded-full">
                 <AlertCircle className="w-6 h-6" />

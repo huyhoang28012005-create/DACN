@@ -67,12 +67,13 @@ export const equipmentService = {
 };
 
 export const bookingService = {
-  create: (data: { roomId: string | number; startTime: Date; endTime: Date; purpose: string }) =>
+  create: (data: { roomId: string | number; startTime: Date; endTime: Date; purpose: string; status?: string }) =>
     apiClient.post('/api/bookings', {
       room_id: Number(data.roomId),
       start_time: data.startTime.toISOString(),
       end_time: data.endTime.toISOString(),
       purpose: data.purpose,
+      status: data.status,
     }),
 
   getAll: (startDate?: string, endDate?: string) => {
