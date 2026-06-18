@@ -67,9 +67,10 @@ export const equipmentService = {
 };
 
 export const bookingService = {
-  create: (data: { roomId: string | number; startTime: Date; endTime: Date; purpose: string; status?: string }) =>
+  create: (data: { roomId: string | number; equipmentId?: string | number; startTime: Date; endTime: Date; purpose: string; status?: string }) =>
     apiClient.post('/api/bookings', {
       room_id: Number(data.roomId),
+      ...(data.equipmentId && { equipment_id: Number(data.equipmentId) }),
       start_time: data.startTime.toISOString(),
       end_time: data.endTime.toISOString(),
       purpose: data.purpose,
@@ -166,4 +167,10 @@ export const checkInService = {
   getHistory: () => apiClient.get('/api/check-in/history/user'),
 
   getAll: () => apiClient.get('/api/check-in'),
+};
+
+export const notificationService = {
+  getUnread: () => apiClient.get('/api/notifications'),
+  markAsRead: (id: string | number) => apiClient.patch(`/api/notifications/${id}/read`),
+  markAllAsRead: () => apiClient.patch('/api/notifications/read-all'),
 };

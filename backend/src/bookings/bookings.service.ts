@@ -312,7 +312,7 @@ export class BookingsService {
   }
 
   async findAll(startDate?: string, endDate?: string) {
-    const whereClause: any = { is_deleted: false };
+    const whereClause: any = {};
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -343,7 +343,7 @@ export class BookingsService {
 
   async findMyBookings(userId: number) {
     const bookings = await this.prisma.booking.findMany({
-      where: { user_id: userId, is_deleted: false },
+      where: { user_id: userId },
       include: {
         room: { select: { id: true, name: true } },
         equipment: { select: { id: true, name: true } },
@@ -396,7 +396,7 @@ export class BookingsService {
       },
     });
 
-    if (!booking || booking.is_deleted) {
+    if (!booking) {
       throw new NotFoundException(
         I18nContext.current()?.t('messages.errors.BOOKING_NOT_FOUND', {
           args: { id },

@@ -20,7 +20,6 @@ export class ReportsService {
 
   async findAll() {
     return this.prisma.report.findMany({
-      where: { is_deleted: false },
       include: {
         user: { select: { id: true, name: true, email: true } },
         equipment: { select: { id: true, name: true } },
@@ -32,7 +31,7 @@ export class ReportsService {
 
   async findMyReports(userId: number) {
     return this.prisma.report.findMany({
-      where: { user_id: userId, is_deleted: false },
+      where: { user_id: userId },
       include: {
         user: { select: { id: true, name: true, email: true } },
         equipment: { select: { id: true, name: true } },
@@ -43,13 +42,13 @@ export class ReportsService {
   }
 
   async getStatistics() {
-    const total = await this.prisma.report.count({ where: { is_deleted: false } });
-    const open = await this.prisma.report.count({ where: { status: 'OPEN', is_deleted: false } });
+    const total = await this.prisma.report.count();
+    const open = await this.prisma.report.count({ where: { status: 'OPEN' } });
     const inProgress = await this.prisma.report.count({
-      where: { status: 'IN_PROGRESS', is_deleted: false },
+      where: { status: 'IN_PROGRESS' },
     });
     const resolved = await this.prisma.report.count({
-      where: { status: 'RESOLVED', is_deleted: false },
+      where: { status: 'RESOLVED' },
     });
 
     return {
@@ -70,7 +69,7 @@ export class ReportsService {
       },
     });
 
-    if (!report || report.is_deleted) {
+    if (!report) {
       throw new NotFoundException(`Báo cáo với ID ${id} không tồn tại`);
     }
 

@@ -94,4 +94,20 @@ export class NotificationsGateway
     });
     this.logger.log(`Broadcasted calendar update to all clients`);
   }
+
+  // Public method to broadcast room updates
+  broadcastRoomUpdate() {
+    this.server.emit('room_updated', {
+      timestamp: new Date(),
+    });
+    this.logger.log(`Broadcasted room update to all clients`);
+  }
+
+  // Public method to broadcast equipment updates
+  broadcastEquipmentUpdate() {
+    this.server.emit('equipment_updated', {
+      timestamp: new Date(),
+    });
+    this.logger.log(`Broadcasted equipment update to all clients`);
+  }
 }

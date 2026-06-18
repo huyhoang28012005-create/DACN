@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Edit2, Plus, Trash2, BookOpen, X, User } from "lucide-react";
-import { courseService, userService } from "../../services";
+import { courseService } from "../../services";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
+import { useCourses } from "../../hooks/useCourses";
 import { StatMini } from "../../components/ui/StatMini";
 import { toast } from "react-hot-toast";
 import { format } from "date-fns";
@@ -11,9 +12,7 @@ import { format } from "date-fns";
 export function Courses() {
   const { t } = useTranslation();
 
-  const [courses, setCourses] = useState<any[]>([]);
-  const [instructors, setInstructors] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { courses, instructors, isLoading, refetch, canManage, isAdminOrTechnician } = useCourses();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -22,51 +21,7 @@ export function Courses() {
   const [formData, setFormData] = useState({ id: 0, code: "", name: "", instructor_id: "" });
   const [isEditing, setIsEditing] = useState(false);
 
-  const currentUserStr = localStorage.getItem("user");
-  const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
-  const isAdminOrTechnician = currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN';
-  const isInstructor = currentUser?.role === 'INSTRUCTOR';
-  const canManage = isAdminOrTechnician || isInstructor;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      let coursesData = [];
-      let usersData = [];
-
-      if (canManage) {
-        const [coursesRes, usersRes] = await Promise.all([
-          courseService.getAll(),
-          isAdminOrTechnician ? userService.getAll() : Promise.resolve({ data: [currentUser] })
-        ]);
-        coursesData = coursesRes.data || [];
-        usersData = usersRes.data || [currentUser];
-      } else {
-        const coursesRes = await courseService.getAll();
-        coursesData = coursesRes.data || [];
-      }
-      
-      // Nếu là giảng viên, chỉ hiển thị các khóa học do mình phụ trách
-      if (isInstructor) {
-        coursesData = coursesData.filter((c: any) => c.instructor_id === currentUser.id);
-      }
-      setCourses(coursesData);
-      
-      if (canManage) {
-        const instrs = usersData.filter((u: any) => u.role === 'INSTRUCTOR' || u.role === 'ADMIN');
-        setInstructors(instrs);
-      }
-    } catch (error: any) {
-      const msg = error.response?.data?.message || t("load_courses_error");
-      toast.error(Array.isArray(msg) ? msg[0] : msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleOpenModal = (course?: any) => {
     if (course) {
@@ -98,10 +53,10 @@ export function Courses() {
         toast.success(t("update_course_success"));
       } else {
         await courseService.create(payload);
-        toast.success(t("add_course_success"));
+        toast.success(t("create_course_success"));
       }
       setIsModalOpen(false);
-      fetchData();
+      refetch();
     } catch (error: any) {
       const msg = error.response?.data?.message || (isEditing ? t("update_failed") : t("add_failed"));
       toast.error(Array.isArray(msg) ? msg[0] : msg);
@@ -113,9 +68,9 @@ export function Courses() {
       try {
         await courseService.delete(deleteConfirmId.toString());
         toast.success(t("delete_course_success"));
-        setDeleteConfirmId(null);
-        fetchData();
-      } catch (error: any) {
+      setDeleteConfirmId(null);
+      refetch();
+    } catch (error: any) {
         const msg = error.response?.data?.message || t("delete_course_error");
         toast.error(Array.isArray(msg) ? msg[0] : msg);
       }
@@ -136,7 +91,7 @@ export function Courses() {
   }, [courses]);
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
+    <div className="max-w-[1200px] w-full mx-auto animate-in fade-in duration-300 h-full flex flex-col space-y-4">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
@@ -157,7 +112,7 @@ export function Courses() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex flex-col flex-1 min-h-0">
         <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
@@ -171,10 +126,10 @@ export function Courses() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-auto flex-1 min-h-0">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0 z-10">
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%]">{t("course_code")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[35%]">{t("course_name")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[25%]">{t("course_instructor")}</th>

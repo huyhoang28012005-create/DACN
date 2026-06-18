@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Calendar, Clock, ArrowRight, LayoutGrid, CheckCircle2, CalendarPlus } from "lucide-react";
+import { Calendar, Clock, ArrowRight, LayoutGrid, CheckCircle2, CalendarPlus, Bell } from "lucide-react";
 import { Link } from "react-router";
 import { toast } from "react-hot-toast";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { bookingService, roomService } from "../../services";
-import { format, isToday, isTomorrow } from "date-fns";
+import { bookingService, roomService, notificationService, authService } from "../../services";
+import { format, formatDistanceToNow, isToday, isTomorrow } from "date-fns";
+import { vi } from "date-fns/locale";
+import { socketService } from "../../services/socket";
 
 interface Booking {
   id: number;
@@ -39,6 +41,7 @@ export function DashboardStudent() {
   const [approvedCount, setApprovedCount] = useState(0);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -66,8 +69,33 @@ export function DashboardStudent() {
           .slice(0, 5);
         setUpcomingBookings(upcoming);
 
-        // Phòng khả dụng (status AVAILABLE), tối đa 3
-        setAvailableRooms(rooms.slice(0, 6));
+        // Tính toán trạng thái Khả dụng thời gian thực (Dynamic Status)
+        const now = new Date().getTime();
+        
+        const smartRooms = rooms.map(room => {
+          // Nếu trạng thái tĩnh của phòng không phải AVAILABLE (vd MAINTENANCE, BROKEN) thì giữ nguyên
+          if (room.status !== "AVAILABLE") return room;
+
+          // Kiểm tra xem phòng có đang bị đặt không
+          const isCurrentlyInUse = approved.some(booking => {
+            if (booking.room?.id !== room.id && (booking as any).room_id !== room.id) return false;
+            const start = new Date(booking.start_time).getTime();
+            const end = new Date(booking.end_time).getTime();
+            return now >= start && now <= end;
+          });
+
+          if (isCurrentlyInUse) {
+            return { ...room, status: "IN_USE" };
+          }
+          return room;
+        });
+
+        // Sắp xếp: AVAILABLE lên đầu, sau đó IN_USE, cuối cùng là MAINTENANCE/BROKEN
+        const sortOrder: Record<string, number> = { "AVAILABLE": 1, "IN_USE": 2, "MAINTENANCE": 3, "BROKEN": 4 };
+        smartRooms.sort((a, b) => (sortOrder[a.status] || 5) - (sortOrder[b.status] || 5));
+
+        // Lấy 6 phòng đứng đầu danh sách
+        setAvailableRooms(smartRooms.slice(0, 6));
       } catch (error: any) {
         const msg = error.response?.data?.message || t("load_dashboard_error");
         toast.error(Array.isArray(msg) ? msg[0] : msg);
@@ -77,7 +105,58 @@ export function DashboardStudent() {
     };
 
     fetchData();
+
+    // Nạp thông báo cũ từ Database
+    const fetchNotifications = async () => {
+      try {
+        const res = await notificationService.getUnread();
+        setNotifications(res.data);
+      } catch (err) {
+        console.error("Lỗi tải thông báo:", err);
+      }
+    };
+    fetchNotifications();
+
+    // Khởi tạo Socket.io
+    const socket = socketService.getSocket();
+    if (socket) {
+      const handleNotif = (data: any) => {
+        setNotifications((prev) => [data, ...prev].slice(0, 20));
+      };
+      const handleRefresh = () => {
+        fetchData(); // Lắng nghe sự kiện để tải lại data ngầm
+      };
+      
+      socket.on("notification", handleNotif);
+      socket.on("calendar_updated", handleRefresh);
+      socket.on("room_updated", handleRefresh);
+
+      return () => {
+        socket.off("notification", handleNotif);
+        socket.off("calendar_updated", handleRefresh);
+        socket.off("room_updated", handleRefresh);
+      };
+    }
   }, []);
+
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications([]);
+      toast.success(t("marked_all_read") || "Đã đánh dấu tất cả là đã đọc");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Format ngày cho Lịch đặt sắp tới
   const formatBookingDate = (startTime: string) => {
@@ -246,32 +325,56 @@ END:VCALENDAR`;
         </div>
 
         {/* Right Column 35% - Thông báo gần đây */}
-        <div className="lg:col-span-4 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md">
-          <div className="px-7 py-6 border-b border-neutral-100 dark:border-slate-800">
-            <h2 className="text-lg font-extrabold text-neutral-900 dark:text-slate-100">{t("recent_notifications")}</h2>
+        <div className="lg:col-span-4 bg-white/50 dark:bg-slate-800/20 backdrop-blur-sm rounded-2xl shadow-sm border border-[#E0E0E0]/50 dark:border-slate-800/50 overflow-hidden flex flex-col transition-all duration-300 hover:shadow-md h-[400px]">
+          <div className="px-7 py-6 border-b border-neutral-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900/50">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-extrabold text-neutral-900 dark:text-slate-100">{t("recent_notifications")}</h2>
+              {notifications.length > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                  {notifications.length}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="divide-y divide-[#E0E0E0] dark:divide-slate-800 flex-1">
-            {[
-              { title: t("notif_example_1"), time: t("time_2_hours_ago"), unread: true },
-              { title: t("notif_example_2"), time: t("time_5_hours_ago"), unread: true },
-              { title: t("notif_example_3"), time: t("time_1_day_ago"), unread: false },
-            ].map((item, i) => (
-              <div key={i} className={`px-6 py-4 flex gap-3 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 dark:hover:bg-slate-800 transition-colors ${item.unread ? "bg-blue-50/30 dark:bg-slate-800" : ""}`}>
-                <div className="mt-1">
-                  <div className={`w-2 h-2 rounded-full ${item.unread ? "bg-[#1E5FA5] dark:bg-blue-500" : "bg-transparent"}`}></div>
+          <div className="divide-y divide-[#E0E0E0] dark:divide-slate-800 flex-1 overflow-y-auto custom-scrollbar">
+            {notifications.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 bg-blue-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
+                  <Bell className="w-8 h-8 text-blue-200 dark:text-slate-600" />
                 </div>
-                <div>
-                  <p className={`text-[14px] ${item.unread ? "font-semibold text-[#212121] dark:text-slate-100" : "text-[#212121] dark:text-slate-300"}`}>{item.title}</p>
-                  <p className="text-[12px] text-[#757575] dark:text-slate-500 mt-1">{item.time}</p>
-                </div>
+                <p className="text-[#757575] dark:text-slate-400 font-medium">Bạn không có thông báo mới nào</p>
               </div>
-            ))}
+            ) : (
+              notifications.map((item, i) => (
+                <div 
+                  key={item.id || i} 
+                  onClick={() => handleMarkAsRead(item.id)}
+                  className="px-6 py-4 flex gap-4 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 transition-colors bg-blue-50/30 dark:bg-blue-900/10 cursor-pointer relative group"
+                >
+                  <div className="mt-1">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#1E5FA5] dark:bg-blue-500 shadow-[0_0_8px_rgba(30,95,165,0.5)]"></div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[14px] font-semibold text-[#212121] dark:text-slate-100 mb-1">{item.title}</p>
+                    {item.message && <p className="text-[13px] text-[#424242] dark:text-slate-300 mb-2">{item.message}</p>}
+                    <p className="text-[11px] text-[#757575] dark:text-slate-500 font-medium uppercase tracking-wider">
+                      {formatDistanceToNow(new Date(item.created_at || item.timestamp), { addSuffix: true, locale: vi })}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-          <div className="px-6 py-3 bg-[#F5F5F5] dark:bg-slate-800/50 border-t border-[#E0E0E0] dark:border-slate-800 text-center">
-            <button onClick={() => toast.success(t('feature_in_development'))} className="text-[14px] font-medium text-[#1E5FA5] dark:text-blue-400 hover:underline inline-flex items-center gap-1">
-              {t("view_all")} <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          {notifications.length > 0 && (
+            <div className="px-6 py-3 bg-[#F5F5F5] dark:bg-slate-800/50 border-t border-[#E0E0E0] dark:border-slate-800 text-center shrink-0">
+              <button 
+                onClick={handleMarkAllAsRead} 
+                className="text-[14px] font-medium text-[#1E5FA5] dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Đánh dấu tất cả đã đọc
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

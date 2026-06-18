@@ -19,7 +19,6 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
-    if (user && user.is_deleted) return null;
     return user;
   }
 
@@ -40,7 +39,6 @@ export class UsersService {
 
   async findAll() {
     return this.prisma.user.findMany({
-      where: { is_deleted: false },
       select: {
         id: true,
         email: true,

@@ -71,9 +71,6 @@ export function DashboardInstructor() {
     return format(date, "dd/MM/yyyy");
   };
 
-  const formatBookingTime = (startTime: string, endTime: string) => {
-    return `${format(new Date(startTime), "HH:mm")} - ${format(new Date(endTime), "HH:mm")}`;
-  };
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">

@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Search, Edit2, Plus, Users as UsersIcon, Trash2, ShieldCheck, UserCheck, GraduationCap, UserX } from "lucide-react";
 import { userService } from "../../services";
+import { useUsers } from "../../hooks/useUsers";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { toast } from "react-hot-toast";
@@ -11,8 +12,7 @@ export function Users() {
   const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [users, setUsers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { users, isLoading, refetch } = useUsers();
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "STUDENT" });
@@ -22,22 +22,7 @@ export function Users() {
   const [blacklistingUserId, setBlacklistingUserId] = useState<number | null>(null);
   const [blacklistReason, setBlacklistReason] = useState("");
 
-  useEffect(() => {
-    fetchData();
-  }, []);
 
-  async function fetchData() {
-    setIsLoading(true);
-    try {
-      const res = await userService.getAll();
-      setUsers(res.data || []);
-    } catch (error: any) {
-      const msg = error.response?.data?.message || t("users_load_error");
-      toast.error(Array.isArray(msg) ? msg[0] : msg);
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   const handleToggleActiveClick = (userId: number, currentStatus: boolean) => {
     if (currentStatus) {
@@ -55,7 +40,7 @@ export function Users() {
       await userService.update(userId.toString(), { is_active: newStatus, blacklist_reason: reason });
       toast.success(newStatus ? t("blacklist_removed_success") : t("blacklist_added_success"));
       setBlacklistingUserId(null);
-      fetchData();
+      refetch();
     } catch (error: any) {
       const msg = error.response?.data?.message || t("status_update_failed");
       toast.error(Array.isArray(msg) ? msg[0] : msg);
@@ -77,7 +62,7 @@ export function Users() {
       });
       toast.success(t("update_info_success"));
       setIsEditingUser(false);
-      fetchData();
+      refetch();
     } catch (error: any) {
       const msg = error.response?.data?.message || t("update_failed");
       toast.error(Array.isArray(msg) ? msg[0] : msg);
@@ -90,7 +75,7 @@ export function Users() {
         await userService.delete(deleteConfirmId.toString());
         toast.success(t("user_deleted_success"));
         setDeleteConfirmId(null);
-        fetchData();
+        refetch();
       } catch (error: any) {
         const msg = error.response?.data?.message || t("delete_failed");
         toast.error(Array.isArray(msg) ? msg[0] : msg);
@@ -105,7 +90,7 @@ export function Users() {
       toast.success(t("add_user_success"));
       setIsAddingUser(false);
       setNewUser({ name: "", email: "", password: "", role: "STUDENT" });
-      fetchData();
+      refetch();
     } catch (error: any) {
       const msg = error.response?.data?.message || t("add_user_failed");
       toast.error(Array.isArray(msg) ? msg[0] : msg);
@@ -137,7 +122,7 @@ export function Users() {
   }), [users]);
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
+    <div className="max-w-[1200px] w-full mx-auto animate-in fade-in duration-300 h-full flex flex-col space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("manage_users")}</h1>
@@ -157,7 +142,7 @@ export function Users() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex flex-col flex-1 min-h-0">
         {/* Toolbar */}
         <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between items-center">
           <div className="relative w-[300px]">
@@ -189,10 +174,10 @@ export function Users() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-auto flex-1 min-h-0">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0 z-10">
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("full_name")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("system_id")}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("email")}</th>

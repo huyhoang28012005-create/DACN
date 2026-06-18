@@ -7,7 +7,6 @@ export class CoursesService {
 
   async findAll() {
     return this.prisma.course.findMany({
-      where: { is_deleted: false },
       include: {
         instructor: {
           select: { id: true, name: true, email: true },
@@ -26,7 +25,7 @@ export class CoursesService {
         },
       },
     });
-    if (!course || course.is_deleted) throw new NotFoundException('Course not found');
+    if (!course) throw new NotFoundException('Course not found');
     return course;
   }
 

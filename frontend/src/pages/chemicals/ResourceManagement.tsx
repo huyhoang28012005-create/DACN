@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Plus, Search, Edit2, Trash2, Home, CheckCircle2, Wind } from "lucide-react";
 import { DeviceManagement } from "../equipment/DeviceManagement";
 import { ChemicalManagement } from "./ChemicalManagement";
 import { roomService } from "../../services";
+import { useRooms } from "../../hooks/useRooms";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
 import { StatMini } from "../../components/ui/StatMini";
 import { toast } from "react-hot-toast";
@@ -13,21 +14,20 @@ export function ResourceManagement() {
 
   const [activeTab, setActiveTab] = useState("Thiết bị");
   const tabs = [{id: "Phòng Lab", label: t("lab_room")}, {id: "Thiết bị", label: t("equipment")}, {id: "Hóa chất", label: t("chemicals")}];
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const { rooms, isLoadingRooms, fetchRooms } = useRooms();
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [isEditingRoom, setIsEditingRoom] = useState(false);
   const [newRoom, setNewRoom] = useState({ name: "", location: "", capacity: 30, has_air_conditioner: true });
   const [editingRoom, setEditingRoom] = useState({ id: 0, name: "", location: "", capacity: 30, has_air_conditioner: true });
   const [deleteConfirmRoomId, setDeleteConfirmRoomId] = useState<number | null>(null);
+  const [searchRoomTerm, setSearchRoomTerm] = useState("");
 
-  const fetchRooms = () => {
-    setIsLoadingRooms(true);
-    roomService.getAll()
-      .then(res => setRooms(res.data || []))
-      .catch(() => { /* apiClient.ts sẽ tự hiển thị toast lỗi */ })
-      .finally(() => setIsLoadingRooms(false));
-  };
+  const filteredRooms = useMemo(() => {
+    return rooms.filter(r => 
+      r.name.toLowerCase().includes(searchRoomTerm.toLowerCase()) || 
+      r.location.toLowerCase().includes(searchRoomTerm.toLowerCase())
+    );
+  }, [rooms, searchRoomTerm]);
 
   useEffect(() => {
     if (activeTab === "Phòng Lab") {
@@ -104,13 +104,13 @@ export function ResourceManagement() {
         </div>
 
         {activeTab === "Thiết bị" && (
-          <div className="flex-1 overflow-auto -mx-6 px-6">
+          <div className="flex-1 flex flex-col min-h-0 -mx-6 px-6">
             <DeviceManagement />
           </div>
         )}
 
         {activeTab === "Phòng Lab" && (
-          <div className="flex-1 flex flex-col space-y-4">
+          <div className="flex-1 flex flex-col space-y-4 min-h-0">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-2">
               <StatMini label={t("total_rooms", "Tổng số phòng")} value={rooms.length} icon={<Home className="w-5 h-5" />} color="text-indigo-600" bgColor="bg-indigo-600" />
               <StatMini label={t("available_rooms", "Đang khả dụng")} value={rooms.length} icon={<CheckCircle2 className="w-5 h-5" />} color="text-green-600" bgColor="bg-green-600" />
@@ -122,6 +122,8 @@ export function ResourceManagement() {
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#757575] dark:text-slate-400" />
                 <input 
                   type="text" 
+                  value={searchRoomTerm}
+                  onChange={(e) => setSearchRoomTerm(e.target.value)}
                   placeholder={t("search_room_placeholder")} 
                   className="w-full pl-9 pr-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
@@ -144,8 +146,8 @@ export function ResourceManagement() {
                 </thead>
                 <tbody className="divide-y divide-[#E0E0E0] dark:divide-slate-800">
                   {isLoadingRooms ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-[#757575] dark:text-slate-400">{t("loading")}</td></tr>
-                  ) : rooms.map((r) => (
+                    <tr><td colSpan={6} className="p-8 text-center text-[#757575] dark:text-slate-400">{t("loading")}</td></tr>
+                  ) : filteredRooms.map((r) => (
                     <tr key={r.id} className="hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 bg-white dark:bg-slate-900 transition-colors">
                       <td className="px-6 py-4 text-[14px] font-mono text-[#757575] dark:text-slate-400">{r.id}</td>
                       <td className="px-6 py-4 text-[14px] font-bold text-[#212121] dark:text-slate-100">{r.name}</td>
@@ -173,8 +175,8 @@ export function ResourceManagement() {
                       </td>
                     </tr>
                   ))}
-                  {!isLoadingRooms && rooms.length === 0 && (
-                    <tr><td colSpan={5} className="p-8 text-center text-[#757575] dark:text-slate-400">{t("no_lab_rooms")}</td></tr>
+                  {(!isLoadingRooms && filteredRooms.length === 0) && (
+                    <tr><td colSpan={6} className="p-8 text-center text-[#757575] dark:text-slate-400">{t("no_lab_rooms")}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -184,7 +186,7 @@ export function ResourceManagement() {
         )}
 
         {activeTab === "Hóa chất" && (
-          <div className="flex-1 overflow-auto -mx-6 px-6">
+          <div className="flex-1 flex flex-col min-h-0 -mx-6 px-6">
             <ChemicalManagement />
           </div>
         )}

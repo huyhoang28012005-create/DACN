@@ -82,4 +82,12 @@ export class NotificationsService {
   broadcastCalendarUpdate() {
     this.gateway.broadcastCalendarUpdate();
   }
+
+  broadcastRoomUpdate() {
+    this.gateway.broadcastRoomUpdate();
+  }
+
+  broadcastEquipmentUpdate() {
+    this.gateway.broadcastEquipmentUpdate();
+  }
 }

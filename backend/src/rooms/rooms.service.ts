@@ -2,20 +2,25 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(createRoomDto: CreateRoomDto) {
-    return this.prisma.room.create({
+    const room = await this.prisma.room.create({
       data: createRoomDto,
     });
+    this.notificationsService.broadcastRoomUpdate();
+    return room;
   }
 
   async findAll() {
     return this.prisma.room.findMany({
-      where: { is_deleted: false },
       take: 1000,
       include: {
         _count: {
@@ -29,13 +34,11 @@ export class RoomsService {
     const room = await this.prisma.room.findUnique({
       where: { id },
       include: {
-        equipment: {
-          where: { is_deleted: false }
-        },
+        equipment: true,
       },
     });
 
-    if (!room || room.is_deleted) {
+    if (!room) {
       throw new NotFoundException(`Phòng Lab với ID ${id} không tồn tại`);
     }
 
@@ -46,19 +49,23 @@ export class RoomsService {
     // Check if exists
     await this.findOne(id);
 
-    return this.prisma.room.update({
+    const room = await this.prisma.room.update({
       where: { id },
       data: updateRoomDto,
     });
+    this.notificationsService.broadcastRoomUpdate();
+    return room;
   }
 
   async remove(id: number) {
     // Check if exists
     await this.findOne(id);
 
-    return this.prisma.room.update({
+    const room = await this.prisma.room.update({
       where: { id },
       data: { is_deleted: true }
     });
+    this.notificationsService.broadcastRoomUpdate();
+    return room;
   }
 }

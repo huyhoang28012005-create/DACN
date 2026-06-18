@@ -8,29 +8,29 @@ datasource db {
 }
 
 model User {
-  id               Int             @id @default(autoincrement())
-  name             String          @db.VarChar(255)
-  email            String          @unique @db.VarChar(255)
-  password         String          @db.VarChar(255)
-  role             Role            @default(STUDENT)
-  created_at       DateTime        @default(now())
-  updated_at       DateTime        @updatedAt
-  avatar_url       String?         @db.VarChar(500)
-  is_active        Boolean         @default(true)
-  refresh_token    String?         @db.Text
-  blacklist_reason String?         @db.Text
-  failed_login_attempts Int        @default(0)
-  locked_until     DateTime?
-  mfa_secret       String?         @db.VarChar(255)
-  is_mfa_enabled   Boolean         @default(false)
-  is_deleted       Boolean         @default(false)
-  audit_logs       AuditLog[]
-  bookings         Booking[]
-  check_in_records CheckInRecord[]
-  comments         Comment[]
-  courses          Course[]
-  reports          Report[]
-  notifications    Notification[]
+  id                    Int             @id @default(autoincrement())
+  name                  String          @db.VarChar(255)
+  email                 String          @unique @db.VarChar(255)
+  password              String          @db.VarChar(255)
+  role                  Role            @default(STUDENT)
+  created_at            DateTime        @default(now())
+  updated_at            DateTime        @updatedAt
+  avatar_url            String?         @db.VarChar(500)
+  is_active             Boolean         @default(true)
+  refresh_token         String?         @db.Text
+  blacklist_reason      String?         @db.Text
+  failed_login_attempts Int             @default(0)
+  locked_until          DateTime?
+  is_mfa_enabled        Boolean         @default(false)
+  mfa_secret            String?         @db.VarChar(255)
+  is_deleted            Boolean         @default(false)
+  audit_logs            AuditLog[]
+  bookings              Booking[]
+  check_in_records      CheckInRecord[]
+  comments              Comment[]
+  courses               Course[]
+  notifications         Notification[]
+  reports               Report[]
 
   @@map("users")
 }
@@ -165,16 +165,16 @@ model ChemicalUsage {
 }
 
 model AuditLog {
-  id         Int      @id @default(autoincrement())
-  action     String   @db.VarChar(255)
-  table_name String   @db.VarChar(100)
-  record_id  Int
-  user_id    Int?
-  details    String?  @db.Text
-  previous_hash String? @db.VarChar(64)
-  current_hash  String? @db.VarChar(64)
-  timestamp  DateTime @default(now())
-  user       User?    @relation(fields: [user_id], references: [id])
+  id            Int      @id @default(autoincrement())
+  action        String   @db.VarChar(255)
+  table_name    String   @db.VarChar(100)
+  record_id     Int
+  user_id       Int?
+  details       String?  @db.Text
+  timestamp     DateTime @default(now())
+  current_hash  String?  @db.VarChar(64)
+  previous_hash String?  @db.VarChar(64)
+  user          User?    @relation(fields: [user_id], references: [id])
 
   @@index([user_id], map: "audit_logs_user_id_fkey")
   @@map("audit_logs")

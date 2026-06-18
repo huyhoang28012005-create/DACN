@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, ChevronRight, Lock, Clock, Calendar, Filter, Plus, Info, X, Hourglass } from "lucide-react";
-import { bookingService, roomService } from "../../services";
-import { format, startOfWeek, addDays, getHours, getDay, differenceInHours, isSameDay } from "date-fns";
+import { bookingService, roomService, equipmentService } from "../../services";
+import { format, startOfWeek, addDays, getHours, getDay, isSameDay } from "date-fns";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../../components/common/LoadingSpinner";
 import { socketService } from "../../services/socket";
@@ -15,7 +15,9 @@ export function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [bookings, setBookings] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
+  const [equipments, setEquipments] = useState<any[]>([]);
   const [selectedRooms, setSelectedRooms] = useState<number[]>([]);
+  const [selectedEquipments, setSelectedEquipments] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -29,6 +31,7 @@ export function CalendarView() {
     startTime: "08:00",
     duration: "2",
     room_id: "",
+    equipment_id: "",
   });
 
   const currentUserStr = localStorage.getItem("user");
@@ -50,9 +53,13 @@ export function CalendarView() {
     };
     
     socket.on('calendar_updated', onCalendarUpdated);
+    socket.on('room_updated', onCalendarUpdated);
+    socket.on('equipment_updated', onCalendarUpdated);
     
     return () => {
       socket.off('calendar_updated', onCalendarUpdated);
+      socket.off('room_updated', onCalendarUpdated);
+      socket.off('equipment_updated', onCalendarUpdated);
     };
   }, []);
 
@@ -63,14 +70,19 @@ export function CalendarView() {
       const startDateStr = format(startOfCurrentWeek, "yyyy-MM-ddT00:00:00");
       const endDateStr = format(endOfCurrentWeek, "yyyy-MM-ddT23:59:59");
 
-      const [bookingsRes, roomsRes] = await Promise.all([
+      const [bookingsRes, roomsRes, equipmentsRes] = await Promise.all([
         bookingService.getAll(startDateStr, endDateStr),
-        roomService.getAll()
+        roomService.getAll(),
+        equipmentService.getAll()
       ]);
       setBookings(bookingsRes.data || []);
       setRooms(roomsRes.data || []);
+      setEquipments(equipmentsRes.data || []);
       if (roomsRes.data && roomsRes.data.length > 0) {
         setSelectedRooms(roomsRes.data.map((r: any) => r.id));
+      }
+      if (equipmentsRes.data && equipmentsRes.data.length > 0) {
+        setSelectedEquipments(equipmentsRes.data.map((e: any) => e.id));
       }
     } catch (error: any) {
       const msg = error.response?.data?.message || t("calendar_load_error");
@@ -83,6 +95,12 @@ export function CalendarView() {
   const toggleRoom = (id: number) => {
     setSelectedRooms(prev => 
       prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]
+    );
+  };
+
+  const toggleEquipment = (id: number) => {
+    setSelectedEquipments(prev => 
+      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
     );
   };
 
@@ -99,6 +117,7 @@ export function CalendarView() {
   bookings.forEach(b => {
     if (b.status === "REJECTED") return;
     if (!selectedRooms.includes(b.room_id)) return;
+    if (b.equipment_id && !selectedEquipments.includes(b.equipment_id)) return;
 
     const start = new Date(b.start_time);
     const end = new Date(b.end_time);
@@ -119,9 +138,9 @@ export function CalendarView() {
           type = "waitlisted";
         }
 
-        // Only place the slot in the starting hour cell
         if (startHour >= 7 && startHour <= 22) {
           const room = rooms.find(r => r.id === b.room_id);
+          const eq = b.equipment_id ? equipments.find(e => e.id === b.equipment_id) : null;
           // If there's already a booking, we might need an array, but for now we just assign
           if (!gridBookings[`${dayIdx}-${startHour}`]) {
             gridBookings[`${dayIdx}-${startHour}`] = [];
@@ -131,7 +150,7 @@ export function CalendarView() {
             title: b.purpose,
             startMinute,
             durationMinutes,
-            roomName: room ? room.name : "",
+            roomName: (room ? room.name : "") + (eq ? ` + ${eq.name}` : ""),
             isPast: end < new Date()
           });
         }
@@ -153,6 +172,7 @@ export function CalendarView() {
       await bookingService.create({
         purpose: formData.purpose,
         roomId: formData.room_id,
+        equipmentId: formData.equipment_id || undefined,
         startTime: startDate,
         endTime: endDate,
         status: isWaitlist ? "WAITLISTED" : undefined,
@@ -207,6 +227,26 @@ export function CalendarView() {
                 ))}
               </div>
             </div>
+
+            {/* Lọc theo Thiết bị */}
+            {equipments.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-[#E0E0E0] dark:border-slate-800">
+                <h4 className="text-[13px] font-bold text-[#212121] dark:text-slate-200 uppercase tracking-wide">Thiết bị</h4>
+                <div className="space-y-2">
+                  {equipments.map((eq) => (
+                    <label key={eq.id} className="flex items-center gap-3 cursor-pointer group">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedEquipments.includes(eq.id)}
+                        onChange={() => toggleEquipment(eq.id)}
+                        className="w-4 h-4 rounded border-[#E0E0E0] dark:border-slate-700 text-[#1E5FA5] dark:text-blue-400 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                      />
+                      <span className="text-[13px] text-[#212121] dark:text-slate-300 group-hover:text-[#1E5FA5] dark:text-blue-400 dark:group-hover:text-blue-400 transition-colors">{eq.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -470,7 +510,7 @@ export function CalendarView() {
                 <select 
                   required
                   value={formData.room_id}
-                  onChange={e => setFormData({...formData, room_id: e.target.value})}
+                  onChange={e => setFormData({...formData, room_id: e.target.value, equipment_id: ""})}
                   className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
                   disabled={isSubmitting}
                 >
@@ -480,6 +520,23 @@ export function CalendarView() {
                   ))}
                 </select>
               </div>
+
+              {formData.room_id && equipments.filter(eq => eq.room_id.toString() === formData.room_id).length > 0 && (
+                <div className="animate-in slide-in-from-top-2 duration-300">
+                  <label className="block text-[13px] font-medium text-[#757575] dark:text-slate-400 mb-1">Thiết bị đi kèm (Tùy chọn)</label>
+                  <select 
+                    value={formData.equipment_id}
+                    onChange={e => setFormData({...formData, equipment_id: e.target.value})}
+                    className="w-full px-3 py-2 border border-[#E0E0E0] dark:border-slate-800 rounded-md text-[14px] focus:outline-none focus:border-[#1E5FA5] dark:focus:border-blue-500 focus:ring-1 focus:ring-[#1E5FA5] dark:focus:ring-blue-500/50"
+                    disabled={isSubmitting}
+                  >
+                    <option value="">-- Không chọn thiết bị --</option>
+                    {equipments.filter(eq => eq.room_id.toString() === formData.room_id).map(eq => (
+                      <option key={eq.id} value={eq.id}>{eq.name} - S/N: {eq.serial_number}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

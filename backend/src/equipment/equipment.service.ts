@@ -2,23 +2,29 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class EquipmentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(createEquipmentDto: CreateEquipmentDto) {
     const { last_maintenance, ...rest } = createEquipmentDto;
-    return this.prisma.equipment.create({
+    const equipment = await this.prisma.equipment.create({
       data: {
         ...rest,
         last_maintenance: last_maintenance ? new Date(last_maintenance) : null,
       },
     });
+    this.notificationsService.broadcastEquipmentUpdate();
+    return equipment;
   }
 
   async findAll(roomId?: number) {
-    const where: any = { is_deleted: false };
+    const where: any = {};
     if (roomId) {
       where.room_id = roomId;
     }
@@ -39,7 +45,7 @@ export class EquipmentService {
       },
     });
 
-    if (!equipment || equipment.is_deleted) {
+    if (!equipment) {
       throw new NotFoundException(`Thiết bị với ID ${id} không tồn tại`);
     }
 
@@ -52,7 +58,7 @@ export class EquipmentService {
     const { last_maintenance, ...rest } = updateEquipmentDto;
 
     // Increment row_version for Optimistic Locking
-    return this.prisma.equipment.update({
+    const equipment = await this.prisma.equipment.update({
       where: { id },
       data: {
         ...rest,
@@ -66,14 +72,18 @@ export class EquipmentService {
         },
       },
     });
+    this.notificationsService.broadcastEquipmentUpdate();
+    return equipment;
   }
 
   async remove(id: number) {
     await this.findOne(id);
 
-    return this.prisma.equipment.update({
+    const equipment = await this.prisma.equipment.update({
       where: { id },
       data: { is_deleted: true },
     });
+    this.notificationsService.broadcastEquipmentUpdate();
+    return equipment;
   }
 }

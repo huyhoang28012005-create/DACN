@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export const socketService = {
   connect: () => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('token');
     if (!token) return null;
 
     if (!socket) {

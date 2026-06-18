@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Plus, Search, Edit2, Trash2, Beaker, ClipboardList, X } from "lucide-react";
 import { chemicalService } from "../../services";
 import { ConfirmModal } from "../../components/common/ConfirmModal";
-import { LoadingSpinner } from "../../components/common/LoadingSpinner";
+
 import { toast } from "react-hot-toast";
 
 export function ChemicalManagement() {
@@ -140,10 +140,10 @@ export function ChemicalManagement() {
         </button>
       </div>
       
-      <div className="flex-1 overflow-auto min-h-[400px]">
+      <div className="flex-1 overflow-auto min-h-0">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0">
+            <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0 z-10">
               <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[20%]">{t("chemical_name")}</th>
               <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%]">{t("formula")}</th>
               <th className="px-6 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400 w-[15%] text-right">{t("stock_quantity")}</th>

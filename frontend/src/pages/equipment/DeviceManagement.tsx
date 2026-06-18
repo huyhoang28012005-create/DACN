@@ -159,7 +159,7 @@ export function DeviceManagement() {
   }, [devices]);
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
+    <div className="max-w-[1200px] w-full mx-auto animate-in fade-in duration-300 h-full flex flex-col space-y-4">
       {/* Header + Stats */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
@@ -196,7 +196,7 @@ export function DeviceManagement() {
       )}
 
       {/* Table Area */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex flex-col flex-1 min-h-0">
         {/* Toolbar */}
         <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
           <div className="flex flex-wrap gap-3 flex-1">
@@ -217,10 +217,10 @@ export function DeviceManagement() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto min-h-[400px]">
+        <div className="overflow-auto flex-1 min-h-0">
           <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0 z-10">
                 <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("device_id_name")}</th>
                 <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("serial_number")}</th>
                 <th className="px-4 py-3 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("lab_room")}</th>

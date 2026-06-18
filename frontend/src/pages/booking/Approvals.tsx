@@ -120,7 +120,7 @@ export function Approvals() {
   };
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">
+    <div className="max-w-[1200px] w-full mx-auto animate-in fade-in duration-300 h-full flex flex-col space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h1 className="text-[24px] font-bold text-[#212121] dark:text-slate-100">{t("approve_requests")}</h1>
@@ -140,7 +140,7 @@ export function Approvals() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm dark:shadow-slate-900/50 border border-[#E0E0E0] dark:border-slate-800 flex flex-col flex-1 min-h-0">
         {/* Toolbar */}
         <div className="p-4 border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-md flex justify-between items-center flex-wrap gap-4">
           <div className="relative w-[320px]">
@@ -176,10 +176,10 @@ export function Approvals() {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto min-h-[400px]">
+        <div className="overflow-auto flex-1 min-h-0">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm">
+              <tr className="border-b border-[#E0E0E0]/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30 backdrop-blur-sm sticky top-0 z-10">
                 <th className="px-4 py-4 w-12 text-center"><input type="checkbox" className="rounded text-[#1E5FA5] dark:text-blue-400 border-[#E0E0E0] dark:border-slate-800" /></th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("requester")}</th>
                 <th className="px-4 py-4 text-[13px] font-semibold text-[#757575] dark:text-slate-400">{t("room_device")}</th>

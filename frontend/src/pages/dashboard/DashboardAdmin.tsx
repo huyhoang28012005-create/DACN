@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { bookingService, roomService, equipmentService } from "../../services";
 import { format } from "date-fns";
+import { toast } from "react-hot-toast";
 import {
   AlertDialog,
   AlertDialogAction,
