@@ -9,6 +9,7 @@ interface User {
   is_mfa_enabled?: boolean;
   phone?: string;
   department?: string;
+  trust_score?: number;
 }
 
 interface AuthState {

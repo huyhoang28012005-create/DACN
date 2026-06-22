@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Filter, FlaskConical, Wrench, AlertCircle, Info, Calendar as CalendarIcon, CheckCircle, Clock, ShoppingCart, X, Plus, Minus, Trash2, ChevronRight, Bell, Award } from 'lucide-react';
+import { Search, Filter, FlaskConical, Wrench, AlertCircle, Info, CheckCircle, ShoppingCart, X, Plus, Minus, Trash2, ChevronRight, Bell, Award } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 import { equipmentService, chemicalService, roomService, bookingService, courseService, comboService } from '../../services';
 import toast from 'react-hot-toast';
@@ -343,7 +343,7 @@ export default function BorrowToolsView() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredItems.map((item, idx) => {
+          {filteredItems.map((item) => {
             const isEq = item.type === 'equipment';
             const isCombo = item.type === 'combo';
             const eq = item as Equipment;

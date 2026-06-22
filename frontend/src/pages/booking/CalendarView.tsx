@@ -48,6 +48,7 @@ export function CalendarView() {
   const [selectedEquipments, setSelectedEquipments] = useState<number[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [selectedChemicals, setSelectedChemicals] = useState<number[]>([]);
+  const [chemicalUsages, setChemicalUsages] = useState<{ chemical_id: number; quantity: number }[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   useEffect(() => {
@@ -225,14 +226,6 @@ export function CalendarView() {
     return { name: dayNames[getDay(d)], date: format(d, 'dd/MM'), fullDate: d };
   });
 
-  // Colors for different booking statuses
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-[#FFF8E1] border-[#FFE082] text-[#F57F17]', // Yellow/Amber
-  APPROVED: 'bg-[#E3F2FD] border-[#90CAF9] text-[#1E5FA5]', // Blue
-  IN_USE: 'bg-emerald-50 border-emerald-200 text-emerald-700', // Green
-  CANCELED: 'bg-[#FFEBEE] border-[#EF9A9A] text-[#C62828]', // Red
-  COMPLETED: 'bg-[#F5F5F5] border-[#E0E0E0] text-[#757575]', // Grey
-};
 
   const gridBookings: Record<string, GridBooking[]> = {};
 
@@ -269,8 +262,6 @@ const STATUS_COLORS: Record<string, string> = {
           type = currentUser && b.user_id === currentUser.id ? 'completed' : 'locked';
         } else if (b.status === 'WAITLISTED') {
           type = 'waitlisted';
-        } else if (b.status === 'OVERDUE') {
-          type = 'overdue';
         }
 
         if (startHour >= 7 && startHour <= 22) {
@@ -736,9 +727,6 @@ const STATUS_COLORS: Record<string, string> = {
                           } else if (slot.type === 'completed') {
                             slotClasses +=
                               'bg-slate-100 dark:bg-slate-800/50 border-l-4 border-l-slate-400 dark:border-l-slate-600 border-t border-r border-b border-slate-200 dark:border-slate-700/50 cursor-pointer p-1';
-                          } else if (slot.type === 'overdue') {
-                            slotClasses +=
-                              'bg-red-100 dark:bg-red-900/50 border-l-4 border-l-red-600 dark:border-l-red-500 border-t border-r border-b border-red-300 dark:border-red-800/50 cursor-not-allowed p-1 animate-pulse';
                           }
 
                           if (isPast) {
@@ -786,16 +774,6 @@ const STATUS_COLORS: Record<string, string> = {
                                   <span className="text-[10px] font-bold text-center px-1 leading-tight line-clamp-2">
                                     {slot.roomName || t('waitlist_short')}
                                   </span>
-                                </>
-                              ) : slot.type === 'overdue' ? (
-                                <>
-                                  <AlertCircle className="w-3 h-3 mb-0.5 text-red-600 dark:text-red-400" />
-                                  <div className="text-[11px] font-bold text-red-700 dark:text-red-400 line-clamp-1 leading-tight">
-                                    {slot.title}
-                                  </div>
-                                  <div className="text-[9px] font-bold text-red-600 dark:text-red-400 mt-0.5">
-                                    ⚠️ QUÁ HẠN TRẢ
-                                  </div>
                                 </>
                               ) : (
                                 <>
@@ -989,7 +967,7 @@ const STATUS_COLORS: Record<string, string> = {
 
                   {chemicalUsages.length > 0 && (
                     <div className="space-y-2 mt-2">
-                      {chemicalUsages.map((usage, index) => {
+                      {chemicalUsages.map((usage: { chemical_id: number; quantity: number }, index: number) => {
                         const selectedChem = chemicals.find(c => c.id === usage.chemical_id);
                         return (
                           <div key={index} className="flex gap-2 items-start">
@@ -1004,7 +982,7 @@ const STATUS_COLORS: Record<string, string> = {
                             >
                               {chemicals.map((c) => (
                                 <option key={c.id} value={c.id}>
-                                  {c.name} (Còn {c.quantity_in_stock} {c.unit})
+                                  {c.name} (Còn {c.quantity_stock} {c.unit})
                                 </option>
                               ))}
                             </select>
@@ -1012,7 +990,7 @@ const STATUS_COLORS: Record<string, string> = {
                               type="number"
                               min="0.1"
                               step="0.1"
-                              max={selectedChem?.quantity_in_stock || 100}
+                              max={selectedChem?.quantity_stock || 100}
                               value={usage.quantity}
                               onChange={(e) => {
                                 const newArr = [...chemicalUsages];
