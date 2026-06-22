@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
@@ -37,6 +38,14 @@ export function Users() {
   const [searchTerm, setSearchTerm] = useState('');
   const { users, isLoading, refetch } = useUsers();
   const [isAddingUser, setIsAddingUser] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.action === 'create_user') {
+      setIsAddingUser(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'STUDENT', department: '', student_class: '' });
   const [editingUser, setEditingUser] = useState({ id: 0, name: '', email: '', role: 'STUDENT', department: '', student_class: '' });

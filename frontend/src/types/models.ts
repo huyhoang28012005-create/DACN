@@ -10,6 +10,8 @@ export interface IUser {
   student_class?: string | null;
   blacklist_reason?: string | null;
   trust_score?: number;
+  phone?: string;
+  is_mfa_enabled?: boolean;
   created_at: string;
 }
 
@@ -35,6 +37,7 @@ export interface IEquipment {
   room_id: number;
   last_maintenance?: string | null;
   is_deleted: boolean;
+  updated_at?: string;
 }
 
 export interface IBooking {
@@ -50,7 +53,10 @@ export interface IBooking {
   created_at: string;
   user?: Partial<IUser>;
   room?: Partial<IRoom>;
+  equipment?: Partial<IEquipment>;
+  course?: Partial<ICourse>;
   chemical_usages?: any[];
+  updated_at?: string;
 }
 
 export interface ICourse {
@@ -71,6 +77,9 @@ export interface IChemical {
   quantity_stock: number;
   expiration_date?: string | null;
   status: string;
+  formula?: string;
+  storage_conditions?: string;
+  min_stock_alert?: number;
 }
 
 export interface IReport {

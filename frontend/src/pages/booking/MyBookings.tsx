@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, XCircle, FileText, Calendar, CalendarX, QrCode, X, CalendarPlus, Clock, MapPin, Package, AlertCircle, ChevronRight, Star } from 'lucide-react';
+import { Search, XCircle, FileText, CalendarX, QrCode, X, CalendarPlus, Clock, MapPin, Package, AlertCircle, ChevronRight, Star } from 'lucide-react';
 import { bookingService, checkInService } from '../../services';
 import apiClient from '../../services/apiClient';
 import { format } from 'date-fns';

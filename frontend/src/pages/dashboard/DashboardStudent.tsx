@@ -411,7 +411,7 @@ END:VCALENDAR`;
           
           {/* Quick Actions Panel */}
           <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => navigate('/booking')} className="col-span-2 flex items-center justify-center gap-3 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(99,102,241,0.2)] hover:shadow-[0_8px_30px_rgb(99,102,241,0.4)] hover:-translate-y-1 transition-all duration-300 group">
+            <button onClick={() => navigate('/borrow-tools')} className="col-span-2 flex items-center justify-center gap-3 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(99,102,241,0.2)] hover:shadow-[0_8px_30px_rgb(99,102,241,0.4)] hover:-translate-y-1 transition-all duration-300 group">
               <div className="bg-white/20 p-2.5 rounded-2xl group-hover:scale-110 transition-transform duration-300">
                 <CalendarPlus className="w-6 h-6" />
               </div>

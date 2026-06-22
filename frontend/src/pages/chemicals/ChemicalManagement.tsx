@@ -32,7 +32,7 @@ export function ChemicalManagement() {
 
   const [usageData, setUsageData] = useState({ chemical_id: 0, booking_id: 1, quantity_used: 0 }); // booking_id = 1 as placeholder for demo
 
-  const [lowStockAlerts, setLowStockAlerts] = useState<IChemical[]>([]);
+
   const [expiringAlerts, setExpiringAlerts] = useState<IChemical[]>([]);
 
   useEffect(() => {
@@ -42,11 +42,11 @@ export function ChemicalManagement() {
 
   const fetchAlerts = async () => {
     try {
-      const [lowStockRes, expiringRes] = await Promise.all([
+      const [, expiringRes] = await Promise.all([
         chemicalService.getLowStockAlerts(),
         chemicalService.getExpiringAlerts(),
       ]);
-      setLowStockAlerts(lowStockRes.data || []);
+      // setLowStockAlerts is removed as it's unused
       setExpiringAlerts(expiringRes.data || []);
     } catch (e) {
       console.error(e);
@@ -317,6 +317,8 @@ export function ChemicalManagement() {
                         quantity_stock: 0,
                         unit: 'ml',
                         expiration_date: '',
+                        storage_conditions: '',
+                        min_stock_alert: 5,
                       });
                       setIsEditing(false);
                       setIsModalOpen(true);

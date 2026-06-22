@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Download,
@@ -68,6 +69,16 @@ function StatusBadge({ status }: { status: string }) {
 export function Reports() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('incidents'); // 'Thống kê' hoặc 'Sự cố'
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.action === 'create_report') {
+      setActiveTab('incidents');
+      setIsModalOpen(true);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const [chartMonth, setChartMonth] = useState(format(new Date(), 'yyyy-MM'));
 
   // States cho Sự cố

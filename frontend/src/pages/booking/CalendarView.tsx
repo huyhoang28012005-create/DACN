@@ -23,6 +23,26 @@ import { IBooking, IRoom, IEquipment, ICourse, IChemical } from '../../types/mod
 
 const HOURS = Array.from({ length: 16 }, (_, i) => i + 7); // 07:00 to 22:00
 
+const LOCALIZED_NAMES_MAP: Record<string, string> = {
+  'Lab Mạng máy tính': 'room_lab_computer_network',
+  'Lab Sinh học phân tử': 'room_lab_molecular_biology',
+  'Lab Máy tính hiệu năng cao': 'room_lab_high_performance_computing',
+  'Lab Hóa Phân Tích': 'room_lab_analytical_chemistry',
+  'Lab Năng lượng tái tạo': 'room_lab_renewable_energy',
+  'Lab IoT & Robotics': 'room_lab_iot_robotics',
+  'Lab Trí tuệ nhân tạo (AI)': 'room_lab_ai',
+  'Lab Cơ điện tử': 'room_lab_mechatronics',
+  'Thiết kế Vi mạch': 'course_ic_design',
+  'Thực hành Vi điều khiển': 'course_microcontroller_practice',
+  'Thực hành Robot công nghiệp': 'course_industrial_robot_practice',
+  'Thí nghiệm Hóa vô cơ': 'course_inorganic_chemistry_experiment',
+  'Thực hành Lập trình Mạng': 'course_network_programming_practice',
+};
+
+const getLocalizedName = (name: string, t: any) => {
+  return LOCALIZED_NAMES_MAP[name] ? t(LOCALIZED_NAMES_MAP[name]) : name;
+};
+
 interface GridBooking {
   type: string;
   title: string;
@@ -463,7 +483,7 @@ export function CalendarView() {
                       onChange={() => toggleRoom(room.id)}
                       className="w-4 h-4 rounded border-[#E0E0E0] dark:border-slate-700 text-[#1E5FA5] dark:text-blue-400 focus:ring-[#1E5FA5]"
                     />
-                    <span className="text-[13px] text-[#212121] dark:text-slate-300">{room.name}</span>
+                    <span className="text-[13px] text-[#212121] dark:text-slate-300">{getLocalizedName(room.name, t)}</span>
                   </label>
                 ))}
               </div>
@@ -476,7 +496,7 @@ export function CalendarView() {
                 onClick={() => setOpenDropdown(openDropdown === 'equipment' ? null : 'equipment')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[13px] font-medium transition-all ${selectedEquipments.length > 0 ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800/50 text-indigo-700 dark:text-indigo-400' : 'bg-[#FAFAFA] dark:bg-slate-800/50 border-[#E0E0E0] dark:border-slate-700 text-[#212121] dark:text-slate-300 hover:bg-[#F5F5F5] dark:hover:bg-slate-800'}`}
               >
-                Thiết bị {selectedEquipments.length > 0 && <span className="bg-indigo-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">{selectedEquipments.length}</span>}
+                {t('equipment')} {selectedEquipments.length > 0 && <span className="bg-indigo-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">{selectedEquipments.length}</span>}
                 <ChevronLeft className={`w-3 h-3 transition-transform ${openDropdown === 'equipment' ? '-rotate-90' : 'rotate-180'}`} />
               </button>
               {openDropdown === 'equipment' && (
@@ -503,7 +523,7 @@ export function CalendarView() {
                 onClick={() => setOpenDropdown(openDropdown === 'chemical' ? null : 'chemical')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[13px] font-medium transition-all ${selectedChemicals.length > 0 ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400' : 'bg-[#FAFAFA] dark:bg-slate-800/50 border-[#E0E0E0] dark:border-slate-700 text-[#212121] dark:text-slate-300 hover:bg-[#F5F5F5] dark:hover:bg-slate-800'}`}
               >
-                Hóa chất {selectedChemicals.length > 0 && <span className="bg-emerald-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">{selectedChemicals.length}</span>}
+                {t('chemicals')} {selectedChemicals.length > 0 && <span className="bg-emerald-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">{selectedChemicals.length}</span>}
                 <ChevronLeft className={`w-3 h-3 transition-transform ${openDropdown === 'chemical' ? '-rotate-90' : 'rotate-180'}`} />
               </button>
               {openDropdown === 'chemical' && (
@@ -530,7 +550,7 @@ export function CalendarView() {
                 onClick={() => setOpenDropdown(openDropdown === 'course' ? null : 'course')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[13px] font-medium transition-all ${selectedCourses.length > 0 ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400' : 'bg-[#FAFAFA] dark:bg-slate-800/50 border-[#E0E0E0] dark:border-slate-700 text-[#212121] dark:text-slate-300 hover:bg-[#F5F5F5] dark:hover:bg-slate-800'}`}
               >
-                Học phần {selectedCourses.length > 0 && <span className="bg-amber-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">{selectedCourses.length}</span>}
+                {t('subject')} {selectedCourses.length > 0 && <span className="bg-amber-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">{selectedCourses.length}</span>}
                 <ChevronLeft className={`w-3 h-3 transition-transform ${openDropdown === 'course' ? '-rotate-90' : 'rotate-180'}`} />
               </button>
               {openDropdown === 'course' && (
@@ -543,7 +563,7 @@ export function CalendarView() {
                         onChange={() => toggleCourse(c.id)}
                         className="w-4 h-4 rounded border-[#E0E0E0] dark:border-slate-700 text-amber-600 focus:ring-amber-500"
                       />
-                      <span className="text-[13px] text-[#212121] dark:text-slate-300">{c.name}</span>
+                      <span className="text-[13px] text-[#212121] dark:text-slate-300">{getLocalizedName(c.name, t)}</span>
                     </label>
                   ))}
                 </div>
@@ -554,16 +574,16 @@ export function CalendarView() {
 
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-3 text-[12px] bg-[#FAFAFA] dark:bg-slate-800/50 px-3 py-1.5 rounded-full border border-[#E0E0E0] dark:border-slate-700">
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#FFF8E1] dark:bg-yellow-900/30 border border-[#FFE082] rounded-sm"></div><span className="text-[#757575] dark:text-slate-400">Chờ duyệt</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#D6E4F7] dark:bg-blue-900/30 border border-[#1E5FA5] rounded-sm"></div><span className="text-[#757575] dark:text-slate-400">Đã duyệt</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-sm"></div><span className="text-[#757575] dark:text-slate-400">Khóa</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#FFF8E1] dark:bg-yellow-900/30 border border-[#FFE082] rounded-sm"></div><span className="text-[#757575] dark:text-slate-400">{t('pending')}</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-[#D6E4F7] dark:bg-blue-900/30 border border-[#1E5FA5] rounded-sm"></div><span className="text-[#757575] dark:text-slate-400">{t('approved')}</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-sm"></div><span className="text-[#757575] dark:text-slate-400">{t('locked')}</span></div>
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 px-5 rounded-full font-bold transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-blue-500/30 text-[13px] active:scale-95 whitespace-nowrap"
           >
-            <Plus className="w-4 h-4" /> {isResourceMode ? 'Mượn dụng cụ học tập' : t('book_schedule')}
+            <Plus className="w-4 h-4" /> {isResourceMode ? t('borrow_tools') : t('book_schedule')}
           </button>
         </div>
       </div>

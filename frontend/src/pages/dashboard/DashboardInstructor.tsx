@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Clock, LayoutGrid, CheckCircle2, ArrowRight, AlertTriangle, Plus, FileText, Calendar as CalendarIcon, Check, X } from 'lucide-react';
+import { BookOpen, Clock, LayoutGrid, CheckCircle2, ArrowRight, AlertTriangle, FileText, Calendar as CalendarIcon, Check, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'react-hot-toast';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { bookingService, courseService, roomService, checkInService } from '../../services';
 import { IBooking, IRoom, ICourse } from '../../types/models';
-import { format, isToday, isTomorrow } from 'date-fns';
+import { format, isToday } from 'date-fns';
 
 export function DashboardInstructor() {
   const { t } = useTranslation();
@@ -30,22 +30,21 @@ export function DashboardInstructor() {
   const [pendingBookings, setPendingBookings] = useState<IBooking[]>([]);
   const [todaySchedule, setTodaySchedule] = useState<IBooking[]>([]);
   const [availableRooms, setAvailableRooms] = useState<IRoom[]>([]);
-  const [checkInRecords, setCheckInRecords] = useState<any[]>([]);
+
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [bookingsRes, coursesRes, roomsRes, checkInRes] = await Promise.all([
+      const [bookingsRes, coursesRes, roomsRes] = await Promise.all([
         bookingService.getAll(),
         courseService.getAll(),
         roomService.getAll(),
-        checkInService.getAll(),
       ]);
 
       const bookings = bookingsRes.data || [];
       const courses = coursesRes.data || [];
       const rooms = roomsRes.data || [];
-      setCheckInRecords(checkInRes.data || []);
+
 
       // Lọc số lượng khóa học do giảng viên này phụ trách
       const myCourses = courses.filter((c: ICourse) => c.instructor_id === currentUser?.id);
@@ -102,12 +101,7 @@ export function DashboardInstructor() {
     }
   };
 
-  const formatBookingDate = (startTime: string) => {
-    const date = new Date(startTime);
-    if (isToday(date)) return t('today');
-    if (isTomorrow(date)) return t('tomorrow');
-    return format(date, 'dd/MM/yyyy');
-  };
+
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-300 pb-8">

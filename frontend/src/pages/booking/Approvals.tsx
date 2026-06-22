@@ -20,6 +20,7 @@ import { toast } from 'react-hot-toast';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { StatMini } from '../../components/ui/StatMini';
 import { IBooking } from '../../types/models';
+import { BookingStatus } from '../../constants/roles';
 
 export function Approvals() {
   const { t } = useTranslation();
@@ -62,7 +63,7 @@ export function Approvals() {
   const handleUpdateStatus = async (id: number, status: string, reason?: string) => {
     try {
       await bookingService.update(id.toString(), { status, rejection_reason: reason });
-      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status, rejection_reason: reason } : r)));
+      setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status: status as BookingStatus, rejection_reason: reason } : r)));
       toast.success(t('status_update_success'));
     } catch (error: unknown) {
       const err = error as any;
@@ -150,8 +151,8 @@ export function Approvals() {
   const filteredRequests = typedRequests.filter((r) => {
     const matchStatus = statusFilter === 'ALL' || r.status === statusFilter;
     const matchSearch =
-      r.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.room?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.room?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.purpose.toLowerCase().includes(searchTerm.toLowerCase());
     return matchStatus && matchSearch;
   });
@@ -180,8 +181,6 @@ export function Approvals() {
 
     try {
       const toastId = toast.loading('Đang xuất file Excel...');
-      const res = await bookingService.getAll(); // Wait, I need apiClient here. Let me import apiClient.
-      // But wait, I shouldn't just fetch all bookings locally. I want the backend Excel generation.
       const response = (await bookingService.exportExcel)
         ? await bookingService.exportExcel()
         : await import('../../services/apiClient').then((m) =>
@@ -219,13 +218,13 @@ export function Approvals() {
                 onClick={() => setConfirmState({ isOpen: true, type: 'APPROVE_SELECTED' })}
                 className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 text-[14px] hover:-translate-y-0.5"
               >
-                <Check className="w-4 h-4" /> Duyệt {selectedIds.length} đơn
+                <Check className="w-4 h-4" /> {t('approve_n_requests_btn', { count: selectedIds.length })}
               </button>
               <button
                 onClick={() => setConfirmState({ isOpen: true, type: 'REJECT_SELECTED' })}
                 className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-red-500/30 hover:shadow-red-500/50 text-[14px] hover:-translate-y-0.5"
               >
-                <X className="w-4 h-4" /> Từ chối {selectedIds.length} đơn
+                <X className="w-4 h-4" /> {t('reject_n_requests_btn', { count: selectedIds.length })}
               </button>
             </div>
           ) : (
@@ -248,7 +247,7 @@ export function Approvals() {
                 : 'border-transparent text-[#757575] hover:text-[#212121] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            Tất cả yêu cầu
+            {t('all_requests')}
           </button>
           <button
             onClick={() => setRequestType('SCHEDULE')}
@@ -258,7 +257,7 @@ export function Approvals() {
                 : 'border-transparent text-[#757575] hover:text-[#212121] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            Duyệt lịch (Phòng Lab)
+            {t('approve_schedule_lab')}
           </button>
           <button
             onClick={() => setRequestType('EQUIPMENT')}
@@ -268,7 +267,7 @@ export function Approvals() {
                 : 'border-transparent text-[#757575] hover:text-[#212121] dark:text-slate-400 dark:hover:text-slate-200'
             }`}
           >
-            Duyệt thiết bị & Hóa chất
+            {t('approve_equipment_chemicals')}
           </button>
         </div>
 
@@ -329,7 +328,7 @@ export function Approvals() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-4 py-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-[#E0E0E0] dark:border-slate-800 rounded-lg text-[14px] text-[#212121] dark:text-slate-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
             >
-              <option value="ALL">Tất cả trạng thái</option>
+              <option value="ALL">{t('all_statuses')}</option>
               <option value="PENDING">{t('status_filter_pending')}</option>
               <option value="APPROVED">{t('status_filter_approved')}</option>
               <option value="REJECTED">{t('status_filter_rejected')}</option>
@@ -338,7 +337,7 @@ export function Approvals() {
               onClick={handleExportExcel}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-bold text-[14px] transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 ml-2"
             >
-              <Download className="w-4 h-4" /> Xuất Excel
+              <Download className="w-4 h-4" /> {t('export_excel')}
             </button>
           </div>
         </div>
@@ -412,9 +411,9 @@ export function Approvals() {
                           {req.room?.name || t('no_room')}
                         </span>
                         {req.equipment_id || (req.chemical_usages && req.chemical_usages.length > 0) ? (
-                          <span className="w-fit px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">Mượn Dụng Cụ</span>
+                          <span className="w-fit px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">{t('borrow_equipment_tag')}</span>
                         ) : (
-                          <span className="w-fit px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">Đặt Không Gian</span>
+                          <span className="w-fit px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">{t('book_space_tag')}</span>
                         )}
                       </div>
                     </td>

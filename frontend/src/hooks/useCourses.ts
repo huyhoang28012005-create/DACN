@@ -3,6 +3,7 @@ import { courseService, userService } from '../services';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { ICourse, IUser } from '../types/models';
+import { UserRole } from '../constants/roles';
 
 export function useCourses() {
   const { t } = useTranslation();
@@ -13,7 +14,7 @@ export function useCourses() {
   const currentUserStr = localStorage.getItem('user');
   const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
   const isAdminOrTechnician = currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN';
-  const isInstructor = currentUser?.role === 'INSTRUCTOR';
+  const isInstructor = currentUser?.role === UserRole.LECTURER;
   const canManage = isAdminOrTechnician || isInstructor;
 
   const fetchCourses = useCallback(async () => {
@@ -38,7 +39,7 @@ export function useCourses() {
 
       if (canManage) {
         const instrs = usersData.filter(
-          (u: IUser) => u.role === 'INSTRUCTOR' || u.role === 'ADMIN'
+          (u: IUser) => u.role === UserRole.LECTURER || u.role === UserRole.ADMIN
         );
         setInstructors(instrs);
       }

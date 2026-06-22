@@ -307,7 +307,7 @@ export function DashboardAdmin() {
 
             {/* Quick Actions Panel (1 col) */}
             <div className="flex flex-col gap-4">
-              <button onClick={() => navigate('/dashboard/users')} className="flex-1 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-3xl p-6 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-1 transition-all duration-300 group">
+              <button onClick={() => navigate('/users', { state: { action: 'create_user' } })} className="flex-1 flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-3xl p-6 shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-1 transition-all duration-300 group">
                 <div className="bg-white/20 p-3 rounded-2xl group-hover:scale-110 transition-transform duration-300">
                   <PlusCircle className="w-8 h-8" />
                 </div>
@@ -315,7 +315,7 @@ export function DashboardAdmin() {
               </button>
               
               <div className="flex-1 grid grid-cols-2 gap-4">
-                <button onClick={() => navigate('/dashboard/resources')} className="flex flex-col items-center justify-center gap-2 bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 rounded-3xl p-4 shadow-sm hover:shadow-md transition-all group">
+                <button onClick={() => navigate('/reports', { state: { action: 'create_report' } })} className="flex flex-col items-center justify-center gap-2 bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 rounded-3xl p-4 shadow-sm hover:shadow-md transition-all group">
                   <Wrench className="w-6 h-6 text-red-500 group-hover:-rotate-12 transition-transform" />
                   <span className="text-[13px] font-semibold text-neutral-700 dark:text-slate-300 text-center">{t('report_issue')}</span>
                 </button>

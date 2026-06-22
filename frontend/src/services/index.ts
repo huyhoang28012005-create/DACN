@@ -39,12 +39,16 @@ export const userService = {
     fullName: string;
     code?: string;
     role?: string;
+    department?: string;
+    student_class?: string;
   }) =>
     apiClient.post('/api/users', {
       email: data.email,
       password: data.password,
       name: data.fullName,
       role: data.role,
+      department: data.department,
+      student_class: data.student_class,
     }),
 
   getAll: () => apiClient.get('/api/users'),
