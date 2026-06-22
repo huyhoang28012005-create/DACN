@@ -44,4 +44,12 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   blacklist_reason?: string;
+
+  @IsString()
+  @IsOptional()
+  department?: string;
+
+  @IsString()
+  @IsOptional()
+  student_class?: string;
 }

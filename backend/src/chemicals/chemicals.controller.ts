@@ -36,6 +36,18 @@ export class ChemicalsController {
     return this.chemicalsService.recordUsage(recordUsageDto);
   }
 
+  @Get('alerts/low-stock')
+  @Roles(Role.ADMIN, Role.TECHNICIAN)
+  getLowStockAlerts() {
+    return this.chemicalsService.getLowStockAlerts();
+  }
+
+  @Get('alerts/expiring')
+  @Roles(Role.ADMIN, Role.TECHNICIAN)
+  getExpiringAlerts() {
+    return this.chemicalsService.getExpiringAlerts();
+  }
+
   @Get('history/usage')
   getUsageHistory(@Query('chemicalId') chemicalId?: string) {
     return this.chemicalsService.getUsageHistory(

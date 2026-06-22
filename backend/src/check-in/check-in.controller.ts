@@ -32,6 +32,11 @@ export class CheckInController {
     return this.checkInService.create(createCheckInDto, user.userId);
   }
 
+  @Post('scan-qr')
+  scanQR(@Body('qr_data') qrData: string, @CurrentUser() user: UserPayload) {
+    return this.checkInService.scanQR(qrData, user.userId);
+  }
+
   @Get()
   @Roles(Role.ADMIN, Role.TECHNICIAN, Role.INSTRUCTOR)
   findAll() {

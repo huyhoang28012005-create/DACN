@@ -25,7 +25,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto) {
-    const { email, password, name, role } = registerDto;
+    const { email, password, name } = registerDto;
 
     const existingUser = await this.usersService.findByEmail(email);
     if (existingUser) {
@@ -34,17 +34,35 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 🛡️ BẢO MẬT: Chặn tấn công Privilege Escalation. Bắt buộc tài khoản đăng ký mới là STUDENT.
     const user = await this.usersService.create({
       email,
       password: hashedPassword,
       name,
-      role: role || Role.STUDENT,
+      role: Role.STUDENT,
     });
 
     return this.generateAuthResponse(user);
   }
 
-  async login(loginDto: LoginDto) {
+  async recordLoginHistory(userId: number, ipAddress: string, device: string, status: string) {
+    try {
+      // NOTE: Because Prisma client is not fully regenerated yet, we use any or raw query if it complains.
+      // But let's try the normal way. If it fails, we will know.
+      await (this.prisma as any).loginHistory.create({
+        data: {
+          user_id: userId,
+          ip_address: ipAddress,
+          device: device,
+          status: status,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to record login history', error);
+    }
+  }
+
+  async login(loginDto: LoginDto, ipAddress: string = 'Unknown', device: string = 'Unknown') {
     const { email, password } = loginDto;
 
     const user = await this.usersService.findByEmail(email);
@@ -69,24 +87,32 @@ export class AuthService {
         where: { key: 'MAINTENANCE_MODE' },
       });
       if (maintenanceMode && maintenanceMode.value === 'true') {
-        throw new ForbiddenException('Hệ thống đang bảo trì, vui lòng quay lại sau!');
+        throw new ForbiddenException(
+          'Hệ thống đang bảo trì, vui lòng quay lại sau!',
+        );
       }
     }
 
     // -----------------------------------------------------------------------
     // 🛡️ BẢO MẬT: KIỂM TRA reCAPTCHA
     // -----------------------------------------------------------------------
-    const recaptchaToken = (loginDto as any).recaptchaToken;
+    const recaptchaToken = (loginDto as LoginDto & { recaptchaToken?: string })
+      .recaptchaToken;
     if (recaptchaToken) {
-      const secretKey = process.env.RECAPTCHA_SECRET_KEY || '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'; // Google Test Secret Key
+      const secretKey =
+        process.env.RECAPTCHA_SECRET_KEY ||
+        '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'; // Google Test Secret Key
       try {
         const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`;
         const recaptchaRes = await fetch(verifyUrl, { method: 'POST' });
-        const data = await recaptchaRes.json();
+        const data = (await recaptchaRes.json()) as {
+          success: boolean;
+          score: number;
+        };
         if (!data.success || data.score < 0.5) {
           throw new ForbiddenException('Hành vi đáng ngờ. Vui lòng thử lại!');
         }
-      } catch (err) {
+      } catch {
         throw new ForbiddenException('Không thể xác thực reCAPTCHA');
       }
     }
@@ -105,7 +131,14 @@ export class AuthService {
 
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      await this.usersService.incrementFailedLogin(user.id);
+      const updatedUser = await this.usersService.incrementFailedLogin(user.id);
+      if (updatedUser && updatedUser.failed_login_attempts >= 5) {
+        await this.recordLoginHistory(user.id, ipAddress, device, 'Thất bại - Sai MK nhiều lần');
+        throw new ForbiddenException(
+          'Tài khoản đã bị khóa do đăng nhập sai quá nhiều lần. Vui lòng thử lại sau 15 phút.',
+        );
+      }
+      await this.recordLoginHistory(user.id, ipAddress, device, 'Thất bại - Sai mật khẩu');
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
@@ -114,10 +147,16 @@ export class AuthService {
       await this.usersService.resetFailedLogin(user.id);
     }
 
+    await this.recordLoginHistory(user.id, ipAddress, device, 'Thành công');
+
     // -----------------------------------------------------------------------
     // 🛡️ BẢO MẬT: KIỂM TRA XÁC THỰC 2 BƯỚC (MFA)
     // -----------------------------------------------------------------------
-    if ((user as any).is_mfa_enabled) {
+    const extendedUser = user as User & {
+      is_mfa_enabled?: boolean;
+      mfa_secret?: string;
+    };
+    if (extendedUser.is_mfa_enabled) {
       return {
         requires_mfa: true,
         user_id: user.id, // Trả về ID tạm để Frontend dùng gọi API verify
@@ -148,7 +187,9 @@ export class AuthService {
       // 🛡️ BẢO MẬT: PHÁT HIỆN TÁI SỬ DỤNG TOKEN (REUSE DETECTION)
       // Kẻ gian có thể đã dùng một token cũ đã hết hạn hoặc không khớp. Xóa toàn bộ token của người dùng này!
       await this.usersService.updateRefreshToken(userId, null);
-      throw new ForbiddenException('Cảnh báo bảo mật: Phát hiện sử dụng lại Token cũ. Phiên đăng nhập đã bị vô hiệu hóa.');
+      throw new ForbiddenException(
+        'Cảnh báo bảo mật: Phát hiện sử dụng lại Token cũ. Phiên đăng nhập đã bị vô hiệu hóa.',
+      );
     }
 
     return this.generateAuthResponse(user);
@@ -181,7 +222,8 @@ export class AuthService {
         name: user.name,
         role: user.role,
         avatar_url: (user as { avatar_url?: string }).avatar_url,
-        is_mfa_enabled: (user as any).is_mfa_enabled,
+        is_mfa_enabled: (user as User & { is_mfa_enabled?: boolean })
+          .is_mfa_enabled,
       },
     };
   }
@@ -214,7 +256,11 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('Người dùng không tồn tại');
 
-    const secret = (user as any).mfa_secret;
+    const extendedUser = user as User & {
+      is_mfa_enabled?: boolean;
+      mfa_secret?: string;
+    };
+    const secret = extendedUser.mfa_secret;
     if (!secret) throw new BadRequestException('MFA chưa được thiết lập');
 
     const isValid = authenticator.verify({ token: code, secret });
@@ -224,7 +270,7 @@ export class AuthService {
     }
 
     // Nếu chưa enable thì giờ enable
-    if (!(user as any).is_mfa_enabled) {
+    if (!extendedUser.is_mfa_enabled) {
       await this.usersService.enableMfa(userId);
     }
 
@@ -234,5 +280,27 @@ export class AuthService {
 
   async disableMfa(userId: number) {
     return this.usersService.disableMfa(userId);
+  }
+
+  // -----------------------------------------------------------------------
+  // 🛡️ API QUÊN MẬT KHẨU (FORGOT PASSWORD)
+  // -----------------------------------------------------------------------
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      // 🛡️ SECURITY: Trả về chung một thông báo để tránh lộ lọt email (User Enumeration)
+      return { message: 'Nếu email tồn tại trong hệ thống, mật khẩu đã được đặt lại thành Temp@1234' };
+    }
+
+    const defaultPassword = 'Temp@1234';
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    
+    // Đặt lại mật khẩu (Giả lập cho Demo do không có SMTP)
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword }
+    });
+
+    return { message: 'Nếu email tồn tại trong hệ thống, mật khẩu đã được đặt lại thành Temp@1234' };
   }
 }

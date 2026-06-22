@@ -22,8 +22,34 @@ export class ChemicalsService {
     });
   }
 
+  async getLowStockAlerts() {
+    const chemicals = await this.prisma.chemical.findMany({
+      where: { is_deleted: false },
+    });
+    return chemicals
+      .filter((c) => c.quantity_stock <= c.min_stock_alert)
+      .sort((a, b) => a.quantity_stock - b.quantity_stock);
+  }
+
+  async getExpiringAlerts() {
+    const next30Days = new Date();
+    next30Days.setDate(next30Days.getDate() + 30);
+
+    return this.prisma.chemical.findMany({
+      where: {
+        is_deleted: false,
+        expiration_date: {
+          lte: next30Days,
+        },
+      },
+      orderBy: { expiration_date: 'asc' },
+    });
+  }
+
   async findAll() {
-    return this.prisma.chemical.findMany();
+    return this.prisma.chemical.findMany({
+      where: { is_deleted: false },
+    });
   }
 
   async recordUsage(recordUsageDto: RecordUsageDto) {
@@ -48,6 +74,12 @@ export class ChemicalsService {
     if (!chemical) {
       throw new NotFoundException(
         `Hóa chất với ID ${chemicalId} không tồn tại`,
+      );
+    }
+
+    if (chemical.is_deleted) {
+      throw new BadRequestException(
+        'Hóa chất này đã bị xóa hoặc ngưng sử dụng',
       );
     }
 

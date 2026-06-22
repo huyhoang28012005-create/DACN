@@ -8,11 +8,18 @@ import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exce
 import { HttpAdapterHost } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { XssSanitizerPipe } from './common/pipes/xss-sanitizer.pipe';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   // 1. Prefix cho toàn bộ API
   app.setGlobalPrefix('api');
+
+  // Serve static files from public directory
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    prefix: '/public/',
+  });
 
   // Khởi tạo cookie-parser để đọc HttpOnly cookies
   app.use(cookieParser());
@@ -47,7 +54,7 @@ async function bootstrap() {
 
   // 3. CORS: Giới hạn danh sách trắng (Whitelist) chỉ cho Frontend truy cập
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

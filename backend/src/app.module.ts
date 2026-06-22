@@ -26,6 +26,17 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { SearchModule } from './search/search.module';
 import { AiChatModule } from './ai-chat/ai-chat.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { ExcelModule } from './common/excel/excel.module';
+import { InvestmentsModule } from './investments/investments.module';
+import { PublicationsModule } from './publications/publications.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
+import { CombosModule } from './combos/combos.module';
+import { CommunityModule } from './community/community.module';
+import { RatingsModule } from './ratings/ratings.module';
+import { WaitlistsModule } from './waitlists/waitlists.module';
+import { SkillBadgesModule } from './skill-badges/skill-badges.module';
+import { ChemicalLimitsModule } from './chemical-limits/chemical-limits.module';
 
 @Module({
   imports: [
@@ -70,6 +81,17 @@ import { AiChatModule } from './ai-chat/ai-chat.module';
     }),
     SearchModule,
     AiChatModule,
+    UploadsModule,
+    ExcelModule,
+    InvestmentsModule,
+    PublicationsModule,
+    MaintenanceModule,
+    CombosModule,
+    CommunityModule,
+    RatingsModule,
+    WaitlistsModule,
+    SkillBadgesModule,
+    ChemicalLimitsModule,
   ],
   controllers: [AppController],
   providers: [

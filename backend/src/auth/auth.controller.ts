@@ -21,7 +21,14 @@ import { Throttle } from '@nestjs/throttler';
 interface AuthResponse {
   access_token: string;
   refresh_token: string;
-  user: any;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    role: string;
+    avatar_url?: string | null;
+    is_mfa_enabled?: boolean;
+  };
 }
 
 @Controller('auth')
@@ -51,11 +58,17 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() loginDto: LoginDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { refresh_token, ...result } = (await this.authService.login(
-      loginDto,
-    )) as AuthResponse;
+    const ipAddress = req.ip || req.connection.remoteAddress || 'Unknown IP';
+    const device = req.headers['user-agent'] || 'Unknown Device';
+
+    const loginResult = await this.authService.login(loginDto, ipAddress, device);
+    if ('requires_mfa' in loginResult) {
+      return loginResult;
+    }
+    const { refresh_token, ...result } = loginResult as AuthResponse;
     this.setRefreshTokenCookie(res, refresh_token);
     return result;
   }
@@ -117,13 +130,12 @@ export class AuthController {
     @Body() body: { userId: number; code: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result: any = await this.authService.verifyMfa(
+    const { refresh_token, ...result } = (await this.authService.verifyMfa(
       body.userId,
       body.code,
-    );
-    if (result.refresh_token) {
-      this.setRefreshTokenCookie(res, result.refresh_token);
-      delete result.refresh_token; // don't send back in body
+    )) as AuthResponse;
+    if (refresh_token) {
+      this.setRefreshTokenCookie(res, refresh_token);
     }
     return result;
   }
@@ -148,5 +160,14 @@ export class AuthController {
     }
     await this.authService.disableMfa(user.userId);
     return { message: 'Đã tắt xác thực 2 bước thành công' };
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() body: { email: string }) {
+    if (!body.email) {
+      throw new UnauthorizedException('Email là bắt buộc');
+    }
+    return this.authService.forgotPassword(body.email);
   }
 }

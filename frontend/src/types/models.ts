@@ -1,41 +1,97 @@
-import { UserRole, BookingStatus, DeviceStatus } from '../constants/roles';
+import { UserRole, BookingStatus } from '../constants/roles';
 
 export interface IUser {
-  id: string;
+  id: number;
   email: string;
-  fullName: string;
+  name: string;
   role: UserRole;
-  createdAt: string;
-  updatedAt: string;
+  is_active: boolean;
+  department?: string | null;
+  student_class?: string | null;
+  blacklist_reason?: string | null;
+  trust_score?: number;
+  created_at: string;
 }
 
 export interface IRoom {
-  id: string;
+  id: number;
   name: string;
-  capacity: number;
   location: string;
-  isAvailable: boolean;
-  devices: IDevice[];
+  capacity: number;
+  has_air_conditioner: boolean;
+  status: string;
+  is_deleted: boolean;
+  _count?: {
+    equipment: number;
+  };
+  equipment?: IEquipment[];
 }
 
-export interface IDevice {
-  id: string;
+export interface IEquipment {
+  id: number;
   name: string;
-  status: DeviceStatus;
-  roomId: string;
+  serial_number: string;
+  status: string;
+  room_id: number;
+  last_maintenance?: string | null;
+  is_deleted: boolean;
 }
 
-export interface IBookingRequest {
-  userId: string;
-  roomId: string;
-  startTime: string;
-  endTime: string;
-  purpose: string;
-  membersCount: number;
-}
-
-export interface IBookingResponse extends IBookingRequest {
-  id: string;
+export interface IBooking {
+  id: number;
+  user_id: number;
+  room_id: number;
+  equipment_id?: number | null;
+  course_id?: number | null;
+  start_time: string;
+  end_time: string;
   status: BookingStatus;
-  createdAt: string;
+  purpose: string;
+  created_at: string;
+  user?: Partial<IUser>;
+  room?: Partial<IRoom>;
+  chemical_usages?: any[];
+}
+
+export interface ICourse {
+  id: number;
+  code: string;
+  name: string;
+  instructor_id: number;
+  semester: string;
+  academic_year: string;
+  instructor?: Partial<IUser>;
+  created_at: string;
+}
+
+export interface IChemical {
+  id: number;
+  name: string;
+  unit: string;
+  quantity_stock: number;
+  expiration_date?: string | null;
+  status: string;
+}
+
+export interface IReport {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  user_id: number;
+  equipment_id?: number | null;
+  room_id?: number | null;
+  created_at: string;
+  user?: Partial<IUser>;
+  equipment?: Partial<IEquipment>;
+  room?: Partial<IRoom>;
+}
+
+export interface INotification {
+  id: number;
+  title: string;
+  message: string;
+  is_read: boolean;
+  type?: string;
+  created_at: string | Date;
 }

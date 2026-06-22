@@ -5,6 +5,7 @@ import {
   MaxLength,
   IsDateString,
   IsEnum,
+  IsNumber,
 } from 'class-validator';
 import { EquipmentStatus } from '@prisma/client';
 
@@ -32,4 +33,16 @@ export class CreateEquipmentDto {
   @IsString()
   @MaxLength(500)
   image_url?: string;
+
+  @IsOptional()
+  @IsDateString()
+  purchase_date?: string;
+
+  @IsOptional()
+  @IsNumber()
+  value?: number;
+
+  @IsOptional()
+  @IsInt()
+  maintenance_interval_months?: number;
 }

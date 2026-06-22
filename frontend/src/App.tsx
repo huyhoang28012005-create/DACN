@@ -1,7 +1,7 @@
-import { RouterProvider } from "react-router";
-import { router } from "./routes";
-import { Toaster } from "react-hot-toast";
-import { ThemeProvider } from "next-themes";
+import { RouterProvider } from 'react-router';
+import { router } from './routes';
+import { Toaster } from 'react-hot-toast';
+import { ThemeProvider } from 'next-themes';
 
 export default function App() {
   return (

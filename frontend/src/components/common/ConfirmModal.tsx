@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X } from 'lucide-react';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -17,9 +17,9 @@ export function ConfirmModal({
   message,
   onConfirm,
   onCancel,
-  confirmText = "Xác nhận",
-  cancelText = "Hủy",
-  isDestructive = false
+  confirmText = 'Xác nhận',
+  cancelText = 'Hủy',
+  isDestructive = false,
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
@@ -29,7 +29,10 @@ export function ConfirmModal({
         <div className="p-5">
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-[18px] font-bold text-[#212121] dark:text-slate-100">{title}</h3>
-            <button onClick={onCancel} className="text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 p-1 rounded-md transition-colors">
+            <button
+              onClick={onCancel}
+              className="text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 p-1 rounded-md transition-colors"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -38,20 +41,20 @@ export function ConfirmModal({
           </p>
         </div>
         <div className="bg-[#FAFAFA]/50 dark:bg-slate-800/30 px-5 py-4 flex justify-end gap-3 border-t border-[#E0E0E0]/50 dark:border-slate-800/50">
-          <button 
-            onClick={onCancel} 
+          <button
+            onClick={onCancel}
             className="px-4 py-2 text-[14px] font-medium text-[#757575] dark:text-slate-400 hover:bg-[#F5F5F5] dark:hover:bg-slate-800 dark:bg-slate-800/50 rounded-md transition-colors"
           >
             {cancelText}
           </button>
-          <button 
+          <button
             onClick={() => {
               onConfirm();
               onCancel();
-            }} 
+            }}
             className={`px-4 py-2 text-[14px] font-bold text-white rounded-md transition-all duration-300 shadow-sm hover:-translate-y-0.5 ${
-              isDestructive 
-                ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-red-500/20' 
+              isDestructive
+                ? 'bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 shadow-red-500/20'
                 : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-blue-500/20'
             }`}
           >

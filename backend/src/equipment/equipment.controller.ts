@@ -30,8 +30,16 @@ export class EquipmentController {
   }
 
   @Get()
-  findAll(@Query('roomId') roomId?: string) {
-    return this.equipmentService.findAll(roomId ? parseInt(roomId) : undefined);
+  findAll(
+    @Query('roomId') roomId?: string,
+    @Query('startTime') startTime?: string,
+    @Query('endTime') endTime?: string,
+  ) {
+    return this.equipmentService.findAll(
+      roomId ? parseInt(roomId) : undefined,
+      startTime,
+      endTime,
+    );
   }
 
   @Get(':id')

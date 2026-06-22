@@ -10,7 +10,9 @@ import {
   Delete,
   UseGuards,
   ParseIntPipe,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
@@ -47,6 +49,54 @@ export class ReportsController {
     return this.reportsService.getStatistics();
   }
 
+  @Get('operational')
+  @Roles(Role.ADMIN, Role.TECHNICIAN)
+  getOperationalStats() {
+    return this.reportsService.getOperationalStats();
+  }
+
+  @Get('management')
+  @Roles(Role.ADMIN, Role.TECHNICIAN, Role.INSTRUCTOR)
+  getManagementStats() {
+    return this.reportsService.getManagementStats();
+  }
+
+  @Get('strategic')
+  @Roles(Role.ADMIN)
+  getStrategicStats() {
+    return this.reportsService.getStrategicStats();
+  }
+
+  @Get('export/excel')
+  @Roles(Role.ADMIN, Role.INSTRUCTOR, Role.TECHNICIAN)
+  async exportToExcel(@Res() res: Response) {
+    const buffer = await this.reportsService.exportToExcel();
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="reports_export.xlsx"',
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.send(buffer);
+  }
+
+  @Get('export/strategic-excel')
+  @Roles(Role.ADMIN, Role.INSTRUCTOR)
+  async exportStrategicToExcel(@Res() res: Response) {
+    const buffer = await this.reportsService.exportStrategicToExcel();
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="strategic_export.xlsx"',
+    );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.send(buffer);
+  }
+
   @Get(':id')
   findOne(
     @Param('id', ParseIntPipe) id: number,
@@ -68,5 +118,14 @@ export class ReportsController {
   @Roles(Role.ADMIN)
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.reportsService.remove(id);
+  }
+
+  @Post('schedule-maintenance/:equipmentId')
+  @Roles(Role.ADMIN, Role.TECHNICIAN)
+  scheduleMaintenance(
+    @Param('equipmentId', ParseIntPipe) equipmentId: number,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.reportsService.scheduleMaintenance(equipmentId, user.userId);
   }
 }

@@ -13,6 +13,9 @@ model User {
   email                 String          @unique @db.VarChar(255)
   password              String          @db.VarChar(255)
   role                  Role            @default(STUDENT)
+  department            String?         @db.VarChar(255)
+  phone                 String?         @db.VarChar(20)
+  student_class         String?         @db.VarChar(100)
   created_at            DateTime        @default(now())
   updated_at            DateTime        @updatedAt
   avatar_url            String?         @db.VarChar(500)
@@ -24,13 +27,23 @@ model User {
   is_mfa_enabled        Boolean         @default(false)
   mfa_secret            String?         @db.VarChar(255)
   is_deleted            Boolean         @default(false)
+  trust_score           Int             @default(100)
   audit_logs            AuditLog[]
   bookings              Booking[]
   check_in_records      CheckInRecord[]
   comments              Comment[]
   courses               Course[]
+  course_enrollments    CourseEnrollment[]
   notifications         Notification[]
   reports               Report[]
+  login_history         LoginHistory[]
+  maintenance_schedules MaintenanceSchedule[]
+  waitlists             Waitlist[]
+  community_posts       CommunityPost[]
+  community_comments    CommunityComment[]
+  ratings               Rating[]
+  skill_badges          UserSkillBadge[]
+  publications          UserPublication[]
 
   @@map("users")
 }
@@ -52,16 +65,33 @@ model Notification {
 model Course {
   id              Int             @id @default(autoincrement())
   name            String          @db.VarChar(255)
-  created_at      DateTime        @default(now())
   code            String          @unique @db.VarChar(100)
+  semester        String          @default("Kỳ 1") @db.VarChar(50)
+  academic_year   String          @default("2025-2026") @db.VarChar(50)
+  created_at      DateTime        @default(now())
   instructor_id   Int
   is_deleted      Boolean         @default(false)
   bookings        Booking[]
   chemical_usages ChemicalUsage[]
+  chemical_limits ChemicalLimit[]
   instructor      User            @relation(fields: [instructor_id], references: [id], onDelete: Cascade)
+  enrollments     CourseEnrollment[]
 
   @@index([instructor_id], map: "courses_instructor_id_fkey")
   @@map("courses")
+}
+
+model CourseEnrollment {
+  id              Int       @id @default(autoincrement())
+  course_id       Int
+  student_id      Int
+  enrolled_at     DateTime  @default(now())
+
+  course          Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  student         User      @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([course_id, student_id])
+  @@map("course_enrollments")
 }
 
 model Room {
@@ -73,10 +103,15 @@ model Room {
   created_at          DateTime        @default(now())
   image_url           String?         @db.VarChar(500)
   is_deleted          Boolean         @default(false)
-  bookings            Booking[]
-  check_in_records    CheckInRecord[]
-  equipment           Equipment[]
-  reports             Report[]
+  bookings              Booking[]
+  check_in_records      CheckInRecord[]
+  equipment             Equipment[]
+  reports               Report[]
+  investments           LabInvestment[]
+  publications          ScientificPublication[]
+  maintenance_schedules MaintenanceSchedule[]
+  waitlists             Waitlist[]
+  ratings               Rating[]
 
   @@map("rooms")
 }
@@ -88,15 +123,23 @@ model Equipment {
   status           EquipmentStatus @default(AVAILABLE)
   room_id          Int
   last_maintenance DateTime?       @db.Date
+  purchase_date    DateTime?       @db.Date
+  value            Float?
+  maintenance_interval_months Int?
   created_at       DateTime        @default(now())
   image_url        String?         @db.VarChar(500)
   row_version      Int             @default(1)
   is_deleted       Boolean         @default(false)
-  bookings         Booking[]
-  check_in_records CheckInRecord[]
-  comments         Comment[]
-  room             Room            @relation(fields: [room_id], references: [id], onDelete: Cascade)
-  reports          Report[]
+  bookings              Booking[]
+  check_in_records      CheckInRecord[]
+  comments              Comment[]
+  room                  Room            @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  reports               Report[]
+  maintenance_schedules MaintenanceSchedule[]
+  waitlists             Waitlist[]
+  community_posts       CommunityPost[]
+  ratings               Rating[]
+  required_badges       SkillBadge[]    @relation("EquipmentSkillRequirements")
 
   @@index([status])
   @@index([room_id], map: "equipment_room_id_fkey")
@@ -109,13 +152,35 @@ model Chemical {
   formula         String?         @db.VarChar(100)
   quantity_stock  Float           @default(0)
   unit            String          @db.VarChar(20)
+  storage_conditions String?      @db.VarChar(255)
+  min_stock_alert Float           @default(5)
   created_at      DateTime        @default(now())
   expiration_date DateTime?       @db.Date
   image_url       String?         @db.VarChar(500)
   is_deleted      Boolean         @default(false)
   usages          ChemicalUsage[]
+  limits          ChemicalLimit[]
 
   @@map("chemicals")
+}
+
+model ChemicalLimit {
+  id            Int      @id @default(autoincrement())
+  course_id     Int
+  chemical_id   Int
+  max_quantity  Float
+  unit          String   @db.VarChar(20)
+  description   String?  @db.Text
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  course        Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  chemical      Chemical @relation(fields: [chemical_id], references: [id], onDelete: Cascade)
+
+  @@unique([course_id, chemical_id])
+  @@index([course_id], map: "chemical_limits_course_id_fkey")
+  @@index([chemical_id], map: "chemical_limits_chemical_id_fkey")
+  @@map("chemical_limits")
 }
 
 model Booking {
@@ -281,6 +346,7 @@ enum BookingStatus {
   CANCELED
   REJECTED
   WAITLISTED
+  OVERDUE
 }
 
 enum ReportStatus {
@@ -289,4 +355,212 @@ enum ReportStatus {
   RESOLVED
   REJECTED
   PENDING
+}
+
+model LabInvestment {
+  id          Int      @id @default(autoincrement())
+  room_id     Int
+  amount      Float
+  year        Int
+  description String?  @db.Text
+  source      String?  @db.VarChar(255)
+  room        Room     @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now())
+
+  @@index([room_id], map: "lab_investments_room_id_fkey")
+  @@map("lab_investments")
+}
+
+model ScientificPublication {
+  id          Int      @id @default(autoincrement())
+  title       String   @db.VarChar(500)
+  authors     String   @db.VarChar(500)
+  journal     String   @db.VarChar(255)
+  year        Int
+  doi         String?  @db.VarChar(100)
+  category    String?  @db.VarChar(100)
+  room_id     Int
+  room        Room     @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now())
+
+  authors_users UserPublication[]
+
+  @@index([room_id], map: "scientific_publications_room_id_fkey")
+  @@map("scientific_publications")
+}
+
+model UserPublication {
+  id              Int       @id @default(autoincrement())
+  user_id         Int
+  publication_id  Int
+  role            String    @default("author") @db.VarChar(50) // author, co_author, reviewer
+  is_corresponding Boolean @default(false)
+  created_at      DateTime  @default(now())
+
+  user         User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  publication  ScientificPublication @relation(fields: [publication_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, publication_id])
+  @@index([user_id], map: "user_publications_user_id_fkey")
+  @@index([publication_id], map: "user_publications_publication_id_fkey")
+  @@map("user_publications")
+}
+
+model LoginHistory {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  ip_address String   @db.VarChar(50)
+  device     String   @db.VarChar(255)
+  location   String?  @db.VarChar(255)
+  status     String   @default("Thành công") @db.VarChar(50)
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "login_history_user_id_fkey")
+  @@map("login_history")
+}
+
+model EquipmentCombo {
+  id          Int                  @id @default(autoincrement())
+  name        String               @db.VarChar(255)
+  description String?              @db.Text
+  image_url   String?              @db.VarChar(500)
+  items       EquipmentComboItem[]
+  
+  @@map("equipment_combos")
+}
+
+model EquipmentComboItem {
+  id              Int            @id @default(autoincrement())
+  combo_id        Int
+  equipment_name  String         @db.VarChar(255)
+  quantity        Int            @default(1)
+  combo           EquipmentCombo @relation(fields: [combo_id], references: [id], onDelete: Cascade)
+
+  @@index([combo_id], map: "equipment_combo_items_combo_id_fkey")
+  @@map("equipment_combo_items")
+}
+
+model MaintenanceSchedule {
+  id           Int        @id @default(autoincrement())
+  room_id      Int?
+  equipment_id Int?
+  start_time   DateTime
+  end_time     DateTime
+  description  String     @db.Text
+  created_by   Int
+  created_at   DateTime   @default(now())
+  
+  room         Room?      @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  equipment    Equipment? @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [created_by], references: [id], onDelete: Cascade)
+
+  @@index([room_id], map: "maintenance_schedules_room_id_fkey")
+  @@index([equipment_id], map: "maintenance_schedules_equipment_id_fkey")
+  @@index([start_time])
+  @@index([created_by], map: "maintenance_schedules_created_by_fkey")
+  @@map("maintenance_schedules")
+}
+
+model Waitlist {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  equipment_id Int?
+  room_id      Int?
+  created_at   DateTime @default(now())
+  is_notified  Boolean  @default(false)
+
+  user         User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  equipment    Equipment? @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
+  room         Room?      @relation(fields: [room_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([equipment_id])
+  @@index([room_id])
+  @@map("waitlists")
+}
+
+model CommunityPost {
+  id           Int      @id @default(autoincrement())
+  author_id    Int
+  title        String   @db.VarChar(255)
+  content      String   @db.Text
+  equipment_id Int?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  upvotes      Int      @default(0)
+  views        Int      @default(0)
+
+  author       User       @relation(fields: [author_id], references: [id], onDelete: Cascade)
+  equipment    Equipment? @relation(fields: [equipment_id], references: [id], onDelete: SetNull)
+  comments     CommunityComment[]
+
+  @@index([author_id])
+  @@index([equipment_id])
+  @@map("community_posts")
+}
+
+model CommunityComment {
+  id         Int      @id @default(autoincrement())
+  post_id    Int
+  author_id  Int
+  content    String   @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  upvotes    Int      @default(0)
+
+  post       CommunityPost @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  author     User          @relation(fields: [author_id], references: [id], onDelete: Cascade)
+
+  @@index([post_id])
+  @@index([author_id])
+  @@map("community_comments")
+}
+
+model Rating {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  equipment_id Int?
+  room_id      Int?
+  score        Int      // 1 to 5
+  comment      String?  @db.Text
+  created_at   DateTime @default(now())
+
+  user         User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  equipment    Equipment? @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
+  room         Room?      @relation(fields: [room_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([equipment_id])
+  @@index([room_id])
+  @@map("ratings")
+}
+
+model SkillBadge {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(255)
+  description String   @db.Text
+  icon_url    String?  @db.VarChar(500)
+  created_at  DateTime @default(now())
+
+  user_badges UserSkillBadge[]
+  equipment   Equipment[] @relation("EquipmentSkillRequirements")
+
+  @@map("skill_badges")
+}
+
+model UserSkillBadge {
+  id           Int      @id @default(autoincrement())
+  user_id      Int
+  badge_id     Int
+  issued_at    DateTime @default(now())
+
+  user         User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  badge        SkillBadge @relation(fields: [badge_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, badge_id])
+  @@index([user_id])
+  @@index([badge_id])
+  @@map("user_skill_badges")
 }

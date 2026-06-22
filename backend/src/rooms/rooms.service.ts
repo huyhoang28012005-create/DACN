@@ -21,6 +21,7 @@ export class RoomsService {
 
   async findAll() {
     return this.prisma.room.findMany({
+      where: { is_deleted: false },
       take: 1000,
       include: {
         _count: {
@@ -63,7 +64,7 @@ export class RoomsService {
 
     const room = await this.prisma.room.update({
       where: { id },
-      data: { is_deleted: true }
+      data: { is_deleted: true },
     });
     this.notificationsService.broadcastRoomUpdate();
     return room;

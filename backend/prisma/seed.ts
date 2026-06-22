@@ -14,6 +14,8 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.chemical.deleteMany();
   await prisma.equipment.deleteMany();
+  await prisma.labInvestment.deleteMany();
+  await prisma.scientificPublication.deleteMany();
   await prisma.room.deleteMany();
   await prisma.course.deleteMany();
   await prisma.user.deleteMany();
@@ -51,6 +53,38 @@ async function main() {
     prisma.room.create({ data: { name: 'Lab Mạng máy tính', location: 'Tầng 3 - Tòa C', capacity: 35 } }),
     prisma.room.create({ data: { name: 'Lab Năng lượng tái tạo', location: 'Tầng 1 - Tòa B', capacity: 20 } }),
   ]);
+
+  // Seeding investments for rooms
+  await prisma.labInvestment.createMany({
+    data: [
+      { room_id: rooms[0].id, amount: 450000000, year: 2023, description: 'Mua sắm thiết bị vi điều khiển, cảm biến và kit phát triển IoT' },
+      { room_id: rooms[0].id, amount: 150000000, year: 2024, description: 'Nâng cấp mô hình cánh tay robot và băng chuyền phân loại' },
+      { room_id: rooms[1].id, amount: 800000000, year: 2022, description: 'Trang bị tủ hút khí độc, hệ thống cấp khí hóa chất và tủ bảo quản mẫu' },
+      { room_id: rooms[1].id, amount: 200000000, year: 2025, description: 'Mua sắm máy quang phổ UV-Vis và máy đo pH thế hệ mới' },
+      { room_id: rooms[2].id, amount: 650000000, year: 2023, description: 'Đầu tư các bộ thực hành khí nén, thủy lực và kit PLC Siemens' },
+      { room_id: rooms[3].id, amount: 950000000, year: 2024, description: 'Mua máy PCR thời gian thực, tủ cấy vô trùng và tủ lạnh sâu -80 độ C' },
+      { room_id: rooms[4].id, amount: 1200000000, year: 2023, description: 'Trang bị 30 máy tính Core i7, GPU RTX 3060 phục vụ học tập' },
+      { room_id: rooms[5].id, amount: 1500000000, year: 2024, description: 'Đầu tư máy chủ GPU phục vụ huấn luyện mô hình học sâu (Deep Learning)' },
+      { room_id: rooms[6].id, amount: 350000000, year: 2023, description: 'Thiết bị Switch, Router Cisco và tủ mạng Rack' },
+      { room_id: rooms[7].id, amount: 500000000, year: 2024, description: 'Lắp đặt mô hình pin năng lượng mặt trời và tua-bin gió mô phỏng' },
+    ]
+  });
+
+  // Seeding scientific publications for rooms
+  await prisma.scientificPublication.createMany({
+    data: [
+      { room_id: rooms[0].id, title: 'An IoT-based Smart Agriculture Monitoring System Using LoRaWAN', authors: 'Nguyen Van A, Tran Quoc B', journal: 'IEEE Internet of Things Journal', year: 2023, doi: '10.1109/JIOT.2023.1234567' },
+      { room_id: rooms[0].id, title: 'Path Planning for Autonomous Mobile Robots in Dynamic Environments', authors: 'Nguyen Van A, Pham Minh D', journal: 'International Journal of Robotics Research', year: 2025, doi: '10.1177/0278364925012345' },
+      { room_id: rooms[1].id, title: 'Analysis of Heavy Metal Concentration in Wastewater Using Spectrophotometry', authors: 'Tran Thi B, Le Hoang C', journal: 'Journal of Analytical Chemistry', year: 2022, doi: '10.1007/s10809-022-9876-y' },
+      { room_id: rooms[1].id, title: 'Development of a Novel Catalyst for Organic Compound Degradation', authors: 'Tran Thi B, Nguyen Van A', journal: 'Catalysis Communications', year: 2024, doi: '10.1016/j.catcom.2024.106800' },
+      { room_id: rooms[2].id, title: 'Design and Control of a Pneumatic Exoskeleton for Rehabilitation', authors: 'Nguyen Van A, Vu Duc E', journal: 'Mechatronics', year: 2024, doi: '10.1016/j.mechatronics.2024.103120' },
+      { room_id: rooms[3].id, title: 'Rapid Detection of Pathogens Using a Portable Microfluidic PCR Device', authors: 'Tran Thi B, Dang Thanh F', journal: 'Biosensors and Bioelectronics', year: 2025, doi: '10.1016/j.bios.2025.116500' },
+      { room_id: rooms[4].id, title: 'Optimizing Parallel Genetic Algorithms on Heterogeneous CPU-GPU Clusters', authors: 'Nguyen Van A, Bui Quang G', journal: 'Journal of Parallel and Distributed Computing', year: 2023, doi: '10.1016/j.jpdc.2023.04.015' },
+      { room_id: rooms[5].id, title: 'Vietnamese Sign Language Recognition Using Deep 3D Convolutional Networks', authors: 'Nguyen Van A, Hoang Mai H', journal: 'Computer Vision and Image Understanding', year: 2024, doi: '10.1016/j.cviu.2024.103900' },
+      { room_id: rooms[5].id, title: 'A Lightweight Transformer Model for Real-Time Medical Image Segmentation', authors: 'Nguyen Van A, Do Tuan K', journal: 'IEEE Transactions on Medical Imaging', year: 2026, doi: '10.1109/TMI.2026.3456789' },
+      { room_id: rooms[7].id, title: 'Efficiency Optimization of Wind-Solar Hybrid Microgrids in Northern Vietnam', authors: 'Tran Thi B, Le Hoang C', journal: 'Renewable Energy', year: 2025, doi: '10.1016/j.renene.2025.08.012' },
+    ]
+  });
 
   // 2.5. TẠO 3 KHÓA HỌC (COURSES)
   const courses = await Promise.all([

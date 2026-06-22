@@ -1,9 +1,11 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AiChatService } from './ai-chat.service';
 
+import { Booking, Equipment } from '@prisma/client';
+
 export interface AiChatContext {
-  bookings?: any[];
-  equipment?: any[];
+  bookings?: Booking[];
+  equipment?: Equipment[];
 }
 
 export class AiChatRequestDto {

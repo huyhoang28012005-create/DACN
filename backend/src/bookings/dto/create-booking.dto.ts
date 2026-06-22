@@ -4,8 +4,19 @@ import {
   IsOptional,
   IsDateString,
   IsEnum,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { BookingStatus } from '@prisma/client';
+
+export class ChemicalUsageDto {
+  @IsInt()
+  chemical_id: number;
+
+  @IsInt() // Or IsNumber if float is allowed
+  quantity: number;
+}
 
 export class CreateBookingDto {
   @IsInt()
@@ -19,6 +30,12 @@ export class CreateBookingDto {
   @IsInt()
   course_id?: number;
 
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ChemicalUsageDto)
+  chemical_usages?: ChemicalUsageDto[];
+
   @IsDateString()
   start_time: string;
 
@@ -31,4 +48,8 @@ export class CreateBookingDto {
   @IsOptional()
   @IsEnum(BookingStatus)
   status?: BookingStatus;
+
+  @IsOptional()
+  @IsDateString()
+  recurrenceEndDate?: string;
 }

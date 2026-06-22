@@ -1,15 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
-import { courseService, userService } from "../services";
-import { toast } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { useState, useEffect, useCallback } from 'react';
+import { courseService, userService } from '../services';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import { ICourse, IUser } from '../types/models';
 
 export function useCourses() {
   const { t } = useTranslation();
-  const [courses, setCourses] = useState<any[]>([]);
-  const [instructors, setInstructors] = useState<any[]>([]);
+  const [courses, setCourses] = useState<ICourse[]>([]);
+  const [instructors, setInstructors] = useState<IUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const currentUserStr = localStorage.getItem("user");
+  const currentUserStr = localStorage.getItem('user');
   const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
   const isAdminOrTechnician = currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN';
   const isInstructor = currentUser?.role === 'INSTRUCTOR';
@@ -24,7 +25,7 @@ export function useCourses() {
       if (canManage) {
         const [coursesRes, usersRes] = await Promise.all([
           courseService.getAll(),
-          isAdminOrTechnician ? userService.getAll() : Promise.resolve({ data: [currentUser] })
+          isAdminOrTechnician ? userService.getAll() : Promise.resolve({ data: [currentUser] }),
         ]);
         coursesData = coursesRes.data || [];
         usersData = usersRes.data || [currentUser];
@@ -32,18 +33,18 @@ export function useCourses() {
         const coursesRes = await courseService.getAll();
         coursesData = coursesRes.data || [];
       }
-      
-      if (isInstructor) {
-        coursesData = coursesData.filter((c: any) => c.instructor_id === currentUser.id);
-      }
+
       setCourses(coursesData);
-      
+
       if (canManage) {
-        const instrs = usersData.filter((u: any) => u.role === 'INSTRUCTOR' || u.role === 'ADMIN');
+        const instrs = usersData.filter(
+          (u: IUser) => u.role === 'INSTRUCTOR' || u.role === 'ADMIN'
+        );
         setInstructors(instrs);
       }
-    } catch (error: any) {
-      const msg = error.response?.data?.message || t("load_courses_error");
+    } catch (error: unknown) {
+      const err = error as any;
+      const msg = err.response?.data?.message || t('load_courses_error');
       toast.error(Array.isArray(msg) ? msg[0] : msg);
     } finally {
       setIsLoading(false);

@@ -10,8 +10,21 @@ Dự án không chỉ dừng lại ở các thao tác CRUD cơ bản mà giải 
 - 🔐 **Dual JWT Authentication & Anti-IDOR:** Kiến trúc bảo mật cấp ngân hàng. Access Token (15m) lưu In-memory chống XSS, Refresh Token lưu HttpOnly Cookie. Tích hợp Ownership Check ngăn chặn Insecure Direct Object Reference (IDOR).
 - ⚙️ **Automated Cron Jobs:** Tích hợp bộ lập lịch ngầm tự động quét và hủy đơn chờ quá 24h, bắt No-show sau 15 phút, và phân tích rủi ro hóa chất hết hạn (Node.js Scheduler).
 - 📜 **Global Audit Logging:** Interceptor tự động lắng nghe và ghi vết mọi thao tác `POST, PUT, DELETE` vào cơ sở dữ liệu để phục vụ truy vết lịch sử (Traceability).
-- 🤖 **Zero-cost AI Chatbot (Client-side NLP):** Tích hợp trợ lý ảo điều khiển hệ thống bằng giọng nói/văn bản. Regex NLP Engine chạy độc lập trên trình duyệt giúp độ trễ bằng 0 và không tốn chi phí API.
+- 🤖 **AI Chatbot (Google Gemini 2.5 Flash):** Tích hợp trợ lý ảo thông minh hỗ trợ giải đáp và điều khiển hệ thống. Sử dụng sức mạnh suy luận từ LLM của Google để cung cấp phản hồi linh hoạt thay vì Regex cơ bản.
 - 🚧 **Throttler & Security Headers:** Hệ thống chặn DDoS bằng Rate Limit qua Redis, chống XSS bằng Helmet CSP, chặn BOPLA (Mass Assignment) bằng ValidationPipes.
+
+## 🧠 Tài liệu Thuật toán & Tối ưu hóa (Algorithms & Optimizations)
+
+Để đáp ứng các yêu cầu học thuật và đảm bảo tính vận hành hiệu quả ở quy mô lớn, toàn bộ các giải thuật cốt lõi của hệ thống đã được mô hình hóa và mô tả chi tiết tại:
+
+👉 [**Tài liệu Thuật toán chi tiết (ALGORITHMS.md)**](file:///c:/Users/Admin/DACN-main/DACN-main/ALGORITHMS.md)
+
+### Tóm tắt nội dung:
+1. **Sliding Window Slot Suggestion:** Giải thuật đề xuất 5 khung giờ trống tối ưu cho phòng Lab/Thiết bị trong vòng 3 ngày kế tiếp bằng mô hình cửa sổ trượt, có tính đến thời gian đệm $T_{buffer}$ và xử lý làm tròn thời gian thực. Độ phức tạp $O(D \cdot N_{steps} \cdot B)$.
+2. **Kiểm soát giao dịch đồng thời:**
+   - **Pessimistic Locking (`SELECT FOR UPDATE`):** Ngăn chặn race-condition double-booking bằng cách khóa hàng đợi ở cấp database transaction.
+   - **Optimistic Locking (`row_version`):** Giải quyết xung đột ghi đè dữ liệu (Lost Update) khi cập nhật trạng thái Check-in/Check-out hoặc thiết bị bằng kỹ thuật kiểm tra phiên bản bản ghi.
+3. **Cryptographic Audit Trail (Hash Chaining):** Xây dựng chuỗi liên kết nhật ký hệ thống chống chối bỏ dựa trên hàm băm SHA-256 (tương tự blockchain), cho phép kiểm tra tính toàn vẹn của lịch sử tác vụ một cách tự động.
 
 ## 🛡️ Kiến trúc Bảo mật 15 Lớp (Enterprise Security)
 Dự án được xây dựng với tư duy "Security-First", đáp ứng xuất sắc các tiêu chuẩn OWASP:

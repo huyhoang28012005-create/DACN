@@ -79,10 +79,17 @@ export class SettingsService implements OnModuleInit {
         description: 'Ngôn ngữ mặc định của hệ thống',
       },
       {
+        key: 'REQUIRE_QR_CHECKIN',
+        value: 'true',
+        category: 'AUTOMATION',
+        description: 'Bắt buộc quét mã QR để Check-in. Nếu tắt, hệ thống sẽ tự động Check-in khi tới giờ.',
+      },
+      {
         key: 'MAINTENANCE_MODE',
         value: 'false',
         category: 'SYSTEM',
-        description: 'Khi bật chế độ bảo trì, toàn bộ hệ thống đặt phòng sẽ bị vô hiệu hóa. Sinh viên không thể tạo Booking mới.',
+        description:
+          'Khi bật chế độ bảo trì, toàn bộ hệ thống đặt phòng sẽ bị vô hiệu hóa. Sinh viên không thể tạo Booking mới.',
       },
     ];
 

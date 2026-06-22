@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -25,7 +26,7 @@ export class CoursesController {
   @UseGuards(ThrottlerGuard) // Bổ sung Rate Limit riêng tránh spam tạo khóa học
   @Roles(Role.ADMIN, Role.INSTRUCTOR) // Chỉ Admin hoặc Giảng viên mới được tạo
   create(
-    @Body() createData: { code: string; name: string; instructor_id: number },
+    @Body() createData: { code: string; name: string; instructor_id: number; semester?: string; academic_year?: string },
   ) {
     return this.coursesService.create(createData);
   }
@@ -47,9 +48,21 @@ export class CoursesController {
   update(
     @Param('id') id: string,
     @Body()
-    updateData: { code?: string; name?: string; instructor_id?: number },
+    updateData: { code?: string; name?: string; instructor_id?: number; semester?: string; academic_year?: string },
+    @Req() req: any,
   ) {
-    return this.coursesService.update(+id, updateData);
+    return this.coursesService.update(+id, updateData, req.user);
+  }
+
+  @Post(':id/request-delete')
+  @UseGuards(ThrottlerGuard)
+  @Roles(Role.INSTRUCTOR)
+  requestDelete(
+    @Param('id') id: string,
+    @Body() body: { reason: string },
+    @Req() req: any,
+  ) {
+    return this.coursesService.requestDelete(+id, req.user, body.reason);
   }
 
   @Delete(':id')

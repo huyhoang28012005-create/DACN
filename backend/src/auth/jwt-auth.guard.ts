@@ -27,13 +27,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err: any, user: any) {
+  handleRequest<TUser = any>(err: any, user: any): TUser {
     if (err || !user) {
-      throw (
-        err ||
-        new UnauthorizedException(
-          'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn',
-        )
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new UnauthorizedException(
+        'Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn',
       );
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return

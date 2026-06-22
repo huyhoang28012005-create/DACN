@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
@@ -17,26 +17,28 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       'Chemical',
     ];
 
-    this.$use(async (params, next) => {
+    this.$use(async (params: Prisma.MiddlewareParams, next) => {
       if (params.model && softDeleteModels.includes(params.model)) {
-        if (params.action === 'findUnique' || params.action === 'findFirst') {
-          // findUnique yêu cầu trường unique, ta đổi thành findFirst để kẹp thêm điều kiện
-          params.action = 'findFirst';
-          if (!params.args) params.args = {};
-          if (!params.args.where) params.args.where = {};
-          if (params.args.where.is_deleted === undefined) {
-            params.args.where.is_deleted = false;
+        if (
+          params.action === 'findUnique' ||
+          params.action === 'findFirst' ||
+          params.action === 'findMany' ||
+          params.action === 'count'
+        ) {
+          if (params.action === 'findUnique') {
+            params.action = 'findFirst';
           }
-        }
-        if (params.action === 'findMany' || params.action === 'count') {
           if (!params.args) params.args = {};
-          if (!params.args.where) params.args.where = {};
-          if (params.args.where.is_deleted === undefined) {
-            params.args.where.is_deleted = false;
+          const args = params.args as { where?: { is_deleted?: boolean } };
+          if (!args.where) {
+            args.where = {};
+          }
+          if (args.where.is_deleted === undefined) {
+            args.where.is_deleted = false;
           }
         }
       }
-      return next(params);
+      return next(params) as Promise<unknown>;
     });
   }
 }

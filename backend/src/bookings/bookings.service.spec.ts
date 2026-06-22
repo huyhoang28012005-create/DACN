@@ -3,7 +3,6 @@ import { BookingsService } from './bookings.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ConflictException, BadRequestException } from '@nestjs/common';
 
 describe('BookingsService - Race Condition Prevention', () => {
   let service: BookingsService;
@@ -23,7 +22,19 @@ describe('BookingsService - Race Condition Prevention', () => {
         },
         {
           provide: SettingsService,
-          useValue: { get: jest.fn().mockResolvedValue('0') },
+          useValue: {
+            get: jest
+              .fn()
+              .mockImplementation((key: string, defaultValue: string) => {
+                if (key === 'BOOKING_START_HOUR') return Promise.resolve('7');
+                if (key === 'BOOKING_END_HOUR') return Promise.resolve('22');
+                if (key === 'MIN_BOOKING_MINUTES') return Promise.resolve('30');
+                if (key === 'MAX_BOOKING_MINUTES')
+                  return Promise.resolve('240');
+                if (key === 'MAINTENANCE_MODE') return Promise.resolve('false');
+                return Promise.resolve(defaultValue);
+              }),
+          },
         },
         {
           provide: NotificationsService,
@@ -44,11 +55,11 @@ describe('BookingsService - Race Condition Prevention', () => {
     it('should use SELECT FOR UPDATE to prevent double-booking', async () => {
       const createBookingDto = {
         start_time: new Date(Date.now() + 3600000).toISOString(), // +1 hour
-        end_time: new Date(Date.now() + 7200000).toISOString(),   // +2 hours
+        end_time: new Date(Date.now() + 7200000).toISOString(), // +2 hours
         room_id: 1,
         purpose: 'Test race condition',
       };
-      
+
       const mockTx = {
         $executeRaw: jest.fn().mockResolvedValue([]),
         booking: {
@@ -59,24 +70,34 @@ describe('BookingsService - Race Condition Prevention', () => {
         auditLog: {
           findFirst: jest.fn().mockResolvedValue(null),
           create: jest.fn().mockResolvedValue({ id: 1 }),
-        }
+        },
       };
 
-      jest.spyOn(prismaService, '$transaction').mockImplementation(async (cb) => {
-        return cb(mockTx as any);
-      });
+      jest
+        .spyOn(prismaService, '$transaction')
+
+        .mockImplementation((cb: any) => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+          return cb(mockTx);
+        });
 
       try {
-        await service.create(createBookingDto as any, 1);
-      } catch (e) {
+        await service.create(createBookingDto, 1);
+      } catch {
         // Ignored, we just want to check if executeRaw was called before any validation throws
       }
 
       // Verify that pessimistic lock was acquired
       expect(mockTx.$executeRaw).toHaveBeenCalled();
-      const calls = mockTx.$executeRaw.mock.calls;
-      const sqlQueries = calls.map(call => call[0].join(''));
-      expect(sqlQueries.some(q => q.includes('SELECT id FROM rooms WHERE id =') && q.includes('FOR UPDATE'))).toBeTruthy();
+      const calls = mockTx.$executeRaw.mock.calls as unknown[][];
+      const sqlQueries = calls.map((call) => (call[0] as string[]).join(''));
+      expect(
+        sqlQueries.some(
+          (q) =>
+            q.includes('SELECT id FROM rooms WHERE id =') &&
+            q.includes('FOR UPDATE'),
+        ),
+      ).toBeTruthy();
     });
   });
 });

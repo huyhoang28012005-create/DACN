@@ -30,5 +30,5 @@ export const socketService = {
       socket.disconnect();
       socket = null;
     }
-  }
+  },
 };

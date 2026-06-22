@@ -33,4 +33,13 @@ export class CreateChemicalDto {
   @IsString()
   @MaxLength(500)
   image_url?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  storage_conditions?: string;
+
+  @IsOptional()
+  @IsNumber()
+  min_stock_alert?: number;
 }

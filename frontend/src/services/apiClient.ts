@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
+import { useAuthStore } from '../store/authStore';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const apiClient = axios.create({
@@ -13,7 +15,7 @@ const apiClient = axios.create({
 
 // Thêm Access Token vào mọi Request
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = useAuthStore.getState().token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -21,7 +23,8 @@ apiClient.interceptors.request.use((config) => {
 });
 
 let isRefreshing = false;
-let failedQueue: {resolve: (value: string | null) => void, reject: (reason?: unknown) => void}[] = [];
+let failedQueue: { resolve: (value: string | null) => void; reject: (reason?: unknown) => void }[] =
+  [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -66,30 +69,31 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const userStr = localStorage.getItem('user');
+      const user = useAuthStore.getState().user;
 
-      if (!userStr) {
+      if (!user) {
         isRefreshing = false;
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        useAuthStore.getState().clearAuth();
         window.location.href = '/login';
         return Promise.reject(error);
       }
 
       try {
-        const user = JSON.parse(userStr);
         // Gọi thẳng axios gốc nhưng nhớ bật withCredentials để trình duyệt tự gửi Cookie
-        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
-          userId: user.id,
-        }, {
-          withCredentials: true
-        });
+        const response = await axios.post(
+          `${API_BASE_URL}/api/auth/refresh`,
+          {
+            userId: user.id,
+          },
+          {
+            withCredentials: true,
+          }
+        );
 
         const { access_token } = response.data;
-        
+
         // Cập nhật Token mới
-        localStorage.setItem('token', access_token);
-        // Không còn lưu refresh_token vào localStorage nữa!
+        useAuthStore.getState().setAuth(user, access_token);
 
         apiClient.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
         originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
@@ -98,10 +102,17 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest); // Gửi lại Request ban đầu bị fail
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+
+        // UX Improvement: Chỉ văng màn hình login nếu có mạng (Lỗi từ server thực sự trả về 401/403)
+        // Nếu không có mạng thì không bắt user đăng nhập lại
+        if (navigator.onLine) {
+          useAuthStore.getState().clearAuth();
+          window.location.href = '/login';
+          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        } else {
+          toast.error('Lỗi kết nối khi làm mới phiên làm việc. Vui lòng thử lại khi có mạng.');
+        }
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -112,7 +123,10 @@ apiClient.interceptors.response.use(
     if (status === 403) {
       toast.error('Bạn không có quyền thực hiện hành động này.');
     } else if (status === 409) {
-      const msg = data.message || data.error || 'Tài nguyên đã bị thay đổi bởi một người dùng khác. Vui lòng tải lại dữ liệu.';
+      const msg =
+        data.message ||
+        data.error ||
+        'Tài nguyên đã bị thay đổi bởi một người dùng khác. Vui lòng tải lại dữ liệu.';
       toast.error(Array.isArray(msg) ? msg[0] : msg);
     }
 

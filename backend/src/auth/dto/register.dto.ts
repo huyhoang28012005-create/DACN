@@ -1,11 +1,4 @@
-import {
-  IsEmail,
-  IsString,
-  IsOptional,
-  IsEnum,
-  Matches,
-} from 'class-validator';
-import { Role } from '@prisma/client';
+import { IsEmail, IsString, Matches } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Email không hợp lệ' })
@@ -23,8 +16,4 @@ export class RegisterDto {
 
   @IsString()
   name: string;
-
-  @IsOptional()
-  @IsEnum(Role)
-  role?: Role;
 }

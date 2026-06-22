@@ -1,28 +1,35 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
 import * as xss from 'xss';
 
 @Injectable()
 export class XssSanitizerPipe implements PipeTransform {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  transform(value: any, metadata: ArgumentMetadata) {
-    if (value && typeof value === 'object') {
-      return this.sanitizeObject(value);
+  transform(value: unknown, metadata: ArgumentMetadata) {
+    if (metadata.type === 'custom') {
+      return value;
     }
+
     if (typeof value === 'string') {
       return xss.filterXSS(value);
     }
+
+    if (typeof value === 'object' && value !== null) {
+      return this.sanitizeObject(value);
+    }
+
     return value;
   }
 
-  private sanitizeObject(obj: any): any {
+  private sanitizeObject(obj: unknown): unknown {
     if (Array.isArray(obj)) {
       return obj.map((item) => this.sanitizeObject(item));
     }
-    if (obj !== null && typeof obj === 'object') {
-      const sanitizedObj: any = {};
+
+    if (typeof obj === 'object' && obj !== null) {
+      const sanitizedObj: Record<string, unknown> = {};
       for (const key of Object.keys(obj)) {
-        sanitizedObj[key] = this.sanitizeObject(obj[key]);
+        sanitizedObj[key] = this.sanitizeObject(
+          (obj as Record<string, unknown>)[key],
+        );
       }
       return sanitizedObj;
     }
