@@ -17,11 +17,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Menu,
-  X,
   FlaskConical,
   QrCode,
-  Package,
-  Wrench,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
