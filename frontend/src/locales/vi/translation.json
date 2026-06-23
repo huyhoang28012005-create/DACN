@@ -4,7 +4,7 @@
   "approvals": "Duyệt yêu cầu",
   "resources": "Quản lý tài nguyên",
   "courses": "Quản lý học phần",
-  "users": "người dùng!",
+  "users": "Quản lý người dùng",
   "reports": "Báo cáo & Thống kê",
   "settings": "Cài đặt",
   "my_bookings": "Đơn đặt lịch",
@@ -713,5 +713,6 @@
   "subscribe_noti_success": "Đăng ký nhận thông báo thành công!",
   "send_borrow_request_success": "Đã gửi yêu cầu mượn thành công!",
   "add_new": "Thêm mới",
-  "update_btn": "Cập nhật"
+  "update_btn": "Cập nhật",
+  "users_count": "người dùng!"
 }

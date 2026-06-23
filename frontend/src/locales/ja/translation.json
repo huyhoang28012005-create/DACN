@@ -4,7 +4,7 @@
   "approvals": "承認",
   "resources": "リソース管理",
   "courses": "コース管理",
-  "users": "ユーザー！",
+  "users": "ユーザー管理",
   "reports": "レポートと分析",
   "settings": "システム設定",
   "my_bookings": "私の予約",
@@ -713,5 +713,6 @@
   "subscribe_noti_success": "通知の購読に成功しました！",
   "send_borrow_request_success": "借用リクエストが正常に送信されました！",
   "add_new": "新しく追加する",
-  "update_btn": "更新"
+  "update_btn": "更新",
+  "users_count": "ユーザー！"
 }
