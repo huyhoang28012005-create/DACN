@@ -1,4 +1,4 @@
-import { UserPayload } from '../../auth/interfaces/user-payload.interface';
+import { UserPayload } from '../../modules/auth/interfaces/user-payload.interface';
 import { ForbiddenException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
