@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Users, Plus, MessageSquare, ThumbsUp, Eye } from 'lucide-react';
-import apiClient from '../../services/apiClient';
+import { communityService } from '../../services';
 import toast from 'react-hot-toast';
 
 interface Post {
@@ -30,7 +30,7 @@ export function Community() {
 
   const fetchPosts = async () => {
     try {
-      const res = await apiClient.get('/api/community/posts');
+      const res = await communityService.getAllPosts();
       setPosts(res.data);
     } catch (err) {
       toast.error('Lỗi khi tải bài viết');
@@ -42,7 +42,7 @@ export function Community() {
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiClient.post('/api/community/posts', { title, content });
+      await communityService.createPost({ title, content });
       toast.success(t('post_success'));
       setTitle('');
       setContent('');

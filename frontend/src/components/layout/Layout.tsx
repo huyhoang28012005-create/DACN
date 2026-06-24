@@ -31,6 +31,7 @@ import apiClient from '../../services/apiClient';
 import toast from 'react-hot-toast';
 import { socketService } from '../../services/socket';
 import { INotification } from '../../types/models';
+import { useAuthStore } from '../../store/authStore';
 
 const LANGUAGES = [
   { code: 'vi', label: 'VI', name: 'Tiếng Việt', flag: 'https://flagcdn.com/w40/vn.png' },
@@ -45,8 +46,7 @@ export function Layout() {
   const { theme, setTheme } = useTheme();
 
   // Read user from localStorage
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user = useAuthStore((state: any) => state.user);
   // Secure Role UI: Chỉ lấy role từ thông tin user JWT, không phụ thuộc localStorage dễ bị can thiệp
   const actualRole = user?.role || 'STUDENT';
   const isAdmin = actualRole === 'ADMIN';
@@ -187,7 +187,7 @@ export function Layout() {
       socketService.disconnect();
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [userStr]);
+  }, [user]);
 
   const markAsRead = async (id: number) => {
     try {

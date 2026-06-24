@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { courseService, userService } from '../services';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '../store/authStore';
 import { ICourse, IUser } from '../types/models';
 import { UserRole } from '../constants/roles';
 
@@ -11,8 +12,7 @@ export function useCourses() {
   const [instructors, setInstructors] = useState<IUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const currentUserStr = localStorage.getItem('user');
-  const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+  const currentUser = useAuthStore(state => state.user);
   const isAdminOrTechnician = currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN';
   const isInstructor = currentUser?.role === UserRole.LECTURER;
   const canManage = isAdminOrTechnician || isInstructor;

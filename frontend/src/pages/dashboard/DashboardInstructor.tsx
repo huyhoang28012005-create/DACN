@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '../../store/authStore';
 import { BookOpen, Clock, LayoutGrid, CheckCircle2, ArrowRight, AlertTriangle, FileText, Calendar as CalendarIcon, Check, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'react-hot-toast';
@@ -18,9 +19,8 @@ export function DashboardInstructor() {
     day: 'numeric',
   });
 
-  const userStr = localStorage.getItem('user');
-  const currentUser = userStr ? JSON.parse(userStr) : null;
-  const userName = currentUser?.name || 'Giảng viên';
+  const user = useAuthStore(state => state.user);
+  const userName = user?.name || 'Giảng viên';
   const userInitial = userName.charAt(0).toUpperCase();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +47,7 @@ export function DashboardInstructor() {
 
 
       // Lọc số lượng khóa học do giảng viên này phụ trách
-      const myCourses = courses.filter((c: ICourse) => c.instructor_id === currentUser?.id);
+      const myCourses = courses.filter((c: ICourse) => c.instructor_id === user?.id);
       setCoursesCount(myCourses.length);
 
       const pending = bookings.filter((b: IBooking) => b.status === 'PENDING');
@@ -79,7 +79,7 @@ export function DashboardInstructor() {
 
   useEffect(() => {
     fetchData();
-  }, [currentUser?.id]);
+  }, [user?.id]);
 
   const handleApprove = async (id: number) => {
     try {

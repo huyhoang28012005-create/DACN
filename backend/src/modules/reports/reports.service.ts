@@ -31,6 +31,7 @@ export class ReportsService {
         user: { select: { id: true, name: true, email: true } },
         equipment: { select: { id: true, name: true } },
         room: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true } },
       },
       orderBy: { created_at: 'desc' },
     });
@@ -43,6 +44,7 @@ export class ReportsService {
         user: { select: { id: true, name: true, email: true } },
         equipment: { select: { id: true, name: true } },
         room: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true } },
       },
       orderBy: { created_at: 'desc' },
     });
@@ -414,6 +416,7 @@ export class ReportsService {
         user: { select: { id: true, name: true, email: true } },
         equipment: { select: { id: true, name: true } },
         room: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true } },
       },
     });
 

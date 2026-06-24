@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '../../store/authStore';
 import { useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
@@ -35,6 +36,7 @@ import { timeAgo } from '../../utils/timeAgo';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner';
 import { ConfirmModal } from '../../components/common/ConfirmModal';
 import { toast } from 'react-hot-toast';
+import { ReportDetailModal } from './ReportDetailModal';
 
 function StatusBadge({ status }: { status: string }) {
   const { t } = useTranslation();
@@ -91,6 +93,7 @@ export function Reports() {
     equipment_id: '',
     room_id: '',
   });
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
   const [equipments, setEquipments] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [deleteConfirmReportId, setDeleteConfirmReportId] = useState<number | null>(null);
@@ -107,8 +110,7 @@ export function Reports() {
   const [strategicData, setStrategicData] = useState<any | null>(null);
   const [isStLoading, setIsStLoading] = useState(false);
 
-  const currentUserStr = localStorage.getItem('user');
-  const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+  const currentUser = useAuthStore(state => state.user);
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'TECHNICIAN';
 
   const fetchData = useCallback(async () => {
@@ -1244,7 +1246,8 @@ export function Reports() {
                   {reports.map((r) => (
                     <div
                       key={r.id}
-                      className="group bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                      onClick={() => setSelectedReport(r)}
+                      className="group bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
@@ -1285,7 +1288,7 @@ export function Reports() {
                           <div className="flex gap-2">
                             {r.status === 'OPEN' && (
                               <button
-                                onClick={() => handleUpdateStatus(r.id, 'IN_PROGRESS')}
+                                onClick={(e) => { e.stopPropagation(); handleUpdateStatus(r.id, 'IN_PROGRESS'); }}
                                 className="px-3 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-xl text-[12px] font-bold transition-colors"
                               >
                                 Bắt đầu sửa
@@ -1293,7 +1296,7 @@ export function Reports() {
                             )}
                             {r.status === 'IN_PROGRESS' && (
                               <button
-                                onClick={() => handleUpdateStatus(r.id, 'RESOLVED')}
+                                onClick={(e) => { e.stopPropagation(); handleUpdateStatus(r.id, 'RESOLVED'); }}
                                 className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-[12px] font-bold transition-colors"
                               >
                                 Hoàn tất
@@ -1301,7 +1304,7 @@ export function Reports() {
                             )}
                           </div>
                           <button
-                            onClick={() => setDeleteConfirmReportId(r.id)}
+                            onClick={(e) => { e.stopPropagation(); setDeleteConfirmReportId(r.id); }}
                             className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
                             title={t('delete_report')}
                           >
@@ -1453,6 +1456,15 @@ export function Reports() {
             </form>
           </div>
         </div>
+      )}
+
+      {selectedReport && (
+        <ReportDetailModal
+          report={selectedReport}
+          isOpen={!!selectedReport}
+          onClose={() => setSelectedReport(null)}
+          currentUser={currentUser}
+        />
       )}
 
       <ConfirmModal

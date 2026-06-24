@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma/prisma.service';
 
@@ -27,6 +28,25 @@ export class MaintenanceService {
     if (start >= end) {
       throw new BadRequestException(
         'Thời gian bắt đầu phải trước thời gian kết thúc',
+      );
+    }
+
+    const overlappingBookings = await this.prisma.booking.findFirst({
+      where: {
+        OR: [
+          ...(data.room_id ? [{ room_id: data.room_id }] : []),
+          ...(data.equipment_id ? [{ equipment_id: data.equipment_id }] : []),
+        ],
+        status: { in: ['PENDING', 'APPROVED', 'IN_USE'] },
+        start_time: { lt: end },
+        end_time: { gt: start },
+        is_deleted: false,
+      },
+    });
+
+    if (overlappingBookings) {
+      throw new ConflictException(
+        'Không thể xếp lịch bảo trì vì đang có đơn đặt trong khoảng thời gian này. Vui lòng xử lý các đơn đặt trước.',
       );
     }
 
@@ -100,6 +120,30 @@ export class MaintenanceService {
           'Thời gian bắt đầu phải trước thời gian kết thúc',
         );
       }
+    }
+
+    const finalStart = data.start_time ? new Date(data.start_time) : schedule.start_time;
+    const finalEnd = data.end_time ? new Date(data.end_time) : schedule.end_time;
+    const finalRoomId = data.room_id !== undefined ? data.room_id : schedule.room_id;
+    const finalEquipmentId = data.equipment_id !== undefined ? data.equipment_id : schedule.equipment_id;
+
+    const overlappingBookings = await this.prisma.booking.findFirst({
+      where: {
+        OR: [
+          ...(finalRoomId ? [{ room_id: finalRoomId }] : []),
+          ...(finalEquipmentId ? [{ equipment_id: finalEquipmentId }] : []),
+        ],
+        status: { in: ['PENDING', 'APPROVED', 'IN_USE'] },
+        start_time: { lt: finalEnd },
+        end_time: { gt: finalStart },
+        is_deleted: false,
+      },
+    });
+
+    if (overlappingBookings) {
+      throw new ConflictException(
+        'Không thể cập nhật lịch bảo trì vì đang có đơn đặt trong khoảng thời gian này. Vui lòng xử lý các đơn đặt trước.',
+      );
     }
 
     return this.prisma.maintenanceSchedule.update({

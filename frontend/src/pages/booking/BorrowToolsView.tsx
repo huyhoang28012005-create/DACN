@@ -184,7 +184,7 @@ export default function BorrowToolsView() {
           }
           return comboService.book(item.id, payloadCombo);
         } else {
-          let payload: any = {
+          const payload: any = {
             purpose: formData.purpose,
             startTime: startDate,
             endTime: endDate,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '../../store/authStore';
 import {
   Calendar,
   Clock,
@@ -41,9 +42,8 @@ export function DashboardStudent() {
   });
 
   // Lấy thông tin user thật từ localStorage
-  const userStr = localStorage.getItem('user');
-  const currentUser = userStr ? JSON.parse(userStr) : null;
-  const userName = currentUser?.name || t('user_role');
+  const user = useAuthStore(state => state.user);
+  const userName = user?.name || t('user_role');
   const userInitial = userName.charAt(0).toUpperCase();
 
   // State

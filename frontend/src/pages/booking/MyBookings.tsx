@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, XCircle, FileText, CalendarX, QrCode, X, CalendarPlus, Clock, MapPin, Package, AlertCircle, ChevronRight, Star } from 'lucide-react';
-import { bookingService, checkInService } from '../../services';
-import apiClient from '../../services/apiClient';
+import { bookingService, ratingService, checkInService } from '../../services';
 import { format } from 'date-fns';
 
 import { toast } from 'react-hot-toast';
@@ -47,10 +46,9 @@ export function MyBookings() {
   const handleRating = async () => {
     if (!ratingBooking) return;
     try {
-      await apiClient.post('/api/ratings', {
-        room_id: ratingBooking.room_id,
-        equipment_id: ratingBooking.equipment_id,
-        score: ratingScore,
+      await ratingService.create({
+        booking_id: ratingBooking.id,
+        rating: ratingScore,
         comment: ratingComment,
       });
       toast.success('Cảm ơn bạn đã đánh giá!');

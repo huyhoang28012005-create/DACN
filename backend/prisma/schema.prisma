@@ -44,6 +44,10 @@ model User {
   ratings               Rating[]
   skill_badges          UserSkillBadge[]
   publications          UserPublication[]
+  assigned_reports      Report[]            @relation("ReportAssignee")
+  penalties             Penalty[]
+  chemical_transactions ChemicalTransaction[]
+  inventory_checks      InventoryCheck[]
 
   @@map("users")
 }
@@ -130,10 +134,12 @@ model Equipment {
   image_url        String?         @db.VarChar(500)
   row_version      Int             @default(1)
   is_deleted       Boolean         @default(false)
+  supplier_id      Int?
   bookings              Booking[]
   check_in_records      CheckInRecord[]
   comments              Comment[]
   room                  Room            @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  supplier              Supplier?       @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
   reports               Report[]
   maintenance_schedules MaintenanceSchedule[]
   waitlists             Waitlist[]
@@ -158,8 +164,12 @@ model Chemical {
   expiration_date DateTime?       @db.Date
   image_url       String?         @db.VarChar(500)
   is_deleted      Boolean         @default(false)
+  supplier_id     Int?
+  supplier        Supplier?       @relation(fields: [supplier_id], references: [id], onDelete: SetNull)
   usages          ChemicalUsage[]
   limits          ChemicalLimit[]
+  transactions    ChemicalTransaction[]
+  inventory_checks InventoryCheck[]
 
   @@map("chemicals")
 }
@@ -256,10 +266,13 @@ model Report {
   image_url    String?      @db.VarChar(500)
   created_at   DateTime     @default(now())
   is_deleted   Boolean      @default(false)
+  assigned_to_id Int?
   comments     Comment[]
   equipment    Equipment?   @relation(fields: [equipment_id], references: [id])
   room         Room?        @relation(fields: [room_id], references: [id])
   user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  assignee     User?        @relation("ReportAssignee", fields: [assigned_to_id], references: [id])
+  penalties    Penalty[]
 
   @@index([equipment_id], map: "reports_equipment_id_fkey")
   @@index([room_id], map: "reports_room_id_fkey")
@@ -449,6 +462,7 @@ model MaintenanceSchedule {
   start_time   DateTime
   end_time     DateTime
   description  String     @db.Text
+  cost         Float?
   created_by   Int
   created_at   DateTime   @default(now())
   
@@ -563,4 +577,85 @@ model UserSkillBadge {
   @@index([user_id])
   @@index([badge_id])
   @@map("user_skill_badges")
+}
+
+model Supplier {
+  id              Int       @id @default(autoincrement())
+  name            String    @db.VarChar(255)
+  contact_person  String?   @db.VarChar(255)
+  phone           String?   @db.VarChar(20)
+  email           String?   @db.VarChar(255)
+  address         String?   @db.Text
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  equipment       Equipment[]
+  chemicals       Chemical[]
+
+  @@map("suppliers")
+}
+
+model ChemicalTransaction {
+  id          Int      @id @default(autoincrement())
+  chemical_id Int
+  user_id     Int
+  type        TransactionType
+  quantity    Float
+  note        String?  @db.Text
+  created_at  DateTime @default(now())
+
+  chemical    Chemical @relation(fields: [chemical_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([chemical_id])
+  @@index([user_id])
+  @@map("chemical_transactions")
+}
+
+enum TransactionType {
+  RESTOCK
+  USAGE
+  DISPOSAL
+}
+
+model Penalty {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  report_id   Int?
+  amount      Float
+  reason      String   @db.Text
+  status      PenaltyStatus @default(PENDING)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  report      Report?  @relation(fields: [report_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([report_id])
+  @@map("penalties")
+}
+
+enum PenaltyStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model InventoryCheck {
+  id            Int      @id @default(autoincrement())
+  chemical_id   Int
+  user_id       Int
+  expected_qty  Float
+  actual_qty    Float
+  discrepancy   Float
+  note          String?  @db.Text
+  created_at    DateTime @default(now())
+
+  chemical      Chemical @relation(fields: [chemical_id], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([chemical_id])
+  @@index([user_id])
+  @@map("inventory_checks")
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
 import {
   Plus,
@@ -88,8 +89,7 @@ export function DeviceManagement() {
 
   const [rooms, setRooms] = useState<Room[]>([]);
 
-  const currentUserStr = localStorage.getItem('user');
-  const currentUser = currentUserStr ? JSON.parse(currentUserStr) : null;
+  const currentUser = useAuthStore(state => state.user);
 
   useEffect(() => {
     fetchData();

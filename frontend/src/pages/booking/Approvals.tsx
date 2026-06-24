@@ -2,14 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search,
-  Check,
-  X,
-  CheckSquare,
   RefreshCw,
-  CalendarX,
-  Download,
-  CheckCircle,
+  X,
+  Check,
   XCircle,
+  CheckSquare,
+  CalendarX,
+  CheckCircle,
   Clock,
   FileCheck,
 } from 'lucide-react';
@@ -173,37 +172,6 @@ export function Approvals() {
     );
   };
 
-  const handleExportExcel = async () => {
-    if (filteredRequests.length === 0) {
-      toast.error(t('no_data_export'));
-      return;
-    }
-
-    try {
-      const toastId = toast.loading('Đang xuất file Excel...');
-      const response = (await bookingService.exportExcel)
-        ? await bookingService.exportExcel()
-        : await import('../../services/apiClient').then((m) =>
-            m.default.get('/api/bookings/export/excel', { responseType: 'blob' })
-          );
-
-      const blob = new Blob([response.data], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `baocao_datphong_${format(new Date(), 'ddMMyyyy')}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success('Đã xuất báo cáo Excel', { id: toastId });
-    } catch (error) {
-      toast.error('Lỗi xuất báo cáo Excel');
-    }
-  };
 
   return (
     <div className="max-w-[1200px] w-full mx-auto animate-in fade-in duration-300 h-full flex flex-col space-y-4">
@@ -333,12 +301,6 @@ export function Approvals() {
               <option value="APPROVED">{t('status_filter_approved')}</option>
               <option value="REJECTED">{t('status_filter_rejected')}</option>
             </select>
-            <button
-              onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-lg font-bold text-[14px] transition-all duration-300 shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-0.5 ml-2"
-            >
-              <Download className="w-4 h-4" /> {t('export_excel')}
-            </button>
           </div>
         </div>
 

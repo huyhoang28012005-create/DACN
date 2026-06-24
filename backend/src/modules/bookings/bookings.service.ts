@@ -535,6 +535,25 @@ export class BookingsService {
         );
       }
 
+      // Refund chemicals if booking is rejected or canceled
+      if (
+        status &&
+        ['REJECTED', 'CANCELED'].includes(status) &&
+        !['REJECTED', 'CANCELED'].includes(existingBooking.status)
+      ) {
+        if (
+          existingBooking.chemical_usages &&
+          existingBooking.chemical_usages.length > 0
+        ) {
+          for (const cu of existingBooking.chemical_usages) {
+            await tx.chemical.update({
+              where: { id: cu.chemical_id },
+              data: { quantity_stock: { increment: cu.quantity_used } },
+            });
+          }
+        }
+      }
+
       return tx.booking.update({
         where: {
           id,
@@ -647,12 +666,24 @@ export class BookingsService {
           'Không thể hủy đơn ở trạng thái này',
       );
     }
-    const result = await this.prisma.booking.update({
-      where: { id },
-      data: {
-        status: 'CANCELED',
-        row_version: { increment: 1 },
-      },
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Refund chemicals if booking is canceled
+      if (booking.chemical_usages && booking.chemical_usages.length > 0) {
+        for (const cu of booking.chemical_usages) {
+          await tx.chemical.update({
+            where: { id: cu.chemical_id },
+            data: { quantity_stock: { increment: cu.quantity_used } },
+          });
+        }
+      }
+
+      return tx.booking.update({
+        where: { id },
+        data: {
+          status: 'CANCELED',
+          row_version: { increment: 1 },
+        },
+      });
     });
     this.notificationsService.broadcastCalendarUpdate();
 
@@ -994,6 +1025,28 @@ export class BookingsService {
       include: { chemical_usages: true },
       orderBy: { created_at: 'asc' },
     });
+
+    // 1. Notify users who subscribed to the waitlist for this resource
+    const notifyWaitlists = await this.prisma.waitlist.findMany({
+      where: {
+        room_id: room_id ? room_id : undefined,
+        equipment_id: equipment_id ? equipment_id : undefined,
+        is_notified: false,
+      },
+    });
+
+    for (const wl of notifyWaitlists) {
+      void this.notificationsService.createNotification(
+        wl.user_id,
+        'Tài nguyên bạn quan tâm đã có thay đổi!',
+        `Tài nguyên bạn đăng ký nhận thông báo hiện có sự thay đổi lịch trình. Hãy kiểm tra lại lịch để đặt chỗ.`,
+        'info',
+      );
+      await this.prisma.waitlist.update({
+        where: { id: wl.id },
+        data: { is_notified: true },
+      });
+    }
 
     if (waitlistedBookings.length === 0) return;
 

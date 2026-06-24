@@ -275,6 +275,15 @@ export const maintenanceService = {
   delete: (id: number | string) => apiClient.delete(`/api/maintenance/${id}`),
 };
 
+export const communityService = {
+  getAllPosts: () => apiClient.get('/api/community/posts'),
+  createPost: (data: { title: string; content: string }) => apiClient.post('/api/community/posts', data),
+};
+
+export const ratingService = {
+  create: (data: { booking_id: number; rating: number; comment?: string }) => apiClient.post('/api/ratings', data),
+};
+
 export const commentService = {
   getAll: (reportId?: number, bookingId?: number, equipmentId?: number) => {
     const params = new URLSearchParams();
@@ -352,4 +361,44 @@ export const publicationService = {
   getAll: () => apiClient.get('/api/publications'),
   create: (data: Record<string, unknown>) => apiClient.post('/api/publications', data),
   delete: (id: number) => apiClient.delete(`/api/publications/${id}`),
+};
+
+export const supplierService = {
+  getAll: () => apiClient.get('/api/suppliers'),
+  getOne: (id: number | string) => apiClient.get(`/api/suppliers/${id}`),
+  create: (data: Record<string, unknown>) => apiClient.post('/api/suppliers', data),
+  update: (id: number | string, data: Record<string, unknown>) => apiClient.patch(`/api/suppliers/${id}`, data),
+  delete: (id: number | string) => apiClient.delete(`/api/suppliers/${id}`),
+};
+
+export const chemicalTransactionService = {
+  getAll: (chemicalId?: number | string) => {
+    let url = '/api/chemical-transactions';
+    if (chemicalId) url += `?chemicalId=${chemicalId}`;
+    return apiClient.get(url);
+  },
+  create: (data: { chemical_id: number; type: string; quantity: number; note?: string }) =>
+    apiClient.post('/api/chemical-transactions', data),
+};
+
+export const inventoryCheckService = {
+  getAll: (chemicalId?: number | string) => {
+    let url = '/api/inventory-checks';
+    if (chemicalId) url += `?chemicalId=${chemicalId}`;
+    return apiClient.get(url);
+  },
+  create: (data: { chemical_id: number; actual_qty: number; note?: string }) =>
+    apiClient.post('/api/inventory-checks', data),
+};
+
+export const penaltyService = {
+  getAll: (userId?: number | string) => {
+    let url = '/api/penalties';
+    if (userId) url += `?userId=${userId}`;
+    return apiClient.get(url);
+  },
+  getOne: (id: number | string) => apiClient.get(`/api/penalties/${id}`),
+  create: (data: Record<string, unknown>) => apiClient.post('/api/penalties', data),
+  update: (id: number | string, data: Record<string, unknown>) => apiClient.patch(`/api/penalties/${id}`, data),
+  delete: (id: number | string) => apiClient.delete(`/api/penalties/${id}`),
 };

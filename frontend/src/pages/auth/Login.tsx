@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, User, Lock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -345,12 +345,7 @@ export function Login() {
                       {t('remember_me')}
                     </span>
                   </label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-[14px] font-bold text-[#1E5FA5] dark:text-blue-400 hover:text-[#0F172A] dark:text-slate-100 dark:hover:text-blue-400 transition-colors"
-                  >
-                    Quên mật khẩu?
-                  </Link>
+                  <div className="flex-1"></div>
                 </div>
 
                 <button

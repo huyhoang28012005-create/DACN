@@ -37,6 +37,10 @@ import { RatingsModule } from './modules/ratings/ratings.module';
 import { WaitlistsModule } from './modules/waitlists/waitlists.module';
 import { SkillBadgesModule } from './modules/skill-badges/skill-badges.module';
 import { ChemicalLimitsModule } from './modules/chemical-limits/chemical-limits.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { ChemicalTransactionsModule } from './modules/chemical-transactions/chemical-transactions.module';
+import { InventoryChecksModule } from './modules/inventory-checks/inventory-checks.module';
+import { PenaltiesModule } from './modules/penalties/penalties.module';
 
 @Module({
   imports: [
@@ -92,6 +96,10 @@ import { ChemicalLimitsModule } from './modules/chemical-limits/chemical-limits.
     WaitlistsModule,
     SkillBadgesModule,
     ChemicalLimitsModule,
+    SuppliersModule,
+    ChemicalTransactionsModule,
+    InventoryChecksModule,
+    PenaltiesModule,
   ],
   controllers: [AppController],
   providers: [

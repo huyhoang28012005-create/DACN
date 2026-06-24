@@ -162,7 +162,7 @@ export function Users() {
     try {
       const toastId = toast.loading('Đang nhập dữ liệu từ Excel...');
       const res = await userService.importExcel(file);
-      toast.success(`${t('import_users_success')} ${res.data?.count || 0} ${t('users')}`, { id: toastId });
+      toast.success(`${t('import_users_success')} ${res.data?.count || 0} ${t('users_count')}`, { id: toastId });
       refetch();
     } catch (error: unknown) {
       const err = error as any;

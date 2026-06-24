@@ -159,7 +159,7 @@ export function LimitManagement() {
         <div>
           <h2 className="text-[20px] font-bold text-[#0F172A] dark:text-slate-100 flex items-center gap-2">
             <AlertTriangle className="w-6 h-6 text-orange-500" />
-            Quản lý Định mức Hóa chất
+            {t('limit_management', 'Quản lý Định mức Hóa chất')}
           </h2>
           <p className="text-[13px] text-[#64748B] dark:text-slate-400 mt-1">
             {t('set_limit_for_course', 'Thiết lập giới hạn sử dụng hóa chất theo từng học phần để đảm bảo an toàn.')}

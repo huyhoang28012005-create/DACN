@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuthStore } from '../../store/authStore';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, DollarSign, Target, Award, FileText, Search, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -12,8 +13,7 @@ export function StrategicManagement() {
   const [activeTab, setActiveTab] = useState<'investment' | 'publication' | 'roi'>('investment');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const userStr = localStorage.getItem('user');
-  const user = userStr ? JSON.parse(userStr) : null;
+  const user = useAuthStore(state => state.user);
   const isAdmin = user?.role === 'ADMIN';
 
   const [investments, setInvestments] = useState<any[]>([]);
