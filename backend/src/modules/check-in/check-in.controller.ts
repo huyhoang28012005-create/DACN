@@ -33,8 +33,13 @@ export class CheckInController {
   }
 
   @Post('scan-qr')
-  scanQR(@Body('qr_data') qrData: string, @CurrentUser() user: UserPayload) {
-    return this.checkInService.scanQR(qrData, user.userId);
+  scanQR(
+    @Body('qr_data') qrData: string,
+    @Body('lat') lat: number,
+    @Body('lng') lng: number,
+    @CurrentUser() user: UserPayload,
+  ) {
+    return this.checkInService.scanQR(qrData, user.userId, lat, lng);
   }
 
   @Get()

@@ -437,25 +437,47 @@ END:VCALENDAR`;
 
               {/* Control Buttons */}
               <div className="w-full flex flex-col gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={isScanning}
-                  onClick={async () => {
+                {(() => {
+                  const handleMockScan = async (qrData: string) => {
                     setIsScanning(true);
                     try {
-                      const qrData = `ROOM_${scanBooking.room_id}`;
-                      const res = await checkInService.scanQR(qrData);
+                      if (!navigator.geolocation) {
+                        toast.error('Trình duyệt không hỗ trợ định vị GPS');
+                        return;
+                      }
+
+                      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                          enableHighAccuracy: true,
+                          timeout: 5000,
+                          maximumAge: 0,
+                        });
+                      });
+
+                      const lat = position.coords.latitude;
+                      const lng = position.coords.longitude;
+                      const res = await checkInService.scanQR(qrData, lat, lng);
                       toast.success(res.data?.message || t('action_success'));
                       setScanBooking(null);
                       fetchData();
-                    } catch (error: unknown) {
-                      const err = error as any;
-                      const msg = err.response?.data?.message || 'Quét thất bại';
-                      toast.error(Array.isArray(msg) ? msg[0] : msg);
+                    } catch (error: any) {
+                      if (error.code === 1 || error.code === 2 || error.code === 3) {
+                        toast.error('Bạn phải cấp quyền Vị trí (GPS) để Check-in');
+                      } else {
+                        const msg = error.response?.data?.message || 'Quét thất bại';
+                        toast.error(Array.isArray(msg) ? msg[0] : msg);
+                      }
                     } finally {
                       setIsScanning(false);
                     }
-                  }}
+                  };
+
+                  return (
+                    <>
+                <button
+                  type="button"
+                  disabled={isScanning}
+                  onClick={() => handleMockScan(`ROOM_${scanBooking.room_id}`)}
                   className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[14px] font-bold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   🚪 Quét QR Phòng ({scanBooking.room?.name})
@@ -465,27 +487,16 @@ END:VCALENDAR`;
                   <button
                     type="button"
                     disabled={isScanning}
-                    onClick={async () => {
-                      setIsScanning(true);
-                      try {
-                        const qrData = `EQ_${scanBooking.equipment_id}`;
-                        const res = await checkInService.scanQR(qrData);
-                        toast.success(res.data?.message || t('action_success'));
-                        setScanBooking(null);
-                        fetchData();
-                      } catch (error: unknown) {
-                        const err = error as any;
-                        const msg = err.response?.data?.message || 'Quét thất bại';
-                        toast.error(Array.isArray(msg) ? msg[0] : msg);
-                      } finally {
-                        setIsScanning(false);
-                      }
-                    }}
-                    className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-[14px] font-bold shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    onClick={() => handleMockScan(`EQ_${scanBooking.equipment_id}`)}
+                    className="w-full py-3.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-neutral-800 dark:text-slate-200 rounded-xl text-[14px] font-bold shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
-                    🛠️ Quét QR Thiết bị ({scanBooking.equipment?.name || 'Kèm theo'})
+                    🔬 Quét QR Thiết bị ({scanBooking.equipment?.name})
                   </button>
                 )}
+                </>
+              );
+            })()}
+
               </div>
             </div>
           </div>

@@ -68,8 +68,8 @@ export class BookingsService {
       );
     }
 
-    const bookingStartHour = startTime.getHours();
-    const bookingEndHour = endTime.getHours();
+    const bookingStartHour = (startTime.getUTCHours() + 7) % 24;
+    const bookingEndHour = (endTime.getUTCHours() + 7) % 24;
 
     const startHourLimit = parseInt(
       await this.settingsService.get('BOOKING_START_HOUR', '7'),
@@ -133,7 +133,8 @@ export class BookingsService {
     // Di chuyển ra ngoài transaction để tối ưu hiệu năng
     const encryptedPurpose = EncryptionUtil.encrypt(purpose);
 
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(
+      async (tx) => {
       // 🛡️ BẢO MẬT & ĐỒNG BỘ: PESSIMISTIC LOCKING
       await tx.$executeRaw`SELECT id FROM rooms WHERE id = ${room_id} FOR UPDATE`;
       if (equipment_id) {
@@ -568,7 +569,9 @@ export class BookingsService {
           row_version: { increment: 1 },
         },
       });
-    });
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 
     // Bắn thông báo nếu có đổi status thành APPROVED hoặc REJECTED
     if (status && ['APPROVED', 'REJECTED'].includes(status)) {

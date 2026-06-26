@@ -125,7 +125,13 @@ export class CheckInService {
     });
   }
 
-  async scanQR(qrData: string, userId: number) {
+  async scanQR(qrData: string, userId: number, lat?: number, lng?: number) {
+    // KIỂM TRA EDGE CASE: Chống giả mạo vị trí bằng GPS
+    if (!lat || !lng) {
+      throw new BadRequestException('Hệ thống yêu cầu bật Vị trí (GPS) để check-in chống gian lận.');
+    }
+    // Ở môi trường thực tế, có thể so sánh (lat, lng) với tọa độ gốc của trường để đảm bảo sinh viên đang đứng ở trường.
+    
     let roomId: number | null = null;
     let equipmentId: number | null = null;
 

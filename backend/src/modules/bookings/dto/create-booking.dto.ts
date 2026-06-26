@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsArray,
   ValidateNested,
+  IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BookingStatus } from '@prisma/client';
@@ -15,6 +16,7 @@ export class ChemicalUsageDto {
   chemical_id: number;
 
   @IsInt() // Or IsNumber if float is allowed
+  @IsPositive()
   quantity: number;
 }
 

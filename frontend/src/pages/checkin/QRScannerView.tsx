@@ -38,6 +38,25 @@ export function QRScannerView() {
 
   const handleScan = async (data: string) => {
     try {
+      if (!navigator.geolocation) {
+        toast.error('Trình duyệt không hỗ trợ định vị GPS');
+        return;
+      }
+
+      const getPosition = (): Promise<GeolocationPosition> => {
+        return new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+          });
+        });
+      };
+
+      const position = await getPosition();
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
       // Data expected to be JSON string: {"id":1, "type":"equipment"}
       let payload: any = {};
       try {
@@ -58,12 +77,18 @@ export function QRScannerView() {
       }
 
       // 2. Call scanQR to log check-in/out event
-      const res = await checkInService.scanQR(data);
+      const res = await checkInService.scanQR(data, lat, lng);
       setScanResult(res.data);
       toast.success(t('scan_qr_success'));
     } catch (err: any) {
-      toast.error('Lỗi khi quét QR: ' + (err.response?.data?.message || 'Dữ liệu mã QR không hợp lệ'));
-      setScanResult({ error: 'Không thể xử lý mã QR này' });
+      if (err.code === 1 || err.code === 2 || err.code === 3) {
+        // Geolocation errors
+        toast.error('Bạn phải cấp quyền Vị trí (GPS) để quét QR');
+        setScanResult({ error: 'Chưa cấp quyền GPS' });
+      } else {
+        toast.error('Lỗi khi quét QR: ' + (err.response?.data?.message || 'Dữ liệu mã QR không hợp lệ'));
+        setScanResult({ error: 'Không thể xử lý mã QR này' });
+      }
     }
   };
 

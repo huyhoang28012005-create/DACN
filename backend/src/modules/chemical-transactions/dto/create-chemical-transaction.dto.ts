@@ -1,4 +1,4 @@
-import { IsNumber, IsString, IsEnum, IsOptional } from 'class-validator';
+import { IsNumber, IsString, IsEnum, IsOptional, IsPositive } from 'class-validator';
 import { TransactionType } from '@prisma/client';
 
 export class CreateChemicalTransactionDto {
@@ -9,6 +9,7 @@ export class CreateChemicalTransactionDto {
   type: TransactionType;
 
   @IsNumber()
+  @IsPositive()
   quantity: number;
 
   @IsString()

@@ -1,92 +1,135 @@
-# Hệ thống Quản lý Phòng Lab Toàn diện (Lab Management System)
+# 🚀 Hệ thống Quản lý Thực hành & Tài nguyên Phòng Lab (Lab Management System)
 
-Dự án phần mềm cấp độ Doanh nghiệp (Enterprise-level) dành cho việc quản lý, đặt lịch và vận hành các phòng thí nghiệm, thiết bị và hóa chất trong môi trường Đại học.
+Dự án Đồ án Chuyên ngành (DACN) - Hệ thống Quản lý phòng thực hành toàn diện, hỗ trợ quản lý phòng Lab, trang thiết bị, hóa chất tiêu hao và tự động hóa điểm danh, giám sát lịch trình.
 
-## 🌟 Tính năng Kỹ thuật Nổi bật (Core Innovations)
+---
 
-Dự án không chỉ dừng lại ở các thao tác CRUD cơ bản mà giải quyết triệt để các bài toán kỹ thuật phức tạp:
+## 🌟 Các tính năng nổi bật (Key Features)
 
-- 🛡️ **Pessimistic Locking (Chống Double-Booking):** Sử dụng `SELECT ... FOR UPDATE` ở tầng Database (MySQL InnoDB) để ngăn chặn hoàn toàn hiện tượng Race Condition khi hàng trăm sinh viên cùng tranh nhau đặt 1 phòng Lab hoặc 1 thiết bị.
-- 🔐 **Dual JWT Authentication & Anti-IDOR:** Kiến trúc bảo mật cấp ngân hàng. Access Token (15m) lưu In-memory chống XSS, Refresh Token lưu HttpOnly Cookie. Tích hợp Ownership Check ngăn chặn Insecure Direct Object Reference (IDOR).
-- ⚙️ **Automated Cron Jobs:** Tích hợp bộ lập lịch ngầm tự động quét và hủy đơn chờ quá 24h, bắt No-show sau 15 phút, và phân tích rủi ro hóa chất hết hạn (Node.js Scheduler).
-- 📜 **Global Audit Logging:** Interceptor tự động lắng nghe và ghi vết mọi thao tác `POST, PUT, DELETE` vào cơ sở dữ liệu để phục vụ truy vết lịch sử (Traceability).
-- 🤖 **AI Chatbot (Google Gemini 2.5 Flash):** Tích hợp trợ lý ảo thông minh hỗ trợ giải đáp và điều khiển hệ thống. Sử dụng sức mạnh suy luận từ LLM của Google để cung cấp phản hồi linh hoạt thay vì Regex cơ bản.
-- 🚧 **Throttler & Security Headers:** Hệ thống chặn DDoS bằng Rate Limit qua Redis, chống XSS bằng Helmet CSP, chặn BOPLA (Mass Assignment) bằng ValidationPipes.
+### 1. 👥 Quản lý Phân quyền Đa cấp độ (Role-Based Access Control)
+- **Admin**: Quản trị toàn quyền hệ thống, phê duyệt yêu cầu, quản lý người dùng, cài đặt hệ thống.
+- **Instructor (Giảng viên)**: Đặt phòng/thiết bị tự động được phê duyệt, báo cáo sự cố, đánh giá thiết bị.
+- **Student (Sinh viên)**: Đặt phòng chờ duyệt, kiểm tra số lượng thiết bị, điểm danh QR.
 
-## 🧠 Tài liệu Thuật toán & Tối ưu hóa (Algorithms & Optimizations)
+### 2. 📅 Đặt phòng & Mượn thiết bị (Booking & Equipment)
+- Đặt lịch phòng Lab và mượn thiết bị kèm theo.
+- Lên lịch lặp lại (Recurring Booking).
+- Gợi ý thay thế thiết bị khi hết hàng hoặc hỏng hóc.
+- **Bảo mật:** Áp dụng thuật toán chặn Xung đột đồng thời (Race Condition) bằng `Serializable Isolation`. Ngăn chặn việc nhiều người đặt cùng lúc 1 thiết bị.
 
-Để đáp ứng các yêu cầu học thuật và đảm bảo tính vận hành hiệu quả ở quy mô lớn, toàn bộ các giải thuật cốt lõi của hệ thống đã được mô hình hóa và mô tả chi tiết tại:
+### 3. 🧪 Quản lý Hóa chất & Vật tư (Chemical Inventory)
+- Theo dõi tồn kho hóa chất, ghi log xuất/nhập/tiêu hao.
+- Áp dụng Hạn mức (Chemical Limits) theo từng môn học/đồ án.
+- Cảnh báo hóa chất sắp hết hạn hoặc sắp hết tồn kho.
+- Chặn lỗi nhập số âm (Negative Input Bypass) bằng Validation bảo mật.
 
-👉 [**Tài liệu Thuật toán chi tiết (ALGORITHMS.md)**](file:///c:/Users/Admin/DACN-main/DACN-main/ALGORITHMS.md)
+### 4. 📍 Điểm danh Chống gian lận (GPS-secured QR Check-in)
+- Tạo mã QR động cho từng phòng/thiết bị.
+- **Tích hợp GPS:** Sinh viên dùng điện thoại quét mã phải mở quyền Vị trí (Geolocation) để đảm bảo có mặt thực sự tại trường, chống quét hộ từ xa.
+- Xử lý No-show tự động: Hủy lịch và trừ điểm Uy tín nếu vắng mặt không lý do sau 15 phút.
 
-### Tóm tắt nội dung:
-1. **Sliding Window Slot Suggestion:** Giải thuật đề xuất 5 khung giờ trống tối ưu cho phòng Lab/Thiết bị trong vòng 3 ngày kế tiếp bằng mô hình cửa sổ trượt, có tính đến thời gian đệm $T_{buffer}$ và xử lý làm tròn thời gian thực. Độ phức tạp $O(D \cdot N_{steps} \cdot B)$.
-2. **Kiểm soát giao dịch đồng thời:**
-   - **Pessimistic Locking (`SELECT FOR UPDATE`):** Ngăn chặn race-condition double-booking bằng cách khóa hàng đợi ở cấp database transaction.
-   - **Optimistic Locking (`row_version`):** Giải quyết xung đột ghi đè dữ liệu (Lost Update) khi cập nhật trạng thái Check-in/Check-out hoặc thiết bị bằng kỹ thuật kiểm tra phiên bản bản ghi.
-3. **Cryptographic Audit Trail (Hash Chaining):** Xây dựng chuỗi liên kết nhật ký hệ thống chống chối bỏ dựa trên hàm băm SHA-256 (tương tự blockchain), cho phép kiểm tra tính toàn vẹn của lịch sử tác vụ một cách tự động.
+### 5. 🛠 Báo cáo sự cố & Đánh giá (Reports & Reviews)
+- Theo dõi vòng đời sửa chữa thiết bị (Từ lúc báo hỏng -> Đang sửa -> Hoàn tất).
+- Cho phép sinh viên đánh giá (Review/Rating) chất lượng thiết bị.
+- Tích hợp logic "AI xử lý phạt oan": Bỏ qua phạt No-show nếu sinh viên báo cáo thiết bị hỏng trước giờ.
 
-## 🛡️ Kiến trúc Bảo mật 15 Lớp (Enterprise Security)
-Dự án được xây dựng với tư duy "Security-First", đáp ứng xuất sắc các tiêu chuẩn OWASP:
-1. **Password Hashing:** Bcrypt (10 rounds).
-2. **Password Strength:** Regex bắt buộc độ phức tạp cao.
-3. **CORS Strict Policy:** Khóa chặt tài nguyên từ nguồn lạ.
-4. **Data Validation Pipes:** Chống SQL/NoSQL Injection.
-5. **JWT Authentication:** Xác thực không trạng thái (Stateless).
-6. **Role-based Access Control (RBAC):** Phân quyền nghiêm ngặt cấp Endpoint.
-7. **Rate Limiting (Redis):** Chống DDoS và Brute-force.
-8. **Helmet Security Headers:** Chống Clickjacking & MIME-sniffing.
-9. **Global XSS Sanitizer:** Bộ lọc toàn cục làm sạch HTML độc hại.
-10. **Pessimistic Locking:** Chống Race Condition ở cấp Database.
-11. **Account Lockout:** Đóng băng tài khoản 15 phút sau 5 lần nhập sai.
-12. **Military-grade Encryption (AES-256-GCM):** Mã hóa dữ liệu nhạy cảm trước khi lưu DB.
-13. **Hash-chaining Audit Logs:** Nhật ký không thể chối bỏ (Non-repudiation).
-14. **Ghost Session Rejection:** Check Liveness của JWT theo thời gian thực (Real-time).
-15. **Anti-IDOR Ownership Checks:** Ngăn chặn truy cập chéo tài nguyên trái phép.
+### 6. 🌍 Giao diện Đa ngôn ngữ & UI/UX Hiện đại
+- Tích hợp Dark/Light Mode bằng biến số CSS `oklch`.
+- Hỗ trợ i18n (Tiếng Việt / Tiếng Anh) mượt mà không cần reload trang.
+- Dashboard báo cáo thống kê bằng biểu đồ đa dạng.
 
-## 🛠️ Technology Stack
+---
 
-- **Backend:** NestJS (TypeScript), Prisma ORM, MySQL 8.0, Redis (Caching & Rate Limit).
-- **Frontend:** React 18, Vite, TailwindCSS, Zustand (State Management).
-- **DevOps:** Docker & Docker Compose (Containerization).
+## 💻 Công nghệ sử dụng (Tech Stack)
 
-## 🚀 Hướng dẫn Cài đặt & Khởi chạy (1-Click)
+### Frontend
+- **Framework**: React.js (Vite)
+- **Ngôn ngữ**: TypeScript
+- **Styling**: Tailwind CSS & Lucide Icons
+- **State Management**: Zustand
+- **Data Fetching**: Axios, SWR / React Query
+- **Routing**: React Router DOM
 
-Yêu cầu môi trường: Cài đặt sẵn `Docker` và `Docker Compose`.
+### Backend
+- **Framework**: NestJS
+- **Ngôn ngữ**: TypeScript
+- **ORM**: Prisma
+- **Database**: MySQL
+- **Authentication**: Passport-JWT
+- **Task Scheduling**: @nestjs/schedule (Cronjobs)
 
-**Bước 1: Clone dự án**
+---
+
+## 🛠 Hướng dẫn Cài đặt & Chạy dự án (Local Setup)
+
+### Yêu cầu cài đặt (Prerequisites)
+- [Node.js](https://nodejs.org/en/) (phiên bản 18+ trở lên)
+- [MySQL](https://www.mysql.com/) (hoặc sử dụng XAMPP/WAMP)
+- Git
+
+### 1. Clone dự án về máy
 ```bash
-git clone <repository_url>
-cd DACN-main
+git clone https://github.com/huyhoang28012005-create/DACN.git
+cd DACN
 ```
 
-**Bước 2: Khởi chạy Database & Cache**
-Chỉ với 1 lệnh, hệ thống sẽ tự động pull MySQL 8.0 và Redis, cài đặt cấu hình tự động:
-```bash
-docker-compose up -d
-```
-*(Mật khẩu và DB đã được cấu hình mặc định trong file `.env.example`. Không cần cài đặt thủ công)*
-
-**Bước 3: Chạy Backend API**
+### 2. Cài đặt Backend
+Mở Terminal, di chuyển vào thư mục `backend`:
 ```bash
 cd backend
 npm install
-npx prisma generate
+```
+
+Thiết lập biến môi trường:
+- Tạo một file `.env` ở thư mục `backend` bằng cách copy từ file mẫu:
+```bash
+cp .env.example .env
+```
+- Chỉnh sửa file `.env` và cập nhật chuỗi kết nối Database MySQL của bạn:
+```env
+DATABASE_URL="mysql://root:@localhost:3306/dacn_lab_management"
+JWT_SECRET="your-super-secret-jwt-key"
+PORT=3001
+```
+
+Khởi tạo Database và nạp dữ liệu mẫu (Seeding):
+```bash
+# Push cấu trúc bảng lên MySQL
 npx prisma db push
-npx prisma db seed   # (Tùy chọn) Chạy lệnh này để tạo dữ liệu mẫu
+
+# Chạy seed dữ liệu mẫu (Tạo Admin mặc định, Phòng, Thiết bị...)
+npx prisma db seed
+```
+> **Tài khoản mặc định:** `admin@gmail.com` / `123456`
+
+Chạy Backend server:
+```bash
 npm run start:dev
 ```
-API sẽ khởi chạy tại: `http://localhost:3000/api`
+Backend sẽ khởi chạy tại `http://localhost:3001`
 
-**Bước 4: Chạy Frontend UI**
+### 3. Cài đặt Frontend
+Mở một Terminal khác, di chuyển vào thư mục `frontend`:
 ```bash
 cd frontend
 npm install
+```
+
+Thiết lập biến môi trường:
+- Tạo file `.env` ở thư mục `frontend`:
+```env
+VITE_API_URL=http://localhost:3001/api
+VITE_SOCKET_URL=http://localhost:3001
+```
+
+Chạy Frontend server:
+```bash
 npm run dev
 ```
-Giao diện sẽ khởi chạy tại: `http://localhost:5173`
+Trang web sẽ khởi chạy tại `http://localhost:5173`. Bạn có thể mở trình duyệt và đăng nhập!
 
-## 👥 Phân quyền (RBAC Matrix)
-- **Student:** Đặt lịch, Xem thiết bị, Nhận thông báo.
-- **Lecturer / Technician:** Phê duyệt đơn, Cập nhật trạng thái thiết bị hỏng, Theo dõi hóa chất.
-- **Admin:** Quản lý User (Blacklist), Cấu hình thông số hệ thống, Xem Audit Logs.
+---
+
+## 🤝 Tác giả (Author)
+- **GitHub**: [huyhoang28012005-create](https://github.com/huyhoang28012005-create)
+- Đồ án Chuyên ngành - Phát triển Hệ thống Quản lý Tài nguyên Đại học.

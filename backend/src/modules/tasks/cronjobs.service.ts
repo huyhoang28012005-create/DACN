@@ -90,6 +90,23 @@ export class CronjobsService {
       if (noShowBookings.length === 0) return;
 
       for (const booking of noShowBookings) {
+        // KIỂM TRA EDGE CASE: Bỏ qua phạt No-show nếu sinh viên có báo cáo sự cố phòng/thiết bị
+        const hasReport = await this.prisma.report.findFirst({
+          where: {
+            user_id: booking.user_id,
+            created_at: { gte: booking.start_time, lte: now },
+            OR: [
+              { room_id: booking.room_id },
+              ...(booking.equipment_id ? [{ equipment_id: booking.equipment_id }] : []),
+            ],
+          },
+        });
+
+        if (hasReport) {
+          this.logger.debug(`[No-show] Bỏ qua phạt đơn #${booking.id} do sinh viên đã báo cáo sự cố.`);
+          continue;
+        }
+
         await this.prisma.booking.update({
           where: { id: booking.id },
           data: { status: 'CANCELED', row_version: { increment: 1 } },

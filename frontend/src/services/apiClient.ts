@@ -51,6 +51,13 @@ apiClient.interceptors.response.use(
 
     const { status, data } = error.response;
 
+    // Bắt lỗi 503 (Hệ thống bảo trì)
+    if (status === 503 && data?.message === 'MAINTENANCE_MODE') {
+      useAuthStore.getState().clearAuth();
+      toast.error('Hệ thống đang được bảo trì. Bạn đã bị đăng xuất!');
+      return Promise.reject(error);
+    }
+
     // Bắt lỗi 401 (Access Token hết hạn) và gọi API cấp lại Token
     if (status === 401 && !originalRequest._retry) {
       if (isRefreshing) {

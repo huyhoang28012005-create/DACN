@@ -330,7 +330,7 @@ export const checkInService = {
 
   getAll: () => apiClient.get('/api/check-in'),
 
-  scanQR: (qrData: string) => apiClient.post('/api/check-in/scan-qr', { qr_data: qrData }),
+  scanQR: (qrData: string, lat?: number, lng?: number) => apiClient.post('/api/check-in/scan-qr', { qr_data: qrData, lat, lng }),
 };
 
 export const notificationService = {
